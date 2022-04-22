@@ -1,0 +1,183 @@
+### MGRX CONFIGURATION ###############################################
+
+# This file sets variables that direct the libary build for the
+# programmer needs. The file is used for the four standard plattforms.
+
+# Specify version of MGRX
+# Currently only used to generate name of shared libraries for linux
+MGRX_VERSION=1.3.6
+
+# Specify if you want to include GrGUI in the MGRX lib
+INCLUDE_GRGUI=y
+
+# Specify if you have libjpeg.a and corresponding .h files.
+HAVE_LIBJPEG=y
+
+# Specify if you have libpng.a and corresponding .h files.
+HAVE_LIBPNG=y
+
+# Specify if one of the above libs requires the
+# zlib compression library
+NEED_ZLIB=y
+
+# Specify if you want shared library support (Linux console and X11)
+INCLUDE_SHARED_SUPPORT=n
+
+# Specify if you want to build the library for arm, i386 or x86_64
+# (Linux console and x11 versions) Set only one to 'y'.
+BUILD_I386=n
+BUILD_X86_64=y
+BUILD_ARM=n
+
+# Specify if you need to add librt (Linux console and x11 versions)
+# necesary for glibc version < 2.17 to use clock_getres function
+NEED_LIBRT=n
+
+### SYSTEM SETTINGS ##################################################
+
+CC     = gcc
+AR     = ar
+RANLIB = ranlib
+STRIP  = strip
+
+# Different systems / setups may generate .o files
+# this tag files will show what version is present
+SYSTEM_TAG_PREFIX     = systag
+LINUX_CONSOLE         = $(SYSTEM_TAG_PREFIX).000
+LINUX_X11             = $(SYSTEM_TAG_PREFIX).002
+DOS_DJGPP_V2          = $(SYSTEM_TAG_PREFIX).004
+WIN32_GCC_i386_STATIC = $(SYSTEM_TAG_PREFIX).006
+
+ifdef DEBUG
+CCOPT = -O1 -Wall -g -DDEBUG=$(DEBUG)
+LDOPT = -g
+else
+CCOPT = -O1 -Wall
+LDOPT =
+endif
+
+ifdef PROFILE
+CCOPT += -pg
+endif
+
+# Additional warnings for development
+WARNOPTS = -W -Wshadow -Wpointer-arith -Wbad-function-cast \
+	   -Wcast-align -Wconversion -Wmissing-prototypes  \
+	   -Wnested-externs -Wstrict-prototypes
+#CCOPT += $(WARNOPTS)
+
+### LINUX FB CONSOLE SPECIFIC ########################################
+
+ifdef GRXVLNX
+
+# check for arm, i386 or x86_64 build
+ifeq ($(BUILD_X86_64),y)
+CCOPT += -m64
+LDOPT += -m64
+else ifeq ($(BUILD_I386),y)
+CCOPT += -m32
+LDOPT += -m32
+else
+CCOPT +=
+LDOPT +=
+endif
+
+# place libmgrx.a and libmgrx.so in lib/unix
+GRX_LIB_SUBDIR=unix
+
+# Set here the default destination dir for install and uninstall targets
+INSTALLDIR=/usr/local
+
+# Set the default GRX font path
+#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+
+# Set to 'n'
+SET_SUIDROOT=n
+
+endif
+
+### LINUX X11 SPECIFIC ###############################################
+
+ifdef GRXVX11
+
+# check for arm, i386 or x86_64 build
+ifeq ($(BUILD_X86_64),y)
+CCOPT += -m64
+LDOPT += -m64
+else ifeq ($(BUILD_I386),y)
+CCOPT += -m32
+LDOPT += -m32
+else
+CCOPT +=
+LDOPT +=
+endif
+
+# place libmgrxX.a and libmgrxX.so in lib/unix
+GRX_LIB_SUBDIR=unix
+
+# Set here the destination dir for install and uninstall targets
+INSTALLDIR=/usr/local
+
+# Set the default GRX font path
+#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+
+# These seems no longer necesary
+# The X11 base dir on your system
+#X11BASE=/usr/X11R6
+# Add directories with X11 include files here
+#X11INCS=-I$(X11BASE)/include
+# put X11 required libraries and directories here
+# note: some systems need -lsocket added
+#ifeq ($(BUILD_X86_64),y)
+#X11LIBS=-L$(X11BASE)/lib64 -lX11
+#else
+#X11LIBS=-L$(X11BASE)/lib -lX11
+#endif
+
+X11LIBS=-lX11
+
+# Set to try to use the XFree86 Direct Graphics Access driver (DGA2)
+# (if DGA2 is not available, fall back to the windowed X11 driver)
+# As of XFree-4.3.99.5 DGA/DGA2 seems stable, but use with caution.
+USE_XF86DGA_DRIVER=n
+# Set to 'y' this variable if you want the DGA2 driver to use direct
+# framebuffer access. That should not make DGA2 more unstable and is
+# faster. If this setting is 'y', the DGA2 driver (see above) must
+# also be 'y', or you will get compilation/linkage errors.
+USE_XF86DGA_FRAMEBUFFER=n
+# Set or not set suid root for X11. This is required for the DGA2
+# framebuffer access, it can be set to 'n' if you use the standard
+# X11 driver only or DGA2 without framebuffer access.
+SET_XSUIDROOT=n
+
+endif
+
+### DOS DJGPPv2 SPECIFIC #############################################
+
+ifdef GRXVDJ2
+
+# Put libmgrx.a to lib/dj2
+GRX_LIB_SUBDIR=dj2
+
+# Set the default GRX font path
+#MGRX_DEFAULT_FONT_PATH=c:/grxfonts
+
+endif
+
+### WIN32 MINGW SPECIFIC #############################################
+
+ifdef GRXVW32
+
+# Put libmgrx.a to lib/win32
+GRX_LIB_SUBDIR=win32
+
+# Set here your MINGW dir for install and uninstall targets
+MINGWDIR=C:\TDM-GCC-32
+
+# Set the default GRX font path
+#MGRX_DEFAULT_FONT_PATH=c:/grxfonts
+
+endif
+
+######################################################################
+

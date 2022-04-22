@@ -1,0 +1,90 @@
+#
+# MGRX test programs makefile for DJGPP v2. Uses GNU make.
+#
+.SUFFIXES: .exe
+.PHONY: clean install uninstall
+
+GRXVDJ2=y
+
+include ../makedefs.grx
+
+INCDIR=  -I../include
+MGRX = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.a
+
+ADDON_LIBS=-lpc
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_LIBS += -ljpeg
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_LIBS += -lpng
+endif
+
+ifeq ($(NEED_ZLIB),y)
+  ADDON_LIBS += -lz
+endif
+
+LIBS= $(MGRX) $(ADDON_LIBS)
+
+PROGS=  arctest.exe     \
+	bb1test.exe     \
+	blittest.exe    \
+	circtest.exe    \
+	cliptest.exe    \
+	colorops.exe    \
+	curstest.exe    \
+	fontdemo.exe    \
+	fonttest.exe    \
+	gradtest.exe    \
+	jpgtest.exe     \
+	keys.exe        \
+	life.exe        \
+	life_db.exe     \
+	linetest.exe    \
+	memtest.exe     \
+	mousetst.exe    \
+	patrtest.exe    \
+	pcirctst.exe    \
+	pixmtest.exe    \
+	pnmtest.exe     \
+	pngtest.exe     \
+	polytest.exe    \
+	rgbtest.exe     \
+	sbctest.exe     \
+	scroltst.exe    \
+	speedtst.exe    \
+	textpatt.exe    \
+	winclip.exe     \
+	wintest.exe     \
+	biggtest.exe    \
+	cusptest.exe    \
+	clrtable.exe    \
+	i18ntest.exe	\
+	wrsztest.exe
+
+all: $(PROGS) demomgrx.exe demointl.exe
+
+demomgrx.exe: demomgrx.o gfaz.o $(MGRX)
+	$(CC) $(LDOPT) -o demomgrx.exe demomgrx.o gfaz.o $(LIBS) -lm
+
+demointl.exe: demointl.o gfaz.o $(MGRX)
+	$(CC) $(LDOPT) -o demointl.exe demointl.o gfaz.o $(LIBS) -lm
+
+$(PROGS): %.exe : %.o $(MGRX)
+	$(CC) $(LDOPT) -o $*.exe $*.o $(LIBS) -lm
+
+.c.o:
+	$(CC) -c $(CCOPT) $(INCDIR) $*.c -o $*.o
+
+.c.s:
+	$(CC) -S $(CCOPT) $(INCDIR) $*.c
+
+clean:
+	if exist *.o del *.o
+	if exist *.exe del *.exe
+
+depend.new:
+	$(CC) -MM $(CCOPT) $(INCDIR) $(PROGS:.exe=.c) >depend.new
+
+include depend.gnu

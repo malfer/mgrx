@@ -1,0 +1,202 @@
+#
+# MGRX Library Makefile for DJGPP v2. Needs GNU Make.
+# Make sure your shell is command.com !
+#
+.PHONY : clean cleanall install uninstall \
+	 install-bin uninstall-bin install-fonts uninstall-fonts
+
+GRXVDJ2=y
+
+include ../makedefs.grx
+
+INCDIR= -I. -I./include -I../include
+
+ifdef MGRX_DEFAULT_FONT_PATH
+CCOPT += -DMGRX_DEFAULT_FONT_PATH=\"$(MGRX_DEFAULT_FONT_PATH)\"
+endif
+
+TAG = $(DOS_DJGPP_V2)
+
+MGRXln    = libmgrx.a
+MGRXST    = ../lib/$(GRX_LIB_SUBDIR)/$(MGRXln)
+MGRXSTdos = $(subst /,\,$(MGRXST))
+DJDIRdos  = $(subst /,\,$(DJDIR))
+
+OX=.o
+OP=
+
+include ./stdobjs.mak
+
+# Keep things a little smaller when building the lib ...
+STD_Oa= $(STD_1) $(STD_2)  $(STD_3)  $(STD_4) $(STD_5) $(STD_6)
+STD_Ob= $(STD_7) $(STD_8) $(STD_9) $(STD_10) $(STD_11) $(STD_12)
+ifeq ($(INCLUDE_GRGUI),y)
+STD_Oc= $(GRGUI_1)
+else
+STD_Oc=
+endif
+
+ADDON_O=
+ifdef DEBUG
+ ADDON_O += $(DBG_1)
+endif
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_O += $(JPG_1)
+else
+  ADDON_O += $(NOJPG_1)
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_O += $(PNG_1)
+else
+  ADDON_O += $(NOPNG_1)
+endif
+
+DJ_O=   $(ADDON_O)              \
+	fdrivers/egavga1.o      \
+	fdrivers/ega4.o         \
+	fdrivers/lfb16.o        \
+	fdrivers/lfb24.o        \
+	fdrivers/lfb32h.o       \
+	fdrivers/lfb32l.o       \
+	fdrivers/lfb8.o         \
+	fdrivers/lfbbltrv.o     \
+	fdrivers/lfbbltvr.o     \
+	fdrivers/lfbbltvv.o     \
+	fdrivers/ram24.o        \
+	fdrivers/ram32l.o       \
+	fdrivers/ram32h.o       \
+	fdrivers/svga16.o       \
+	fdrivers/svga24.o       \
+	fdrivers/svga32h.o      \
+	fdrivers/svga32l.o      \
+	fdrivers/svga4.o        \
+	fdrivers/svga8.o        \
+	fdrivers/vga8x.o        \
+	input/grev_dj2.o        \
+	input/clb_gen.o         \
+	misc/dj2delay.o         \
+	misc/dosmisc.o          \
+	vdrivers/stdega.o       \
+	vdrivers/stdvga.o       \
+	vdrivers/u_egavga.o     \
+	vdrivers/u_vesa.o       \
+	vdrivers/u_vsvirt.o     \
+	vdrivers/vesa.o
+
+ALL_O = $(STD_Oa) $(STD_Ob) $(STD_Oc) $(DJ_O)
+
+UTILP = ../bin/bin2c.exe        \
+	../bin/fnt2c.exe        \
+	../bin/vesainfo.exe     \
+	../bin/modetest.exe
+
+all:    $(MGRXST) $(UTILP)
+
+clean:
+	if exist draw\*.o     del draw\*.o
+	if exist fdrivers\*.o del fdrivers\*.o
+	if exist fonts\*.o    del fonts\*.o
+	if exist image\*.o    del image\*.o
+	if exist gcursors\*.o del gcursors\*.o
+	if exist gformats\*.o del gformats\*.o
+	if exist grgui\*.o    del grgui\*.o
+	if exist image\*.o    del image\*.o
+	if exist input\*.o    del input\*.o
+	if exist misc\*.o     del misc\*.o
+	if exist pattern\*.o  del pattern\*.o
+	if exist setup\*.o    del setup\*.o
+	if exist shape\*.o    del shape\*.o
+	if exist text\*.o     del text\*.o
+	if exist user\*.o     del user\*.o
+	if exist utilprog\*.o del utilprog\*.o
+	if exist utils\*.o    del utils\*.o
+	if exist vdrivers\*.o del vdrivers\*.o
+	if exist wideline\*.o del wideline\*.o
+	if exist $(TAG)       del $(TAG)
+
+cleanall: clean
+	if exist $(MGRXSTdos) del $(MGRXSTdos)
+	if exist ..\bin\*.exe del ..\bin\*.exe
+
+install: $(MGRXST)
+	copy $(MGRXSTdos) $(DJDIRdos)\lib
+	copy ..\include\mgrx.h $(DJDIRdos)\include
+	copy ..\include\mgrxkeys.h $(DJDIRdos)\include
+	copy ..\include\mgrxcolr.h $(DJDIRdos)\include
+ifeq ($(INCLUDE_GRGUI),y)
+	copy ..\include\grgui.h $(DJDIRdos)\include
+endif
+
+uninstall:
+	if exist $(DJDIRdos)\lib\$(MGRXln)    del $(DJDIRdos)\lib\$(MGRXln)
+	if exist $(DJDIRdos)\include\mgrx.h   del $(DJDIRdos)\include\mgrx.h
+	if exist $(DJDIRdos)\include\mgrxkeys.h del $(DJDIRdos)\include\mgrxkeys.h
+	if exist $(DJDIRdos)\include\mgrxcolr.h del $(DJDIRdos)\include\mgrxcolr.h
+ifeq ($(INCLUDE_GRGUI),y)
+	if exist $(DJDIRdos)\include\grgui.h   del $(DJDIRdos)\include\grgui.h
+endif
+
+install-bin: $(UTILP)
+	copy ..\bin\bin2c.exe $(DJDIRdos)\bin
+	copy ..\bin\fnt2c.exe $(DJDIRdos)\bin
+	copy ..\bin\vesainfo.exe $(DJDIRdos)\bin
+	copy ..\bin\modetest.exe $(DJDIRdos)\bin
+
+uninstall-bin:
+	if exist $(DJDIRdos)\bin\bin2c.exe del $(DJDIRdos)\bin\bin2c.exe
+	if exist $(DJDIRdos)\bin\fnt2c.exe del $(DJDIRdos)\bin\fnt2c.exe
+	if exist $(DJDIRdos)\bin\vesainfo.exe del $(DJDIRdos)\bin\vesainfo.exe
+	if exist $(DJDIRdos)\bin\modetest.exe del $(DJDIRdos)\bin\modetest.exe
+
+ifdef MGRX_DEFAULT_FONT_PATH
+FONTPATHdos = $(subst /,\,$(MGRX_DEFAULT_FONT_PATH))
+install-fonts:
+	if not exist $(FONTPATHdos)\nul mkdir $(FONTPATHdos)
+	copy ..\fonts\*.* $(FONTPATHdos)
+uninstall-fonts:
+	del $(FONTPATHdos)\*.*
+endif
+
+dep:
+	if exist depend.tmp del depend.tmp
+	gcc -MM $(CCOPT) $(INCDIR) $(ALL_O:.o=.c) >depend.tmp
+	sed 's#^.*: \(.*\)\.c#\1.o: \1.c#g'   <depend.tmp >depend.dj2
+	if exist depend.tmp del depend.tmp
+
+depend.b: depend.new
+	sed "s#\.o:#.obj:#g" <depend.new >depend.b
+	sed "s#\.o:#.asm:#g" <depend.new >>depend.b
+
+$(MGRXST): $(TAG) $(ALL_O)
+	if exist $(MGRXSTdos) del $(MGRXSTdos)
+	$(AR) -r $(MGRXST) $(STD_Oa)
+	$(AR) -r $(MGRXST) $(STD_Ob)
+	$(AR) -r $(MGRXST) $(STD_Oc)
+	$(AR) -r $(MGRXST) $(DJ_O)
+	$(RANLIB) $(MGRXST)
+
+$(UTILP): ../bin/%.exe : utilprog/%.o $(MGRXST)
+	$(CC) -s -o $@ utilprog/$*.o $(MGRXST)
+
+$(DOS_DJGPP_V2):
+	$(MAKE) -f makefile.dj2 clean
+	if exist $(SYSTEM_TAG_PREFIX).* del $(SYSTEM_TAG_PREFIX).*
+	echo DOS_DJGPP_V2_TARGET > $(DOS_DJGPP_V2)
+
+$(ALL_O): $(TAG)
+
+$(ALL_O:.o=.i) : %.i : %.c
+	$(CC) -E $(CCOPT) $(INCDIR) $*.c > $*.i
+
+$(ALL_O:.o=.dm) : %.dm : %.c
+	$(CC) -dM -E $(CCOPT) $(INCDIR) $*.c > $*.dm
+
+.c.s:
+	$(CC) -S $(CCOPT) $(INCDIR) $*.c -o $*.s
+
+.c.o:
+	$(CC) -c $(CCOPT) $(INCDIR) $*.c -o $*.o
+
+include depend.dj2

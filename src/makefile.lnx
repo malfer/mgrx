@@ -1,0 +1,217 @@
+#
+# MGRX Library Makefile for LINUX/console. Uses GNU Make.
+#
+.PHONY : libst libsh clean cleanall install uninstall setsuid \
+	 install-bin uninstall-bin install-fonts uninstall-fonts
+
+GRXVLNX=y
+
+include ../makedefs.grx
+
+INCDIR= -I. -I./include -I../include
+CCOPT += -DLFB_BY_NEAR_POINTER
+ADDON_LIBS =
+
+ifeq ($(NEED_LIBRT),y)
+  ADDON_LIBS += -lrt
+endif
+
+ifdef MGRX_DEFAULT_FONT_PATH
+CCOPT += -DMGRX_DEFAULT_FONT_PATH=\"$(MGRX_DEFAULT_FONT_PATH)\"
+endif
+
+ifeq ($(SET_SUIDROOT),y)
+EXECBITS = 4755
+else
+EXECBITS = 0755
+endif
+
+ifeq ($(BUILD_X86_64),y)
+INSLIBSUBDIR = lib64
+else
+INSLIBSUBDIR = lib
+endif
+
+MGRXST   = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.a
+MGRXSH   = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.so
+MGRXSHli = $(MGRXSH).$(word 1,$(subst ., ,$(MGRX_VERSION)))
+MGRXSHna = $(MGRXSH).$(MGRX_VERSION)
+SHCCOPT  = -fPIC -D__SHARED__ 
+
+OX=.o
+OP=
+
+include ./stdobjs.mak
+
+STD_O= $(STD_1) $(STD_2)  $(STD_3)  $(STD_4) \
+       $(STD_5) $(STD_6)  $(STD_7)  $(STD_8) \
+       $(STD_9) $(STD_10) $(STD_11) $(STD_12)
+
+ADDON_O=
+
+ifdef DEBUG
+ ADDON_O += $(DBG_1)
+endif
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_O += $(JPG_1)
+else
+  ADDON_O += $(NOJPG_1)
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_O += $(PNG_1)
+else
+  ADDON_O += $(NOPNG_1)
+endif
+
+O=      $(STD_O)                \
+	$(ADDON_O)              \
+	fdrivers/ram24.o        \
+	fdrivers/ram32l.o       \
+	fdrivers/ram32h.o       \
+	fdrivers/lnxfb16.o      \
+	fdrivers/lnxfb32l.o     \
+	fdrivers/lnxfb32h.o     \
+	input/grev_lnx.o        \
+	input/clb_gen.o         \
+	misc/lnxmisc.o          \
+	vdrivers/vd_lnxfb.o
+
+ifeq ($(INCLUDE_GRGUI),y)
+O+=	$(GRGUI_1)
+endif
+
+LO = $(subst $(OX),.lo,$(O))
+
+UTILP = ../bin/bin2c            \
+	../bin/fnt2c            \
+	../bin/lfbinfo
+
+UTILPS= ../bin/modetest 
+
+all: libst libsh $(UTILP) $(UTILPS)
+
+libst: $(MGRXST)
+
+$(MGRXST): $(LINUX_CONSOLE) $(O)
+	-rm -f $(MGRXST)
+	$(AR) -r $(MGRXST) $(O)
+	$(RANLIB) $(MGRXST)
+
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+libsh: $(MGRXSHna)
+else
+libsh:
+endif
+
+$(MGRXSHna): $(LINUX_CONSOLE) $(LO)
+	-rm -f $(MGRXSHna)
+	$(CC) $(LDOPT) -shared -Wl,-soname,$(notdir $(MGRXSHli)) -o $(MGRXSHna) $(LO)
+	ln -sf $(notdir $(MGRXSHna)) $(MGRXSHli)
+
+$(UTILP): ../bin/% : utilprog/%.o $(MGRXST)
+	$(CC) $(LDOPT) -o $@ utilprog/$*.o $(MGRXST)
+	$(STRIP) $@
+
+$(UTILPS): ../bin/% : utilprog/%.o $(MGRXST)
+	$(CC) $(LDOPT) -o $@ utilprog/$*.o $(MGRXST) $(ADDON_LIBS) -lm
+	$(STRIP) $@
+	chmod $(EXECBITS) $@
+
+$(O): $(LINUX_CONSOLE)
+
+$(LO): $(LINUX_CONSOLE)
+
+$(LINUX_CONSOLE):
+	if [ ! -r $(LINUX_CONSOLE) ]; then \
+	rm -f $(SYSTEM_TAG_PREFIX).* $(O) $(LO) utilprog/*.o; fi
+	touch $(LINUX_CONSOLE)
+
+clean:
+	rm -f $(O) $(O:.o=.s) $(LO) $(LINUX_CONSOLE)
+	rm -f utilprog/*.o
+
+cleanall: clean
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	rm -f $(MGRXSHna) $(MGRXSHli)
+endif
+	rm -f $(MGRXST)
+	rm -f $(UTILP) $(UTILPS)
+
+install: libst libsh
+	install -m 0755 -d $(INSTALLDIR)/$(INSLIBSUBDIR)
+	install -m 0755 -d $(INSTALLDIR)/include
+	install -m 0644 $(MGRXST) $(INSTALLDIR)/$(INSLIBSUBDIR)
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	install -m 0755 $(MGRXSHna) $(INSTALLDIR)/$(INSLIBSUBDIR)
+	ln -sf $(notdir $(MGRXSHna)) $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHli))
+	ln -sf $(notdir $(MGRXSHli)) $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSH))
+endif
+	install -m 0644 ../include/mgrx.h $(INSTALLDIR)/include
+	install -m 0644 ../include/mgrxkeys.h $(INSTALLDIR)/include
+	install -m 0644 ../include/mgrxcolr.h $(INSTALLDIR)/include
+ifeq ($(INCLUDE_GRGUI),y)
+	install -m 0644 ../include/grgui.h $(INSTALLDIR)/include
+endif
+
+uninstall:
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXST))
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSH))
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHli))
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHna))
+endif
+	rm -f $(INSTALLDIR)/include/mgrx.h
+	rm -f $(INSTALLDIR)/include/mgrxkeys.h
+	rm -f $(INSTALLDIR)/include/mgrxcolr.h
+ifeq ($(INCLUDE_GRGUI),y)
+	rm -f $(INSTALLDIR)/include/grgui.h
+endif
+
+setsuid: $(UTILPS)
+ifeq ($(SET_SUIDROOT),y)
+	chown root ../bin/modetest
+	chmod $(EXECBITS) ../bin/modetest
+else
+	@echo "Nothing to do, SET_SUIDROOT is not set to 'y' in makedefs.grx"
+endif
+
+install-bin: $(UTILP) $(UTILPS)
+	install -m 0755 -d $(INSTALLDIR)/bin
+	install -m 0755 ../bin/bin2c $(INSTALLDIR)/bin
+	install -m 0755 ../bin/fnt2c $(INSTALLDIR)/bin
+	install -m 0755 ../bin/lfbinfo $(INSTALLDIR)/bin
+	install -m $(EXECBITS) ../bin/modetest $(INSTALLDIR)/bin
+
+uninstall-bin:
+	rm -f $(INSTALLDIR)/bin/bin2c
+	rm -f $(INSTALLDIR)/bin/fnt2c
+	rm -f $(INSTALLDIR)/bin/lfbinfo
+	rm -f $(INSTALLDIR)/bin/modetest
+
+ifdef MGRX_DEFAULT_FONT_PATH
+install-fonts:
+	install -m 0755 -d $(MGRX_DEFAULT_FONT_PATH)
+	install -m 0644 ../fonts/* $(MGRX_DEFAULT_FONT_PATH)
+uninstall-fonts:
+	rm -f $(MGRX_DEFAULT_FONT_PATH)/*
+endif
+
+dep:
+	gcc -MM $(CCOPT) $(INCDIR) $(O:.o=.c) \
+	| sed 's#^.*: \(.*\)\.c#\1.o: \1.c#g' >depend.lnx
+
+$(O): %.o : %.c
+	$(CC) -c $(CCOPT) $(INCDIR) $*.c -o $*.o
+
+$(LO): %.lo : %.c
+	$(CC) -c $(CCOPT) $(SHCCOPT) $(INCDIR) $*.c -o $*.lo 
+
+.c.s:
+	$(CC) -S $(CCOPT)  $(INCDIR) $*.c -o $*.s
+
+.c.o:
+	$(CC) -c $(CCOPT) $(INCDIR) $*.c -o $*.o
+
+include depend.lnx

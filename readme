@@ -1,0 +1,310 @@
+Welcome to MGRX 1.3.6!
+
+MGRX is a 2D graphics C library derived from the GRX library. GRX was
+originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC
+compiler.
+
+From version 1.3.0 MGRX comes with GrGUI, a mini Graphics User Interface
+specifically designed for MGRX.
+
+Supported platforms
+===================
+
+  MGRX supports the following four platforms:
+
+  - DOS using the DJGPPv2 compiler; with EGA, VGA, VESA and memory drivers
+  - Linux console using the gcc compiler; with framebuffer and memory drivers
+  - Linux X11 using the gcc compiler; with x11(windowed) and memory drivers
+  - Win32 using the TDM-GCC compiler (a Mingw32 distribution); with w32
+    (windowed) and memory drivers
+
+  For the Linux console and the Linux X11 versions three architectures are
+  supported: i386 (32bit), x86_64 (64bit) and ARM (32bit, tested in a
+  Raspberry Pi 4 using Raspbian).
+
+  Note that with the memory driver a graphics card is not required, so it
+  can be used for generation of graphics files.
+
+Why MGRX
+========
+
+  MGRX (mgrx.fgrim.com) is a fork of GRX (grx.gnu.de). Because I liked the
+  GRX C API interface, I began to maintain GRX when it was orphaned at the
+  end of 2000. But GRX has not only the C API, it has a Pascal API, a BGI
+  compatibility API, support for Turbo C, Wattcom, MSC and some obscure X11
+  implementations over mainframes. At the end it was not funny, it was easy
+  to break things I didn't know. So I stopped maintaining GRX at the end
+  of 2003.
+
+  After that I developed a fork for my own use, only the C API, no Pascal,
+  no BGI, no Turbo C support, only the 4 platforms I can test. It comes
+  with a new (and better I think) input API and some (limited) Intl support.
+  I have released it for fun, maybe it can be useful for someone.
+
+MGRX installation instructions
+==============================
+
+Requirements:
+-------------
+
+  The source files and fonts:  mgrx136.tar.gz or mgrx136s.zip
+  This document:               readme
+  
+Dependencies:
+-------------
+
+  The only dependencies are libjpeg (for reading and writing JPEG files)
+  and libpng and zlib (for reading and writing PNG files). But you can
+  disable those capabilities to have no dependencies at all (see belloow).
+
+  Anyway it's easy to install the binary libraries in Linux and DJGPP. And
+  for the TDM-GCC (Win32) compiler you can download a precompiled package
+  from the MGRX site.
+
+A. Unpacking the MGRX archive
+-----------------------------
+
+  1) 'cd' to a directory where you want the MGRX file tree to be created
+     as a subdirectory. Examples are:
+
+       DJGPP : C:\DJGPP
+       Mingw : C:\MINGW or C:\TDM-GCC-32
+       Linux : /usr/local/src or ~ (your home dir)
+
+  2) Choose and download the .tar.gz or .zip archive. You can use either.
+     The .zip is intended for dos and win32 users, specialy for DJGPP users,
+     because it expand to the contrib subdir and has manifest files.
+
+  3) Unpack the MGRX archive:
+
+         tar xzvf mgrx136.tar.gz   (1)
+     or
+         unzip mgrx136s.zip        (2)
+
+     (1) This will create the subdirectory 'mgrx136'.
+     (2) This will create the subdirectory 'contrib/mgrx136'.
+
+B. Edit "makedefs.grx"
+----------------------
+
+  Go to MGRX base dir and edit "makedefs.grx" to customize it for your
+  system. The file is well comented.
+
+  Some things you can change:
+
+  - not to include GrGUI, set INCLUDE_GRGUI=n
+
+  - remove support for reading/writing JPEG files, set HAVE_LIBJPEG=n
+
+  - remove support for reading/writing PNG files, set HAVE_LIBPNG=n
+    and NEED_ZLIB=n
+
+  - For linux console and X11 select i386, x86_64 or ARM architecture.
+    By default the makefiles build the library for the x86_64 architecture.
+    To build the i386 library you must set BUILD_I386=y, BUILD_X86_64=n
+    and BUILD_ARM=n. To build for ARM set BUILD_ARM=y, BUILD_I386=n and
+    BUILD_X86_64=n.
+
+  - For linux console and X11 select shared or static libraries. By default
+    only the static libraries are build (and it is the recomended option).
+    To build the shared libraries set INCLUDE_SHARED_SUPPORT=y
+
+  - For linux console and X11 if your glibc version is < 2.17 you need to
+    set NEED_LIBRT=y
+
+C. Compiling MGRX
+-----------------
+
+  1) Switch to the "src" sub dir
+
+  2) run 'make -f <your makefile>':
+
+     'make -f makefile.dj2' for DOS DJGPPv2
+     'mingw32-make -f makefile.w32' for Win32
+     'make -f makefile.lnx' for Linux console
+     'make -f makefile.x11' for Linux X11
+
+     This process generates the MGRX lib in the "lib/---" (where --- is dj2,
+     win32 or unix) subdir and some utility programs in the "bin" subdir.
+     The name of the static library is "libmgrx.a" for DOS, Win32 and linux
+     console versions and "libmgrxX.a" for the linux X11 version, so you can
+     have installed both console and X11 versions in the linux platform.
+
+     Note for DJGPP/TDM-GCC users: Do _not_ use an environment variable
+     `SHELL' leading to `bash', e.g. `SHELL=/djgpp/bin/bash.exe'.
+     Do _not_ use MSYS either. The DJGPP/Mingw Makefiles must be run with
+     the standard 'command.com'.
+     
+     Note for TDM-GCC users: remember to use "mingw32-make" instead of "make".
+
+D. Testing MGRX
+---------------
+
+  1) Switch to the "test" sub dir
+
+  2) run 'make -f <your makefile>'
+
+     Note for TDM-GCC users: remember to use "mingw32-make" instead of "make".
+
+  3) run the 'demomgrx' program ('xdemomgrx' for the X11 version)
+     (see bellow on running mgrx programs in Linux console framebuffer)
+
+E. Testing GrGUI (if compiled in)
+---------------------------------
+
+  1) Switch to the "testgui" sub dir
+
+  2) run 'make -f <your makefile>'
+
+     Note for TDM-GCC users: remember to use "mingw32-make" instead of "make".
+
+  3) run the 'demmgrx2' program ('xdemmgrx2' for the X11 version)
+     (see bellow on running mgrx programs in Linux console framebuffer)
+
+F. Installing MGRX lib for your compiler (optional)
+---------------------------------------------------
+
+  - Copy the library from <MGRX base>/lib/<your system> to the compiler library
+    directory.
+
+  - Copy the header files mgrx.h, mgrxkeys.h, mgrxcolr.h and grgui.h from
+    <MGRX base>/include to your compiler include directory.
+
+  Or you can let makefiles do it for you, switch to the "src" sub dir and run
+  'make -f <your makefile> install'. You can uninstall the library running
+  'make -f <your makefile> uninstall'.
+
+  Note 1 for Linux users: probably you must be root to do that.
+  
+  Note 2 for Linux users: if you have build the shared libraries don't forget
+  to run 'ldconfig' to register them.
+
+G. Installing MGRX utility programs (optional)
+----------------------------------------------
+
+  MGRX come with some utility programs like modetest. They are compiled with
+  the library and stored in the "bin" sub dir. To install them in your system
+  run 'make -f <your makefile> install-bin'
+
+  You can uninstall them running 'make -f <your makefile> uninstall-bin'
+
+  Note for Linux users: probably you must be root to do that.
+
+H. Installing MGRX fonts (optional)
+-----------------------------------
+
+  Only if you have defined a default font directory in "makedefs.grx" you can
+  install them running 'make -f <your makefile> install-fonts'
+
+  You can uninstall them running 'make -f <your makefile> uninstall-fonts'
+
+  Note for Linux users: probably you must be root to do that.
+
+Environment variables for using MGRX programs
+=============================================
+
+  1) You can set set the default driver and graphics mode (but it is not
+     required).
+     
+     DOS or Windows:
+
+       SET MGRXDRV=<driver> gw <width> gh <height> nc <colors>
+
+     Linux:
+
+       export MGRXDRV="<driver> gw <width> gh <height> nc <colors>"
+
+     Available drivers are for:
+
+       DOS      : stdega, stdvga, VESA, memory
+       Linux fb : linuxfb, memory
+       Linux X11: xwin, memory
+       Win32    : win32, memory
+
+     Values for gw and gh can be by example 640,480 or 800,600
+     Values for nc can be 2, 16, 256, 64K or 16M.
+     
+  2) Set the keyboard system encoding. MGRX try to guess it, but if unsure
+     it will use this variable.
+
+     DOS or Windows:
+
+       SET MGRXKBSYSENCODING=<kbsysencoding>
+
+     Linux:
+
+       export MGRXKBSYSENCODING="<kbsysencoding>"
+
+     Posible values are: "CP437", "CP850", "CP1251", "CP1252", "CP1253",
+     "ISO_8859_1", "UTF_8" or "UCS_2".
+
+  3) Set the GRX font dir (not required if you have set the default font
+     path in 'makedefs.grx' or if your program know where it is).
+
+     in DOS or Windows:
+
+       SET MGRXFONT=<directory for the MGRX fonts>
+
+     in linux:
+
+       export MGRXFONT=<directory for the MGRX fonts>
+
+  4) the linux framebuffer driver opens the "/dev/fb0" device file by
+     default, if you want to open an alternate device file, set the
+     $FRAMEBUFFER environment variable:
+
+       export FRAMEBUFFER=<device file>
+
+Running mgrx programs for Linux framebuffer
+===========================================
+
+  On most Linux distributios the device framebuffer "/dev/fb0" and the mouse
+  device "/dev/input/mice" are not accesible to normal users by default. So
+  to run mgrx programs for Linux framebuffer you have to choose one of these
+  solutions (beware that you are changing the security policy of your
+  distribution, but as a programmer you know better :)
+
+  - run the program with root supersuser, either changing user or using
+    the sudo command.
+
+  - set the root suid for your mgrx programs (read the "chmod" man page
+    to know how to do it).
+
+  - change the "/dev/fb0" and "/dev/input/mice" permissions (with root).
+
+  - add your user to the "video" and "input" groups, editing (with root)
+    the "/etc/group" file. I think this is the best solution (it seems
+    to be the default in Raspbian, so nothing to do in that case).
+
+Help
+====
+
+  Read the MGRX programmer's manual in the "doc/mgrxpm.htm" file.
+  
+  Read the GrGUI programmer's guide in the "doc/grguipm.htm" file.
+
+  See the MGRX site (mgrx.fgrim.com) for updates, tips, ... 
+
+  Send me a mail (malfer at telefonica.net)
+
+License
+=======
+
+  MGRX is a derived work of GRX, so MGRX uses the same license as GRX. The
+  MGRX graphics library is free software; you can redistribute it and/or
+  modify it under some conditions; see the "copying.grx" file for details.
+
+Credits
+=======
+
+  If you think MGRX is a good library, it is thanks to the people who wrote
+  and maintained GRX:
+
+  Csaba Biegl <csaba at vuse.vanderbilt.edu> who wrote it.
+  Michael Goffioul <goffioul at emic.ucl.ac.be> who released 2.1
+  Hartmut Schirmer <hsc at techfak.uni-kiel.de> who released 2.2 and 2.3
+  and other people, see the "doc/credits.doc" for details.
+
+
+Enjoy, M.Alvarez <malfer at telefonica.net>
+

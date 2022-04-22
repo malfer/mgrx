@@ -1,0 +1,769 @@
+2022-03-27 ----------- MGRX 1.3.6 released
+2022-03-18 For the W32 driver changed theALT_0..9,A..Z recognition to be more
+           generic and work for any keboard (like the Greek one)
+2022-03-18 Solved bugs in test/keys.c
+2022-03-14 Solved a very old bug, an invalid read, in some drawbitmap functions
+2022-03-07 The w32 input driver recognize codepages 1251 and 1253 and sets
+           kbsysencoding to GRENC_CP1251 or GRENC_CP1253. GRENC_CP1252
+           continues to be the default.
+2022-03-07 The w32 input driver recognize GrKey_Alt_Return (default to activate
+           the grgui menu bar)
+2022-02-22 The input code now can compose characters from hexadecimal input, it
+           is disabled by default. To enable it use the new function:
+             void GrSetComposeKey(int compkey);
+           after the input driver is initiated, e.g. GrSetComposeKey(GrKey_Alt_U);
+           After that use the compose-key and up to four hexadecimal digits for
+           GRENC_UTF_8 and GRENC_UCS_2, only two for the rest user encodings.
+2022-02-18 Added two new user encodings and its correspondant text encodings an
+           font encodings, to be able to detect (and use) the Greek and Cyrillic
+           codepages in W32:
+             GRENC_CP1251, GRENC_CP1253
+             GR_CP1251_TEXT, GR_CP1253_TEXT
+             GR_FONTENC_CP1251, GR_FONTENC_CP1253
+2022-02-15 Added two new fonts px16x36.fnt and px16x36b.fnt derived from the
+           px8x18.fnt, public domain, GR_FONTENC_CP437EXT coded.
+2022-02-13 Changes to the clipboard interface
+             you can pass GR_CB_NOLIMIT to GrSetClipBoardMaxChars, by default
+             it is 32000 chars,
+             GrPutClipBoard now returns the number of chars really copied,
+             an extra parameter to GrGetClipBoardLen(int *partloaded)
+             if not NULL it returns true if the last clipboard coppy operation
+             (even internal or from the system clipboard in X11 and W32) was
+             partially loaded, by aplying the maxchar limit.
+2022-02-11 GUIOBJTYPE_ENTRY stores text internally as GR_UCS2_TEXT, so
+           copy/paste retains the correct unicode value even if the font
+           does not have the glyph.
+2022-02-11 On W32 the clipboard interact with the W32 clipboard,
+           GrIsClipBoardReadyToGet will load the W32 clipboard if the W32
+           clipboard sequence number has changed from the last time it was
+           loaded. It returns only 1 or 0 in any case.
+2022-02-08 On X11 the clipboard interact with the X11 clipboard,
+           GrIsClipBoardReadyToGet will return -1 if we don't own the selection
+           and a system clipboard request was issued. Returns 1 if we own the
+           selection or after a GREV_CBREPLY event with p1=1 was generated.
+           Returns 0 if we own the selection and is empty or there are no
+           selection owner.
+           GrClearClipBoard will set the clipboard owner to None if we were
+           owning it.
+2022-02-07 Changed the clipboard interface:
+             void GrSetClipBoardMaxChars(int maxchars);
+             void GrClearClipBoard(void);
+             void GrPutClipBoard(void *buf, int len, int chrtype);
+             int GrIsClipBoardReadyToGet(void);
+             void *GrGetClipBoard(int maxlen, int chrtype);
+             int GrGetClipBoardLen(void);
+           use GrPutClipBoard to put data in the clipboard
+           use GrIsClipBoardReadyToGet before get data from the clipboard, it
+           will return 1 if data is ready, 0 if the clipboard is empty or -1
+           if data will be get from the system clipboard, and you must wait for
+           a GREV_CBREPLY event with p1=1 to get de data. When ready use
+           GrGetClipBoardLen to know the data len (in charactes) before to
+           get the data with GrGetClipBoard.
+           In the generic implementation the clipboard is internal to the progran
+           so GrIsClipBoardReadyToGet will return 1 or 0 only.
+2022-02-07 Added function to recode to/from UTF8 string to any:
+             unsigned char *GrTextRecodeToUTF8(const void *text,int length,int chrtype);
+             void *GrTextRecodeFromUTF8(const unsigned char *text,int length,int chrtype);
+2022-02-06 Added function to recode from UCS2 string to any:
+             void *GrTextRecodeFromUCS2(const unsigned short *text,int length,int chrtype);
+           Moved the (internal) clipboard from GrGUI to MGRX, so we can use the
+           system clipboard in X11 and W32 later. By now only internal and
+           only can put/get UCS2 text. Added functions in input/clb_gen.c:
+             void GrPutUCS2ClipBoard(unsigned short *buf, int len);
+             int GrGetUCS2ClipBoard(unsigned short *buf, int maxlen);
+             int GrGetUCS2ClipBoardLen(void);
+2022-02-02 Expanded the upper-lower unicode table to characters in the
+           GR_FONTENC_MGRX512 font encoding. New src/input/uperlowr.c file with
+           the conversion functions, using a binary search:
+             unsigned short GrUCS2tolower(unsigned short chr);
+             unsigned short GrUCS2toupper(unsigned short chr);
+             long GrUTF8toupper(long chr);
+             long GrUTF8tolower(long chr);
+2022-01-26 Make the GrGUI scrollbars more responsible
+2022-01-23 New GrGUI struct GUIRawTEdit and functions, a raw text editor to
+             be used by the new panel editor and the new editor object
+           New GrGUI struct GUITextPanel and functios, deprecates GUITextArea
+           Modified testgui/grgui09.c and testgui/demintl2 to use a GUITextPanel
+             instead the deprecated GUITextArea
+           New GrGUI Object GUIOBJTYPE_EDIT, a text editor that can be added to
+             a group of objects, internally uses a GUIRawTEdit struct
+           Modified testgui/demintl2 to exercise the new GUIOBJTYPE_EDIT
+2022-01-18 Added a new internal mouse cursor GR_MCUR_TYPE_GLASS
+2022-01-10 Added a new color table to mgrxcolr.h the ANSI one with 256 defined colors
+           Modified test/clrtable.c to exercise the new table
+           Center GUIOBJTYPE_TEXT vertically
+           Showing last partial register in GUIOBJTYPE_LIST and GUIOBJTYPE_DLIST
+2021-12-28 ----------- MGRX 1.3.5 released
+2021-12-23 Added new functions:
+             int GUITilesGetSelected(void);
+             returns the idt of the selected tile
+             void GUITilesSetSelected(int idt, int paint);
+             sets the selected tile and repaint borders if paint != 0
+             int GUIGroupGetSelected(GUIGroup *g);
+             returns the id of the selected object
+2021-12-22 Added a new function
+             void GrSetMinWindowDims(int width, int height);
+             it sets the minimal window dimensions when window resize support is active
+           Added more kesyms to src/input/x11keys.h to see if ALT+letter works with the 
+             Greek keyboard
+2021-12-18 New GrGUI function:
+             void GUIMenuBarSetShortCut(long key);
+             it sets the shortcut to activate the menubar, by default it is
+             GrKey_Alt_Return. It must be a special key
+           New utility MGRX functions:
+             long GrUTF8toupper(long chr);
+             long GrUTF8tolower(long chr);
+             Add this moment only works for latin and greek chars and spanish Ñ
+           Now in GrGUI menues options can be selected with upper and lower chars
+             for Latin and Greek chars and the spanish Ñ
+           Menubar menues can be activate with Alt+letter for greek chars
+           The X11 input driver now generates GrKey_Alt_A to GrKey_Alt_Z when
+             CapsLock is on
+2021-12-08 When use i18n ids:
+             -make shortcuts in menues works with utf-8 strings
+             -solve a bug in menubar, shotcuts must be ALT+letters
+           Smooth wIndow resizing:
+             -use a big DIB and reuse it in the Win32 driver
+             -use a big backingstore and reuse it in the X11 driver
+2021-12-07 Added GR_DRIVERF_WINDOW_RESIZE flag. Both win32 and x11 video drivers set
+             it in their GrVideoDriver.drvflags when user window resize is supported
+             so a user program can check it is active checking
+             GrCurrentVideoDriver()->drvflags & GR_DRIVERF_WINDOW_RESIZE
+2021-12-05 Try fixing warning in gcc 11 with the definition of GrGenerateEllipseArc and
+             GrGenerateEllipse (reported by Panagiotis Papasotiriou)
+2021-12-05 Allow window resizing on windowed platforms, step 6
+           Changes to the w32 video driver:
+             Process WM_NCMOUSEMOVE event, in w10 there are no  WM_NCHITTEST event over
+               the caption title, so the mouse pointer disappeared there
+             When window resize support is active create a maximum DIB and reuse it so
+               transitions in window resizes are smooth now
+             Modified the grgui12.c to demonstrate language change using the MGRX
+               catalog implementation and specific GrGUI functions for menus
+             Added Greek to grgui12.c (by Panagiotis Papasotiriou)
+2021-12-02 Allow window resizing on windowed platforms, step 5
+           Updated the MGRX and GrGUI programmer's guides.
+2021-11-24 Allow window resizing on windowed platforms, step 4
+           Modified the W32 driver to support window resizing
+           GrSetMode (X11 & W32) only set the window title if not set previosly by the
+             program. The W32 driver uses now the same tile format that the X11 one.
+           VESA driver: the string option must begin with "vesa" to not colide with
+             other driver options (like "rszwin"), now must be "vesa[5][p][f][r][b]"
+             (really the opional letters order doesn't matter).
+2021-11-21 Allow window resizing on windowed platforms, step 3
+           When window resize support is up (using the "rszwin option") and for not
+             to fight with the window manager, it is necesary a different procedure
+             to set the graphics mode after a GREV_WSZCHG or if it is program-specified.
+             Call "GrSetMode(GR_default_text)" before set the new graphics mode
+             when it is program-specified, do not call it after a GREV_WSZCHG, so that
+             the X11 driver can know what to do (see testgui/demintl2.c for an
+             example).
+           Added minwgw,minwgh members to the GrDriverInfo struct, like the
+             minimal window dimensions when resizing support is up, the default
+             value is 320,240. Can be changed setting the new environment variable
+             MGRXMINWG.
+           Ignore the first GREV_WSZCHG if there are more in queue.
+2021-11-17 Allow window resizing on windowed platforms, step 2
+           New GrGUI function:
+             void GUITASetPanel(GUITextArea *ta, GUIPanel *p)
+             you can use it to reasign an existing GUITextArea to a new GUIPanel
+             after a window resize.
+           Test programs:
+             New GRX test program wrsztest.c
+             New GRX+GrGUI test program grgui12.c
+             Modified showfnt2.c and demintl2.c
+2021-11-10 Allow window resizing on windowed platforms, step 1
+           Added GREV_WSZCHG event
+           Added GrSetDriverExt(char *drvspec, char *drvopt) function,
+             you must call GrSetDriverExt(NULL, "rszwin"); before GrSetMode, to request
+             window resize support to the default driver, them it will sends GREV_WSZCHG
+             when the window size changes.
+           Modified the X11 driver to support window resizing
+           GrGUI: common dialogs and GUIDialogRun now returns -2 if canceled with a
+             GREV_WMEND event, and -3 if canceled with a GREV_WSZCHG event,
+             the GREV_WSZCHG event is reenqueued
+           GrGUI: menues will be canceled with a GREV_WSZCHG event,
+             the GREV_WSZCHG event is reenqueued
+2021-02-15 Get rid of alloca, using dinamic buffers or malloc
+2020-07-07 ----------- MGRX 1.3.4 released
+2020-06-30 Add gradients as a new pattern type, step 3
+           Modified pattern filled an patterned functions to work with gradients.
+           Added test/gradtest.c example program.
+           Modified test/patrtest.c to test bitmpas, pixmaps and gradients.
+2020-06-29 Add gradients as a new pattern type, step 2
+           Defined the gradient structures:
+             typedef struct {...} GrGrdLinearData;
+             typedef struct {...} GrGrdRadialData;
+             typedef struct {...} GrGrdStop;
+             typedef struct {...} GrGradient;
+           Added GrGradient to the GrPattern union
+           New functions in src/pattern/gradient.c:
+             GrPattern *GrCreateLinGradient(int xi, int yi, int xf, int yf);
+             GrPattern *GrCreateRadGradient(int xc, int yc, int r);
+             int GrAddGradientStop(GrPattern *p, int dist, GrColor c);
+             int GrGenGradientColorTbl(GrPattern *p);
+             GrColor GrGradientColor(GrPattern *p, int x, int y, int xo, int yo);
+             GrPattern *GrBuildPixmapFromGradient(GrPattern *p, int xo, int yo, int w, int h);
+2020-06-28 Add gradients as a new pattern type, step 1
+           Renamed GrPattern.ispixmap to GrPattern.ptype, with possible values:
+             GR_PTYPE_BITMAP   0
+             GR_PTYPE_PIXMAP   1
+             GR_PTYPE_GRADIENT 2 (new!!)
+           Modified pattern filled an patterned functions to have the change
+           in account.
+2020-06-27 New test program pixmtest in place of imgtest that has been deleted.
+           New test program patrtest to test pattern filled and patterned shapes.
+2020-06-26 Added Patterned Align functions:
+             void GrPatndAlignLine(int xo,int yo,int x1,int y1,int x2,int y2,GrLinePattern *lp);
+             void GrPatndAlignBox(int xo,int yo,int x1,int y1,int x2,int y2,GrLinePattern *lp);
+             void GrPatndAlignCircle(int xo,int yo,int xc,int yc,int r,GrLinePattern *lp);
+             void GrPatndAlignEllipse(int xo,int yo,int xc,int yc,int xa,int ya,GrLinePattern *lp);
+             void GrPatndAlignCircleArc(int xo,int yo,int xc,int yc,int r,int start,int end,int style,GrLinePattern *lp);
+             void GrPatndAlignEllipseArc(int xo,int yo,int xc,int yc,int xa,int ya,int start,int end,int style,GrLinePattern *lp);
+             void GrPatndAlignPolyLine(int xo,int yo,int numpts,int points[][2],GrLinePattern *lp);
+             void GrPatndAlignPolygon(int xo,int yo,int numpts,int points[][2],GrLinePattern *lp);
+2020-06-26 Added more Pattern Align functions:
+             void GrPatAlignFilledCircleArc(int xo,int yo,int xc,int yc,int r,int start,int end,int style,GrPattern *p);
+             void GrPatAlignFilledEllipseArc(int xo,int yo,int xc,int yc,int xa,int ya,int start,int end,int style,GrPattern *p);
+             void GrPatAlignFloodFill(int xo,int yo,int x, int y, GrColor border, GrPattern *p);
+2020-06-25 Added more Pattern Align functions:
+             void GrPatAlignFilledCircle(int xo,int yo,int xc,int yc,int r,GrPattern *p);
+             void GrPatAlignFilledEllipse(int xo,int yo,int xc,int yc,int xa,int ya,GrPattern *p);
+             void GrPatAlignFilledConvexPolygon(int xo,int yo,int n,int pt[][2],GrPattern *p);
+             void GrPatAlignFilledPolygon(int xo,int yo,int n,int pt[][2],GrPattern *p);
+2020-06-24 Added Pixmpap display and transformation functions:
+             void GrPixmapDisplay(int x,int y, GrPixmap *p);
+             void GrPixmapDisplayExt(int x1,int y1,int x2,int y2, GrPixmap *p);
+             GrPixmap *GrPixmapInverse(GrPixmap *p,int flag);
+             GrPixmap *GrPixmapStretch(GrPixmap *p,int nwidth,int nheight);
+2020-06-24 Added Pattern Align functions:
+             void GrPatAlignFilledPlot(int xo,int yo,int x,int y,GrPattern *p);
+             void GrPatAlignFilledLine(int xo,int yo,int x1,int y1,int x2,int y2,GrPattern *p);
+             void GrPatAlignFilledBox(int xo,int yo,int x1,int y1,int x2,int y2,GrPattern *p);
+2020-06-24 Added Non Resize versions of GrBuildPixmap functions:
+             GrPattern *GrBuildPixmapNR(const char *pixels,int w,int h,const GrColorTableP ct);
+             GrPattern *GrBuildPixmapFromBitsNR(const char *bits,int w,int h,GrColor fgc,GrColor bgc);
+2020-06-24 Deprecated GrImage and its asociated functions.
+2020-06-20 Solved old bugs handling memflags and generating pixmaps from bits
+           in makepat.c
+2020-06-19 Get rid of farmalloc/farfree
+2020-06-18 Removed src/text/dumptext.c
+2020-06-18 Added GrPatternDrawCharExt function.
+2020-06-18 Solved an old bug in _GrDrawWordText when drawing text with 
+           GrPatternDrawStringExt in subcontext.
+2020-06-18 Solved an old bug in GrPatternFilledLine when drawing in subcontext.
+2020-06-01 Use only int arithmetic in png2ctx.c
+2020-04-10 ----------- MGRX 1.3.3 released
+2020-04-08 Workarround to solve a race condition in W10, sometimes hDCMem
+           was used before it was ready.
+2020-03-24 To help use the i18n catalog, added the field "sid" to GUIMenuItem
+           and GUIMenuBarItem, so menus and the bar menu continue to be
+           defined statically, without populate the "title" and "key" fields,
+           and them use this new funcions:
+             void GUIMenusSetI18nFields(void);
+             void GUIMenuBarSetI18nFields(void);
+2020-03-24 Added to MGRX a catalog implementation to help internationalize
+           programs, it doesn't depend of any other mgrx function and it
+           is Chrtype agnostic (this is why (void *) is used). The functions:
+             int GrI18nInit(int nlg, int nstr, void *defstr);
+             void GrI18nEnd(void);
+             int GrI18nSetLabel(int lid, void *label);
+             void * GrI18nGetLabel(int lid);
+             int GrI18nSetLang(int lid);
+             void GrI18nAddStrings(int lid, int fsid, int nums, void **str);
+             void * GrI18nGetString(int sid);
+           New test program to test the catalog: test/i18ntest.c
+2020-03-20 New GUIObject field "visible", if 0 the object is ignored within
+           the group. After GUIObjectSet.. the object is visible by default,
+           its value can be changed using the new function:
+             void GUIGroupSetVisible(GUIGroup *g, int id, int visible);
+           After doing changes in visibility it is necesary to set the
+           correct GUIContext and call the function:
+             void GUIGroupRestartAfterVisibleChanges(GUIGroup *g);
+           that recalculates the selected object and paints the visible objects.
+2020-03-15 Added GUI component GUIRawDataList2 a generic version of
+           GUIRawDataList, that can handle generic registers, not only
+           strings, to substitute it in the future, for now to be used by
+           GUIOBJTYPE_REGLIST.
+           Added new object: GUIOBJTYPE_REGLIST, a deployed list of registers.
+2020-03-07 New menu item type GUI_MI_TITLE to show a menu title.
+           Added 'border' field to the GUIMenu structure, if =1 a thick
+           border is drawn around the menu.
+           New function:
+             void GUIMenusSetColors2(GrColor bgt, GrColor fgt, GrColor inb);
+           to set the bg and fg title colors and the inner color border.
+2020-02-20 New GrGUI function:
+             int GUIMenuGetDims(int idmenu, int *width, int *height);
+           to know the menu dimensions before running it.
+2020-02-18 New GrGUIfunctions:
+             void GUIDBPauseBltsToScreen(void);
+             void GUIDBRestartBltsToScreen(void);
+           can be used to pause and restart the blts performed by
+           GUIDBCurCtxBltToScreen and GUIDBCurCtxBltRectToScreen when in
+           double buffer mode, so it is easy to control the real screen update
+           when necesary.
+2020-02-02 New testgui program "showfnt2", show the MGRX font collection using
+           the new GUIOBJTYPE_DLIST object to select the font.
+2020-02-01 New GUI component GUIRawDataList mainly for use by GUIOBJTYPE_LIST
+           and the new GUIOBJTYPE_DLIST, a deployed list.
+2020-01-30 Restructured internal GrGUI code when using double buffer. Now
+           all the blits to screen are managed by this two functions:
+             void GUIDBCurCtxBltToScreen(void);
+             void GUIDBCurCtxBltRectToScreen(int x1, int y1, int x2, int y2);
+           they copy the whole or a rect from the current context to the screen
+           context, obviusly the current context must be the global context or
+           a subcontext of it, like the one provided by GUIContext.
+           Both functions do nothing if the double buffer is no enabled.
+           Renamed GUIManageExposeEvents to GUIDBManageExposeEvents.
+2020-01-26 Updated from ASCII to ISO8859-1 all cour, helv & tms fonts.
+           Errors in lucb40b.fnt, lucb40bi.fnt, lucb40.fnt, lucb40i.fnt
+           and lucs40.fnt have been corrected.
+           Checked baseline correctness for most fonts (except xm fonts).
+2020-01-22 Updated all tmgrx fonts from the last Terminus font distribution,
+           applying the variants dv1, ij1 and td1.
+2020-01-19 Updated testgui/demintl2.c test program to cover the new font
+           encoding.
+2020-01-19 Added the three new fonts as built-in fonts ready to use:
+           GrFont_PX8x18, GrFont_PX11x22 and GrFont_PX14x28
+2020-01-19 Added three fonts that are GR_FONTENC_CP437EXT coded,
+           px8x18.fnt, px11x22.fnt and px14x28.fnt. They are derived
+           from pc public domain fonts.
+2020-01-18 New font encoding GR_FONTENC_CP437EXT a custom encoding that
+           cover CP437 + ISO8859-1 + CP1252 (by now). The encoding details
+           are described in doc/cp437ext.txt
+2020-01-11 ----------- MGRX 1.3.2 released
+2020-01-10 Added two new font encodings GR_FONTENC_ISO_8859_5 and
+           GR_FONTENC_ISO_8859_7.
+2020-01-06 Updated programmer's guides.
+2020-01-04 testgui demo grgui11.c uses GrStretchBlt.
+2019-11-26 New 32bpp memory framedrivers in src/newfdrv that uses only C
+           standard bit operations and C standard functions. Not used by now,
+           they will be activate in a future release.
+2019-11-23 Added setmark parameter to GUITAMoveCursor and GUITAMoveCursorRel,
+           if =1 clear marked area, =-1 extend marked area, =0 do nothing.
+           Changed names of GUITADrawChar and GUITADrawString to
+           GUITAPutChar and GUITAPutString. They describe best its function.
+2019-11-22 GUIScrollbar new specific events GREV_SCBVERT and GREV_SCBHORZ,
+           with p1 = new lift inivalue. Events are sent when clicking over or
+           under the lift and when dragging the lift.
+           Changed GUITextArea mini editor to respond to the new events.
+           Changed GUITextArea cursor movement behaviour to be similar
+           to other modern editors.
+2019-11-19 Added mark capabilities (with keys and mouse) and (internal)
+           clipboard interaction to the GUITextArea mini editor.
+2019-11-17 First work to add clipboard interaction to GrGUI.
+           In GUIOBJTYPE_ENTRY objects you can mark text with shift+cursor
+           keys or the mouse and reacts to ^C ^X ^V. The clipboard is internal
+           to the program (by now).
+2019-11-13 The xwin and win32 drivers generate GREV_WMEND events when requested.
+           Modified the testgui/demmgrx2.c to request GREV_WMEND events (and
+           handle them).
+2019-11-12 Preparation for the new GREV_WMEND event, generated in windowing
+           systems when user click the close window button and the programmer
+           has equested it. New function:
+             void GrEventGenWMEnd(int when)
+           "when" can be GR_GEN_WMEND_NO (the default) or GR_GEN_WMEND_YES.
+2019-11-10 ----------- MGRX 1.3.1 released
+2019-11-07 For the GrGUI entry object we draw first the object in
+           memory, so blinking cursor can be draw faster.
+2019-11-01 changes to src/fonts/fdv_xwin.c, the X11 font driver,
+           calculate properly char dimensions, so that there aren't
+           cut characters.
+2019-10-28 New function:
+             void GUIGroupSetText(GUIGroup *g, int id, void *newtext);
+           Update the text propertie of an object (by now only for entries).
+2019-10-27 Two new GUITile types:
+             GUI_TT_ACTIVEBWVSCB and GUI_TT_ACTIVEBWHSCB
+           Tiles with only Vertical or Horizontal scrollbar.
+2019-10-26 New function:
+             GUITile * GUITileGetPointer(int idt);
+           returns a pointer to the registered tile idt.
+           New function:
+             int GUITilesProcessTileEvent(GrEvent *ev, int idt);
+           sends a even to a specific registered tile to be processed.
+           even if it isn't the active tile.
+2019-10-24 The functions GrDumpFont, GrDumpFnaFont and GrDumpGrxFont now
+           returns an int, 1=succes, 0=fail
+2019-10-22 Added SubstructureRedirectMask to go/return from fullsecreen in
+           vd_xwin.c. Now go to fullscrenn works in Raspbian X11.
+2019-10-20 Added new function to stretch blit a context to another:
+           void GrStretchBlt(GrContext *dst,int dx1,int dy1,int dx2,int dy2,
+             GrContext *src,int x1,int y1,int x2,int y2,GrColor oper);
+2019-10-17 ----------- MGRX 1.3.0 released
+2019-10-16 Added new section to the programer's manual:
+           "Recode to/from GR_UCS2_TEXT chartype"
+2019-10-15 Solved a bug in the W32 videodriver, when changing modes without
+           exiting, we need to delete the old hDCMem and generate a new one.
+2019-10-13 Moved test graphics files to the testimg subdirectory, so
+           both normal tests and GrGUI tests can use them.
+2019-10-13 Added GrGUI to MGRX. GrGUI is a mini Graphics User Interface
+           specifically designed for MGRX. The added code consist of:
+           - the src/grgui subdirectory with the GrGUI library functions.
+           - the include/grgui.h main include file.
+           - the doc/grguipm.htm file, the GrGUI programmer's guide.
+           - the testgui subdirectory with demo GrGUI programs, includes
+           demmgrx2, demintl2 and eleven examples used in the pm.
+           By default GrGUI is included in the MGRX library, but a
+           switch is provided in makedefs.grx to exclude it.
+2019-10-07 New recode utility functions:
+           unsigned short GrCharRecodeToUCS2(long chr,int chrtype);
+           long GrCharRecodeFromUCS2(long chr,int chrtype);
+           unsigned short *GrTextRecodeToUCS2(const void *text,int length,
+                                              int chrtype);
+2019-09-19 Remove RAM3x8 framedriver and a lot of conditional compilation
+           defines, really we have never used it.
+2019-09-19 Solved a bug in vd_mem.c, missing color component positions in the
+           24 bpp videomode.
+2019-09-16 Use the more accurate clock_getres function in GrMsecTime function
+           (Linux console and x11 versions). For old glibc versions (< 2.17)
+           it is necesary setting NEED_LIBRT to "y" in makedefs.grx
+2019-09-13 demomgrx showes the screen and ram framebuffers modes.
+2019-09-13 New function:
+           char *GrFrameDriverName(GrFrameMode m);
+           returns a short text describing the GrFrameMode given.
+2019-09-11 ----------- mGRX 1.2.0 released
+2019-09-11 Polished GrFrameMode enum type in mgrx.h
+2019-09-09 New specific and faster frame drivers for 32bpp and 16 bpp linux
+           framebuffer, written from scratch. For 8bpp and 24bpp the generic
+           frame drivers are still used, because I don't have any plattform
+           to test those modes.
+2019-09-07 Added support for ARM (tested in a Raspberry Pi 4 using Raspbian).
+           Both console framebuffer and X11 drivers work, only a few changes in
+           makefiles and include files was necesary. The console framebuffer
+           works better than the i386 version on top of a Nvida card (today
+           little attention is paid to the support of console framebuffer by
+           video drivers). The X11 version is a bit slow and have some glitches,
+           the big one is that the xserver ignore any function to draw except
+           GXcopy.
+2019-08-27 ----------- mGRX 1.1.2 released
+2019-08-25 Solved an old bug showing in 16 color modes. The defaut red mouse
+           allocated a cell with a red color not in the ega color table, so if
+           GrAllocEgaColors() is called after mouse initialization the last ega 
+           color (white) can't be alloced. Solution: setting the default mouse
+           color to black & white and allocate black & white colors first in
+           GrAllocEgaColors() to prevent no cells for the two basic colors.
+2019-08-24 GREV_EXPOSE event populates "count" in the "kbstat" field. If count is
+           zero, no more Expose events follow. The X11 man pages say: Simple
+           applications that do not want to optimize redisplay can just ignore all
+           Expose events with nonzero counts and perform full redisplays on events
+           with zero counts.
+2019-08-22 Decorate demomgrx background.
+2019-08-19 Added "life_db" test program, double buffer version of life, much faster
+           than the normal version in X11 and Win32, a bit slower in Linux-fb
+           and djgpp.
+2019-08-18 Don't recode ASCII keys (include controls) when reading keyboard, it can
+           hide the control keys in MSDOS and Win32.
+2019-08-17 Solved a bug in libgrx.h getting BYTE_ORDED showed in win32 after remove
+           of assembler code in memfill.h.
+2019-08-14 Removed assembler code from src/include/memfill.h, tested all platforms.
+2019-08-13 Moved sttcopy and sttzero to libgrx.h using string.h routines. Deleted
+           includes memcopy.h and memfill.h for files that do not need them now.
+2019-08-13 Restaured "CCOPT += -DLFB_BY_NEAR_POINTER" in src/makefile.lnx because
+           the framebuffer is in user space.  we can now remove lfb--.o files
+           from the linuxfb build.
+2019-08-12 Checking the 32 bit build in linux I had unespected segment violation
+           with the fb friver, the cause was the i386 assembler code used by sttcopy
+           function. Because I don't know how to debug assembler, and it is not used
+           in the 64 bit build, and have not found speed difference with and without
+           the assembler code in other 32 bit plattforms (like DJGPP) I deleted
+           the i386 assembler code in src/include/memcopy.h. As far as the DJGPP
+           and Win32 versions will continue to run I will try to eliminate more
+           assembler code in future.
+2019-08-10 Updated the programmer manual explaining how to use the portable color
+           tables defined in mgrxcolr.h
+2019-08-03 Changed the obsolete termio by termios in the linux framebuffer input driver,
+           this solve problems with control keys.
+2019-08-02 Added support for the imps2 mouse protocol in the linux framebuffer input
+           driver, now we have wheel events.
+2019-06-20 Added color tables (new concept) for easy use of colors by names, there are
+           two tables defined: EGA (16 colors) and WEB (138 colors). The definitions are
+           in the new main include file include/mgrxcolr.h and the necesary code in
+           src/setup/colortbl.c. Added the clrtable.c program to test color tables.
+2019-06-11 ----------- mGRX 1.1.1 released
+2019-06-10 Solved a very old problem in Customized and Patterned line drawings
+           funtions. The intersect code (in src/wideline/drwcpoly.c) gave bad results
+           for solid and pattern filed wide lines, changed to a simple algorithm that
+           works very well, except for circles and dashed lines, so we use part of the
+           original code for these cases.
+           Added the cusptest.c program to test Customized and Patterned line drawings.
+2017-10-01 New functions:
+           reverse recode from font encoding to chrtype
+             long GrFontCharReverseRecode(const GrFont *font,unsigned int chr,int chrtype);
+           get a string for the numerical fontencoding
+             char *GrStrFontEncoding(int fontencoding);
+           these functions enqueue an event the first in the queue
+             int GrEventEnqueueFirst(GrEvent * ev);
+             int GrEventParEnqueueFirst(int type, long p1, long p2, long p3, long p4);
+2017-10-01 New funtion to enqueue a event by its parameters
+             int GrEventParEnqueue(int type, long p1, long p2, long p3, long p4);
+           Changed wait input if no events to delay(1) instead dpmi_yield in the
+           djgpp version, so now demommgrx runs smoothly like other versions.
+2017-09-09 ----------- mGRX 1.1.0 released
+2017-09-08 Fix a proglem in jpeg read with new version 9 of libjpeg, they have 
+           changed the default for cinfo.scale_denom and cinfo.scale_num.
+           Fix warnings with DJGPP 2.05 in src/include/vesa.h.
+2017-09-07 Changed __attribute__((packed)) by #pragma pack in fdv_win.h, to
+           workarround a bug in mingw gcc.
+           Fix a problem with GR_UNDERLINE_TEXT and C_OPER.
+           Workarround to SetDIBColorTable fail seems on W7 with the 256 color
+           driver, probably a race condition.
+           Added some usual modes to the windows video driver.
+           No restart test/demomgrx.c in X11 an WIN32 after running a demo.
+           Some improvements to test/fontdemo.c.
+2017-09-02 Setting the encoding field to the fonts provided with MGRX.
+           Updated the programmer's manual.
+2017-08-31 New function to save a font in own MGRX font format
+             void GrDumpGrxFont(const GrFont *font,char *fileName);
+2017-08-09 Corrected a very old bug in GrClearContextC and GrFloodSpillC and
+           GrFloodSpillC2. They didn't restore the original context.
+           Updated test/fontdemo.c
+           Fixed an error in test/keys.c
+2017-08-05 Fixed a warning en src/input/grev_x11.c, XKeycodeToKeysym is deprecated
+           replaced by XkbKeycodeToKeysym.
+2017-07-22 New function to get the real strlen of a text string of type chrtype
+             int GrStrLen(const void *text, int chrtype);
+           Now GrDrawString (and friends) calculates the text length (using GrStrLen)
+           if the length parameter is equal to zero.
+           Begining update of the programmer manual.
+2017-07-16 Now the xwin driver generates GREV_EXPOSE and stop using backingstore if
+           requested by the user.
+           Modified the test/life.c to request GREV_EXPOSE events (and handle them). It
+           is now much faster under the xwin driver.
+2017-07-13 Preparation for the new GREV_EXPOSE event, added p4 to the GrEvent struct, new
+           function "void GrEventGenExpose(int when)", when can be GR_GEN_EXPOSE_NO (the
+           default) or GR_GEN_EXPOSE_YES.
+           Updated the readme file.
+2017-07-11 Replaced the GrDefaultFont define by two functions GrGetDefaultFont() and
+           GrSetDefaultFont, now you can set the default font you want (set to 
+           built-in GrFont_PC8x14 by default).
+           New GrNextUTF8Char function.
+           Added recode capacity for GR_FONTENC_MGRX512.
+           Expanded test/demointl.c to test the new capacities.
+2017-07-08 Setted the font encoding field to 1 in built-in pc fonts.
+           New function to set the font encoding field:
+             void GrFontSetEncoding(GrFont *font,int fontencoding);
+           Deleted the GrProportionalTextWidth function because GrFontStringWidth works
+           for both proportional and fixed fonts.
+           GrFontStringWidth, GrFontStringHeight, GrCharWidth, GrCharHeight, GrCharSize,
+           GrStringWidth, GrStringHeight, GrStringSize, GrDrawChar, GrDrawString (and friends)
+           now recode form chrtype to font encoding if nedded (fon encoding != GR_FONTENC_UNKNOWN,
+           chrtype != (GR_BYTE_TEXT || GR_WORD_TEXT) and font encoding not equivalent to chrtype.
+           New function to get a chrtype equivalent to user encoding:
+             char GrGetChrtypeForUserEncoding(void);
+           Added maxlen parameter to GrUTF8StrToUCS2Str.
+           Fixed a warning, really a bug, in src/setup/colors.c.
+           GrDumpFont writes the font encoding field too.
+           Changes in test/demointl and test/fontdemo to work properly.
+           Added 16 new fonts "ter-mgrxNNS.psf" converted from terminus fonts, 512 glyps using
+           the GR_FONTENC_MGRX512 encoding, NN can be 14, 16, 18, 20, 22, 24, 28, 32 and S b or n.
+2017-07-04 Added encoding to GrFontHeader struct, it can be
+             GR_FONTENC_UNKNOWN     0     /* unknow encoding (no recode) */
+             GR_FONTENC_CP437       1     /* standard dos encoding */
+             GR_FONTENC_CP850       2     /* standard dos encoding */
+             GR_FONTENC_CP1252      3     /* standard Win encoding */
+             GR_FONTENC_ISO_8859_1  4     /* standard latin encoding */
+             GR_FONTENC_UNICODE     5     /* direct UNICODE encoding */
+             GR_FONTENC_MGRX512     6     /* custom MGRX 512 char encoding */
+             GR_FONTENC_LASTENC     6     /* last encoding, for checks */
+           The new possible values of GrTextOption.txo_chrtype:
+             GR_BYTE_TEXT            0   /* 1 byte per character, unknow encoding */
+             GR_WORD_TEXT            1   /* 2 bytes per character, unknow encoding */
+             GR_CP437_TEXT           2   /* 1 bpc standard DOS encoding */
+             GR_CP850_TEXT           3   /* 1 bpc latin1 DOS encoding */
+             GR_CP1252_TEXT          4   /* 1 bpc standard Win encoding */
+             GR_ISO_8859_1_TEXT      5   /* 1 bpc latin1 standard in some Linux */
+             GR_UTF8_TEXT            6   /* multibyte UTF-8 Unicode, restricted to 4 bytes */
+             GR_UCS2_TEXT            7   /* 2 bpc restricted Unicode, only BMP range */
+           New utility functions to deal with recode from GrTextOption.txo_chrtype to
+           GrFontHeader.encoding:
+             int  GrFontNeedRecode(const GrFont *font,int chrtype);
+             unsigned int GrFontCharRecode(const GrFont *font,long chr,int chrtype);
+             unsigned short *GrFontTextRecode(const GrFont *font,const void *text,int length,int chrtype);
+           GrTextOption.fgcv and GrTextOption.bgcv are now GrColor values.
+           Added two new fonts pc850-14.psf and pc850-16.psf, now test/demointl has a real
+           CP850 coded font.
+2017-07-03 Deleted the GR_ATTR_TEXT char type.
+           Hided for now GrTextRegion and functions.
+2017-07-02 Replaced GrGetKbEncoding and GrSetKbEncoding with
+           GrGetUserEncoding and GrSetUserEncoding, these functions exists even
+           if not input driver is ebabled (like with the memory driver). User
+           enconding default to GRENC_UTF_8 in linux and X11, GRENC_PC437 in
+           DJGPP and GRENC_PC1252 in WIn32, but the programmer can set it like
+           he wants. Now key events are recoded to the user encoding.
+           Changes in test/demointl and test/fontdemo to work properly.
+           Small change in fd_xwin.c, accel a bit drawpixel.
+           Added 32 bpp mode to vd_lnxfb.
+2017-06-19 Make x86_64 the default in linux and X11.
+           Fix a warning in newer versions of libPNG.
+           Output format changes in test/speedtst.c.
+2009-01-29 ----------- mGRX 1.0.0 released
+2009-01-25 Simplified the WM_PAINT proccess to solve a race condition
+           found in Vista running in multiple core cpu's.
+2008-11-19 Fixed a bug in GrMouseWarp win32 version, the cursor was set to the
+           screen, instead to the client area, by Richard Sanders.
+2008-11-05 Added GrClearContextC function, by Richard Sanders.
+2008-09-07 New MGRXBIGG environment variable, it lets the user to limit the
+           dimensions of GR_biggest_graphics mode. MGRXBIGG="maxw maxh"
+2008-09-06 Deleted some graphicsmodes not used anymore: GR_80_25_text,
+           GR_width_height_text, GR_biggest_text, GR_width_height_color_text,
+           GR_width_height_bpp_text and GR_biggest_noninterlaced_graphics
+2008-09-02 vdrivers/vd_win32.c: Added Mario Zagar fix for the app termination bug.
+2008-08-01 fdrivers/fd_xwin.c: Sanitized pixel cache code.
+2008-08-01 fdrivers/fd_xwin.c: New faster and specific for X11 putscanline function,
+           this change accelerates a lot displaying pnm, png and jpeg images.
+2008-02-03 ----------- mGRX 0.9.9 released
+2008-02-03 Changed defaults in makedefs.grx:
+           HAVE_LIBJPEG=y  HAVE_LIBPNG=y  NEED_ZLIB=y
+2008-02-03 Make the w32 driver generates button4 and button5 mouse events
+           (the scroll whell).
+2008-02-02 Planned intl support (and 8, finished by now)
+           Updated the programmer manual with the intl and GR_UTF8_TEXT support,
+2008-01-30 Make textpatt.c demo program works in real color modes.
+2008-01-26 Planned intl support (7)
+           The functions: GrDrawString, GrPatternDrawString, GrPatternDrawStringExt,
+           GrUsrDrawString, GrFontStringWidth, GrFontStringHeight,
+           GrProportionalTextWidth, GrStringWidth, GrStringHeight, GrStringSize
+           support the new GR_UTF8_TEXT text type, "len" must be the UTF8len or less.
+           The functions: GrCharWidth, GrCharHeight, GrCharSize, GrDrawChar,
+           GrPatternDrawChar, GrUsrDrawChar
+           support the new GR_UTF8_TEXT text type too. "chr" must be a unique char,
+           utf-8 encoded, but packed in a long (an union: long and char[4]), like it
+           is packed int the GREV_KEY event.
+           Some utility functions for UTF-8 are provided:
+           int GrUTF8StrLen(unsigned char *s)
+           long GrUCS2ToUTF8(unsigned short ch)
+           unsigned short GrUTF8ToUCS2(unsigned char *s)
+           unsigned short *GrUTF8StrToUCS2Str(unsigned char *s, int *ulen)
+2008-01-23 Warnings fixed in fonts/fdv_bgi.c
+2008-01-21 Planned intl support (6)
+           Added intl support to the dj2 input driver (input/grev_dj2.c). It try
+           to use the MGRXKBSYSENCODING environment variable. If not it sets
+           GRENC_CP437.
+           Added intl support to the w32 input driver (input/grev_w32.c). It try
+           to use the MGRXKBSYSENCODING environment variable. If not it sets
+           GRENC_CP1252.
+           Some warnings fixed.
+2008-01-20 Planned intl support (5)
+           If kbsysencoding == GRENC_UTF_8, sets initial kbencoding
+           to GRENC_ISO_8859_1, because is easier to handle.
+           New input/auxintl.c with auxiliary intl functions
+           Added intl support to the lnx input driver (input/grev_lnx.c). If the
+           LANG environment variable contain "UTF-8" sets the KbSysEncoding
+           to GRENC_UTF_8. If not it try to use the MGRXKBSYSENCODING
+           environment variable. If not it sets GRENC_ISO_8859_1.
+2008-01-19 Planned intl support (4)
+           New input/recode.c recode between supported encodings.
+           Added intl support to grevent.c, it process GREV_PREKEY events and
+           recode if necesary.
+           New test/demointl test program.
+2008-01-14 Planned intl support (3)
+           Added intl support to the x11 input driver (input/grev_x11.c). It try
+           to open a XIM (X input method) and create a XIC (X input context), if
+           it has succes, it uses Xutf8LookupString and sets the KbSysEncoding
+           to GRENC_UTF_8. If it can't, uses the XLookupString and sets
+           KbSysEncoding to GRENC_ISO_8859_1, but this function can't compose
+           accented chars.
+2008-01-12 Planned intl support (2)
+           Changes in input/ninput.h to declare "int _GrGetKbSysEncoding(void)",
+           internal funtion to be provided in the input drivers and the
+           GrRecode function to be written.
+           Added GREV_PREKEY event to mgrx.h. Input drivers with intl support
+           send this ivent instead GREV_KEY, so "grevent.c" can recode it.
+           Added "GrGetKbSysEncoding", "GrGetKbEncoding" and "GrSetKbEncoding"
+           to input/grevent.c, do void GREV_PREKEY preprocess (to be worked
+           later).
+2008-01-11 Planned intl support (1)
+           Changes in mgrx.h and general plan:
+           - Defined the initial supported input encodings:
+             #define GRENC_PC437          0   /* standard DOS encoding */
+             #define GRENC_PC850          1   /* latin1 DOS encoding */
+             #define GRENC_PC1252         2   /* standard Win encoding */
+             #define GRENC_ISO_8859_1     3   /* standard in some Linux */
+             #define GRENC_UTF_8          4   /* multibyte unicode, standard in newest Linux */
+             #define GRENC_UCS_2          5   /* restricted unicode, 2 bytes, only BMP range */
+           - The input driver must guess the system encoding and set an internal
+             var. If unsure, the input driver will use the MGRXKBSYSENCODING
+             environment variable.
+           - The function "int GrGetKbSysEncoding(void)" returns the system
+             encoding.
+           - By default the input driver uses the system encoding in returned
+             GREV_KEY events. Because now char con be a word (2 bytes) for
+             UCS-2 encoding, or multibyte (limited to 4 in MGRX) for UTF-8,we
+             need differ chars from special keycodes. So p2 is used to mark
+             a special key with GRKEY_KEYCODE or to notify the number of bytes
+             used in p1 for a char (1 to 4). The new cp1 char[4] menber event
+             is a union with p1 to facilitate the use of UTF-8 returned chars.
+           - The programmer can ask the input driver to recode the char to other
+             of the supported encodings, before the event is returned with the
+             new function "int GrSetKbEncoding(int enc)", so portable programs
+             can be made for the four supported plattforms. It returns "1" if
+             ok, or "0" else.
+           - The function "int GrGetKbEncoding(void)" returns the actual encoding
+             in use for the input driver.
+           - A new character type "GR_UTF8_TEXT" is defined for use in the text
+             drawing functions, but is to the programmer to use a font wiht the
+             same encoding that the text to be drawn (by example a ISO-8859-1
+             font is ok for UTF-8 text).
+2008-01-10 Changes in test/fontdemo.c to add some info
+2008-01-04 Optimizations to png2ctx.c, by Josu Onaindia.
+2008-01-03 Some changes in test/keys.c to work in graphic mode
+2008-01-02 Added button4 and button5 mouse events (the scroll whell), only
+           the x11 version works by now.
+2008-01-02 Moved the 1msec delay in GrEventRead to x11 and lnx versions of
+           _GrReadInputs, because dj2 and w32 doesn't need it.
+2008-01-02 Some changes in test/polytest.c to show a bug (to be worked).
+2007-12-27 ----------- mGRX 0.9.8 released
+2007-12-27 Added GrFloodSpill functions, by richard at dogcreek.ca
+2007-12-01 vd_xwin: go to fullscreen if w,h == X resolution,
+           GR_biggest_graphics is honored.
+2007-12-01 vd_xwin: modes higher than X resolution are made no-present.
+2007-12-01 Added videomodes for wide monitors in x11 and w32 drivers.
+2007-12-01 Introduction of GR_PtrInt (integer of same length as a pointer)
+           to suppress warnings (in fact errors) when compiling with
+           x86_64 platforms. Backport from GRX 2.4.7 (M.Lombardi).
+2007-11-07 Simplify the include/arith.h code.
+2007-06-09 ----------- mGRX 0.9.7 released
+2007-06-03 The djgpp delay function doesn't work on WinXP and W2000. It is
+           corrected in the djgpp CVS version. We included the source for the
+           new delay in src/misc. When a new djgpp version will be released
+           this source code will be removed.
+2007-06-01 The X11 driver now uses a pixmap for backin store and responds to
+           Expose events. But it is a bit slowly. If you want a faster driver
+           edit src/include/libxwin.h and set USE_PIXMAP_FOR_BS to 0.
+2007-06-01 GrEventRead now waits 1 msec if no event is ready, so now MGRX
+           programs doesn't load the cpu 100%.
+2007-06-01 GrSleep calls XFlush in the X11 platform, to flush the graphics
+           queue before wait.
+2007-05-13 new version of test/speedtst.c more accurate
+2007-04-30 ----------- mGRX 0.9.6 released
+2007-04-30 After a security update in xorg 7.2, bitblt ram to video doesn't
+           work in the x11 driver. We had a bug in the framedriver.
+2007-04-24 ----------- mGRX 0.9.5 released
+2007-04-21 Renamed sincos by gr_sincos in genellip.c, it's an internal function
+           in gcc.4.1.2
+2007-04-21 Changed CLK_TCK by sysconf(_SC_CLK_TCK), it's obsolete in gcc 4.1.2,
+           reported by Bjorn Gustafsson
+2006-05-15 Bug fixed in GrEventAddHook
+2006-02-17 ----------- mGRX 0.9.4 released
+2006-02-10 Better understanding of x86_64. Now by default an i386
+           library is built even on x86_64 platforms. If you set
+           BUILD_X86_64 to 'y' in makdefs.grx a x86_64 library is
+           built, and the install target go to the lib64 subdir
+2006-02-09 Some clean-up in mgrx.h, libgrx.h, etc
+2006-02-05 ----------- mGRX 0.9.3 released
+2006-01-30 Updated the programmer's manual from the GRX user's manual
+2005-01-20 Changed GRX20DRV to MGRXDRV and GRXFONT to MGRXFONT
+2005-01-20 Changed main include file from grxkeys.h to mgrxkeys.h
+2005-01-20 Removed old Dos video drivers (herc, ati, etc)
+2004-12-25 New input interface in place
+2004-10-04 Removed far and near keywords
+2004-10-04 Changed main include file from grx20.h to mgrx.h
+2004-09-24 Added x86_64 support
+2004-09-24 Removed addons (bmp, tiff and printing code)
+2004-09-24 Removed svgalib support
+2004-09-24 Removed LEFTSIDE CAST constructions
+2004-09-24 Removed configure script
+2004-09-24 Removed WATCOM support
+2004-09-24 Removed Borland-C support
+2004-09-24 Removed Pascal support
+2004-09-24 Removed BCCBGI code
+2004-09-24 Derived mGRX from GRX 2.4.7 p1
