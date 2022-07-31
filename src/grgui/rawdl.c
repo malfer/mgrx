@@ -208,6 +208,7 @@ static void show_rdl_item(GUIRawDataList *rdl, int ind)
 
     if (ind > rdl->vreg) return;
     if (ind < 0) return;
+    if (rdl->nreg < 1) return;
     
     x = rdl->x + rdl->dx + 3;
     y = rdl->y + rdl->dy + 3 + ind * rdl->lineheight;
@@ -277,7 +278,7 @@ int GUIRDLProcessEvent(GUIRawDataList *rdl, GrEvent *ev)
                     if (rdl->pressed) {
                         rdl->pressed = 0;
                         pos = (y - rdl->y - 3) / rdl->lineheight;
-                        if (pos == ind) return 2;
+                        if (pos == ind) return (rdl->nreg > 0 ? 2 : 1);
                         res = 1;
                     } else if (rdl->vscb) {
                         return GUIScrollbarProcessEvent(rdl->vscb, ev);
@@ -392,7 +393,7 @@ int GUIRDLProcessEvent(GUIRawDataList *rdl, GrEvent *ev)
                     if (check_freg(rdl) != 0) {
                         change = move = 1;
                     }
-                    res = 2;
+                    res = (rdl->nreg > 0 ? 2 : 1);
             }
             break;
 

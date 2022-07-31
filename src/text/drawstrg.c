@@ -18,7 +18,7 @@
  ** Contributions by:
  ** 080125 M.Alvarez, UTF-8 support
  ** 170706 M.Alvarez, rewrite for font encoding functionality
- *= 200620 M.Alvarez, solved an old bug
+ ** 200620 M.Alvarez, solved an old bug
  **
  **/
 

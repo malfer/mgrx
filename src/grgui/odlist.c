@@ -79,6 +79,38 @@ error:
 
 /***************************/
 
+void GUIObjectUpdDList(GUIObject *o, void **reg, int nreg, int sreg)
+{
+    DListData *data;
+
+    if (o->type != GUIOBJTYPE_DLIST) return;
+
+    data = malloc(sizeof(DListData));
+    if (data == NULL) return;
+
+    data->rdl = NULL;
+    data->reg = reg;
+    data->nreg = nreg;
+    data->sreg = sreg;
+    if (data->sreg > data->nreg) data->sreg = 0;
+    data->rdl = GUIRDLCreate(GUIRDLTYPE_SIMPLE, o->x, o->y, o->width, o->height,
+                             o->bg, o->fg, reg, data->nreg, data->sreg);
+    if (data->rdl == NULL) {
+        free(data);
+        return;
+    }
+
+    if (o->data) {
+        GUIRDLDestroy(((DListData *)(o->data))->rdl);
+        free(o->data);
+    }
+
+    o->data = (void *)data;
+    return;
+}
+
+/***************************/
+
 void _GUIODListDestroy(GUIObject *o)
 {
     DListData *data;

@@ -19,6 +19,9 @@
  **                    changed to a simple one that works ok except for circles
  **                    and dashed lines, so we use part of the original code
  **                    in these cases.
+ ** 220714, M.Alvarez, found problems in the intersect function playing with
+ **                    many edges polygons, check bad cases and use the old
+ **                    code instead.
  **/
 
 #include "libgrx.h"
@@ -40,6 +43,11 @@
 #define x22 l2e[0]
 #define y22 l2e[1]
 
+#define CHECK_DIR(a, b, new) \
+    (((int)((unsigned int)(a - b) ^ (unsigned int)(a - new))) >= 0)
+
+static void intersect2(int l1s[2],int l1e[2],int l2s[2],int l2e[2]);
+
 static void intersect1(int l1s[2],int l1e[2],int l2s[2],int l2e[2])
 {
     // this code for solid and pattern filed wide lines
@@ -56,10 +64,15 @@ static void intersect1(int l1s[2],int l1e[2],int l2s[2],int l2e[2])
                     (imul32(x21,y22) - imul32(y21,x22)) * dx1) / det;
         long newy = ((imul32(x11,y12) - imul32(y11,x12)) * dy2 -
                     (imul32(x21,y22) - imul32(y21,x22)) * dy1) / det;
-        l1e[0] = l2s[0] = (int)newx;
-        l1e[1] = l2s[1] = (int)newy;
-        return;
+        // check if the point is in the correct direction
+        if (CHECK_DIR(x11, x12, newx) && CHECK_DIR(x22, x21, newx) &&
+            CHECK_DIR(y11, y12, newy) && CHECK_DIR(y22, y21, newy) ) {
+            l1e[0] = l2s[0] = (int)newx;
+            l1e[1] = l2s[1] = (int)newy;
+            return;
+        }
     }
+    intersect2(l1s, l1e, l2s, l2e);
 }
 
 static void intersect2(int l1s[2],int l1e[2],int l2s[2],int l2e[2])

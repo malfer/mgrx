@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, proportional fonts can be sparse
+ **
  **/
 
 #include <stdlib.h>
@@ -26,6 +28,7 @@
 
 #if BYTE_ORDER==BIG_ENDIAN
 #include "ordswap.h"
+
 static void swap_header(GrFontFileHeaderGRX *fhdr)
 {
     GRX_ENTER();
@@ -47,7 +50,7 @@ static void swap_wtable(GR_int16u *wtable,unsigned int wtsize)
 {
     GR_int16u *wt;
     unsigned int ws;
-    
+
     GRX_ENTER();
     wt = wtable;
     ws = wtsize / sizeof(GR_int16u);
@@ -68,11 +71,12 @@ int GrDumpGrxFont(const GrFont *f,char *fileName)
     unsigned int wtsize = 0;
     GR_int32u bmpsize = 0;
     unsigned int i, w;
-    
+
+    isfixed = f->h.proportional ? FALSE : TRUE;
+    if (isfixed && f->h.sparse) return 0;
+
     fp = fopen(fileName,"w");
     if (!fp) return 0;
-          
-    isfixed = f->h.proportional ? FALSE : TRUE;
 
     fhdr.magic = GRX_FONTMAGIC;
     fhdr.bmpsize = 0;
@@ -88,7 +92,7 @@ int GrDumpGrxFont(const GrFont *f,char *fileName)
     strncpy(fhdr.fnname, f->h.name, GRX_NAMEWIDTH-1);
     memset(fhdr.family, '\0', GRX_NAMEWIDTH);
     strncpy(fhdr.family, f->h.family, GRX_NAMEWIDTH-1);
-    
+
     if (!isfixed) {
         wtsize = sizeof(GR_int16u) * (fhdr.maxchar - fhdr.minchar + 1);
         wtable = malloc(wtsize);
@@ -99,7 +103,8 @@ int GrDumpGrxFont(const GrFont *f,char *fileName)
         for (i=0; i<f->h.numchars; i++) {
             w = f->chrinfo[i].width;
             wtable[i] = w;
-            bmpsize += ((w + 7) >> 3) * f->h.height;
+            if (w > 0)
+                bmpsize += ((w + 7) >> 3) * f->h.height;
         }
     } else {
         bmpsize = (GR_int32u)(f->h.numchars) * ((f->h.width + 7) >> 3) * f->h.height;
@@ -111,12 +116,12 @@ int GrDumpGrxFont(const GrFont *f,char *fileName)
     if (!isfixed)
         swap_wtable(wtable,wtsize);
 #endif
-    
+
     fwrite(&fhdr,sizeof(fhdr),1,fp);
     if (!isfixed)
         fwrite(wtable,wtsize,1,fp);
     fwrite(f->bitmap,bmpsize,1,fp);
-    
+
     if (!isfixed)
         free(wtable);
 

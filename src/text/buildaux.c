@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, fonts can be sparse
+ **
  **/
 
 #include "libgrx.h"
@@ -26,6 +28,7 @@ char *GrBuildAuxiliaryBitmap(GrFont *f,unsigned int chr,int dir,int ul)
     int  boff,rboff,rbinc;
     char *stdmap,*cvtmap;
     if(idx >= f->h.numchars) return(NULL);
+    if(f->chrinfo[idx].width == 0) return(NULL); // a sparse font
     stdmap = &f->bitmap[f->chrinfo[idx].offset];
     dir = (dir & 3) + ((ul && (f->h.ulheight > 0)) ? 4 : 0);
     if(dir == GR_TEXT_RIGHT) return(stdmap);

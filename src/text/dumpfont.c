@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, fonts can be sparse
+ **
  **/
 
 #include <string.h>
@@ -26,7 +28,7 @@
 static char bitmaphdr[] =
 
 "/**\n"
-" ** %s ---- GRX 2.0 font converted to C by 'GrDumpFont()'\n"
+" ** %s ---- MGRX font converted to C by 'GrDumpFont()'\n"
 " **/\n"
 "\n"
 "#define  %s     FONTNAME_TEMPORARY_REDIRECTION\n"
@@ -57,9 +59,14 @@ static char fonthdr[] =
 "            %d,  \t\t    "         "/* baseline pixel pos (from top) */\n"
 "            %d,  \t\t    "         "/* underline pixel pos (from top) */\n"
 "            %d,  \t\t    "         "/* underline width */\n"
-"            %d,  \t\t    "         "/* lowest character code in font */\n"
-"            %d,  \t\t    "         "/* number of characters in font */\n"
-"            %d   \t\t    "         "/* encoding */\n"
+"            %d,  \t\t    "         "/* lowest glyph code in font */\n"
+"            %d,  \t\t    "         "/* number of glyphs in font */\n"
+"            %d,  \t\t    "         "/* font encoding (if known) */\n"
+"            %d,  \t\t    "         "/* is this font sparse? */\n"
+"            %d,  \t\t    "         "/* use default glyph? */\n"
+"            %d,  \t\t    "         "/* unused to align */\n"
+"            %d,  \t\t    "         "/* unused to align */\n"
+"            %d   \t\t    "         "/* default glyph */\n"
 "        },\n"
 "        (char *)%-20s"             "/* character bitmap array */\n"
 "        0,                          /* auxiliary bitmap */\n"
@@ -114,15 +121,16 @@ int GrDumpFont(const GrFont *f,char *CsymbolName,char *fileName)
     for(i = 0; i < f->h.numchars; i++) {
         int  chr = i + f->h.minchar;
         int  len = GrFontCharBitmapSize(f,chr);
+        if (len == 0) continue; // a sparse font
         int  pos = 0,j;
         char *bmp = GrFontCharBitmap(f,chr);
-        fprintf(fp,"\t/* character %d */\n\t",chr);
+        fprintf(fp,"    /* character %d */\n    ",chr);
         for(j = 0; j < len; j++) {
             fprintf(fp,"0x%02x",(bmp[j] & 0xff));
             if((j + 1) != len) {
                 putc(',',fp);
                 if(++pos != 12) continue;
-                fputs("\n\t",fp);
+                fputs("\n    ",fp);
                 pos = 0;
             }
         }
@@ -145,6 +153,11 @@ int GrDumpFont(const GrFont *f,char *CsymbolName,char *fileName)
         f->h.minchar,
         f->h.numchars,
         f->h.encoding,
+        f->h.sparse,
+        f->h.usedefg,
+        f->h.unused1,
+        f->h.unused2,
+        f->h.defglyph,
         (strcat(bitname,","),bitname),
         f->minwidth,
         f->maxwidth,

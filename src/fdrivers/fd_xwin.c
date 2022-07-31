@@ -494,7 +494,7 @@ void putscanline(int x, int y, int w, const GrColor *scl, GrColor op)
 }
 
 #define ROUNDCOLORCOMP(x,n) (                                   \
-    ((uint)(x) >= CLRINFO->mask[n]) ?                           \
+    ((unsigned int)(x) >= CLRINFO->mask[n]) ?                           \
         CLRINFO->mask[n] :                                      \
         (((x) + CLRINFO->round[n]) & CLRINFO->mask[n])          \
 )

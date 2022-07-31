@@ -91,6 +91,43 @@ error:
 
 /***************************/
 
+void GUIObjectUpdList(GUIObject *o, void **reg, int nreg, int vreg, int sreg)
+{
+    ListData *data;
+
+    if (o->type != GUIOBJTYPE_LIST) return;
+    
+    data = malloc(sizeof(ListData));
+    if (data == NULL) return;
+
+    data->rdl = NULL;
+    data->reg = reg;
+    data->nreg = nreg;
+    data->vreg = vreg;
+    if (data->vreg > data->nreg) data->vreg = data->nreg;
+    data->sreg = sreg;
+    if (data->sreg > data->nreg) data->sreg = 0;
+    data->sx = 0; // will be set later
+    data->sy = 0; // idem
+    data->height = data->vreg * _objectfont->h.height + 6;
+    data->rdl = GUIRDLCreate(GUIRDLTYPE_SIMPLE, 0, 0, o->width, data->height,
+                             o->bg, o->fg, reg, data->nreg, data->sreg);
+    if (data->rdl == NULL) {
+        free(data);
+        return;
+    }
+
+    if (o->data) {
+        GUIRDLDestroy(((ListData *)(o->data))->rdl);
+        free(o->data);
+    }
+
+    o->data = (void *)data;
+    return;
+}
+
+/***************************/
+
 void _GUIOListDestroy(GUIObject *o)
 {
     ListData *data;
@@ -152,11 +189,13 @@ void _GUIOListPaint(GUIObject *o, int dx, int dy)
         GrCustomBox(x+2, y+2, x+o->width-3-SELECTWIDTH, y+o->height-3, &glo);
     }
 
-    GrSetClipBox(x+3, y+1, x+o->width-4-SELECTWIDTH, y+o->height-2);
-    //printf("%d %s\n", data->sreg, (char *)data->reg[data->sreg]);
-    _objectgenopt.txo_fgcolor = o->fg;
-    GrDrawString(data->reg[data->sreg], 0, x+3, y+o->height/2, &_objectgenopt);
-    GrResetClipBox();
+    if (data->nreg > 0) {
+        GrSetClipBox(x+3, y+1, x+o->width-4-SELECTWIDTH, y+o->height-2);
+        //printf("%d %s\n", data->sreg, (char *)data->reg[data->sreg]);
+        _objectgenopt.txo_fgcolor = o->fg;
+        GrDrawString(data->reg[data->sreg], 0, x+3, y+o->height/2, &_objectgenopt);
+        GrResetClipBox();
+    }
  
     GrMouseUnBlock(mouseblock);
 }
@@ -242,6 +281,8 @@ static int ListRun(GUIObject *o)
     int ret;
     
     data = (ListData *)(o->data);
+
+    if (data->nreg < 1) return -1;
 
     gctx = GUIContextCreate(data->sx, data->sy, o->width, data->height, 1);
     if (gctx == NULL) return -1;

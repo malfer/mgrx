@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, fonts can be sparse
+ **
  **/
 
 #include "libgrx.h"
@@ -242,12 +244,17 @@ GrFont *_GrBuildFont(const GrFontHeader *h, int  cvt, int  wdt, int  hgt,
     f->maxwidth = 0;
     for(chr = cmin,i = 0; i < numch; chr++,i++) {
         int  oldw = (*charwdt)(chr);
-        unsigned int neww = urscale(oldw,wdt,h->width);
         if(oldw < 0) goto error;
-        if(f->minwidth > neww) f->minwidth = neww;
-        if(f->maxwidth < neww) f->maxwidth = neww;
-        f->chrinfo[i].width  = oldw;
-        bmplen += ((neww + 7) >> 3) * hgt;
+        f->chrinfo[i].width = oldw;
+        if (oldw == 0) {
+            if (!h->sparse) goto error;
+            f->chrinfo[i].offset = 0;
+        } else {
+            unsigned int neww = urscale(oldw,wdt,h->width);
+            if(f->minwidth > neww) f->minwidth = neww;
+            if(f->maxwidth < neww) f->maxwidth = neww;
+            bmplen += ((neww + 7) >> 3) * hgt;
+        }
     }
     cv.oldhgt = scaled ? hgt : h->height;
     cv.newhgt = hgt;
@@ -290,6 +297,7 @@ GrFont *_GrBuildFont(const GrFontHeader *h, int  cvt, int  wdt, int  hgt,
     f->maxwidth = 0;
     for(chr = cmin,i = 0; i < numch; chr++,i++) {
         unsigned int oldw = f->chrinfo[i].width;
+        if (oldw == 0) continue;  // a sparse font
         unsigned int neww = imax(urscale(oldw,wdt,h->width),1);
         unsigned int size;
         if(scaled) {
@@ -322,6 +330,11 @@ GrFont *_GrBuildFont(const GrFontHeader *h, int  cvt, int  wdt, int  hgt,
     f->h.ulpos        = urscale(h->ulpos,   hgt,h->height);
     f->h.ulheight     = urscale(h->ulheight,hgt,h->height);
     f->h.encoding     = h->encoding;
+    f->h.sparse       = h->sparse;
+    f->h.usedefg      = h->usedefg;
+    f->h.unused1      = 0;
+    f->h.unused2      = 0;
+    f->h.defglyph     = h->defglyph;
     goto done;
     error:
     if(f) {

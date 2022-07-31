@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, proportional fonts can be sparse
+ **
  **/
 
 #include <stdio.h>
@@ -137,7 +139,7 @@ done:
 
 static int header(GrFontHeader *hdr)
 {
-    int res;
+    int res, sparse, i;
     GRX_ENTER();
     res = FALSE;
     if (fontfp != NULL) {
@@ -159,6 +161,18 @@ static int header(GrFontHeader *hdr)
         hdr->encoding     = 0; /* GR_FONTENC_UNKNOWN */
         if (fhdr.encoding > 0 && fhdr.encoding <= GR_FONTENC_LASTENC)
             hdr->encoding = fhdr.encoding;
+        sparse = FALSE;
+        if (hdr->proportional) {
+            for (i=0; i<hdr->numchars; i++) {
+                if (wtable[i] == 0) {
+                    sparse = TRUE;
+                    break;
+                }
+            }
+        }
+        hdr->sparse = sparse;
+        hdr->usedefg = FALSE;
+        hdr->defglyph = 0;
         res = TRUE;
     }
     GRX_RETURN(res);
@@ -177,13 +191,23 @@ static int charwdt(int chr)
 static int bitmap(int chr,int w,int h,char *buffer)
 {
     int res;
+    long fpos;
+
     GRX_ENTER();
     res = FALSE;
     if ((w > 0) && (w == charwdt(chr)) && (h > 0) && (h == fhdr.height) ) {
         if(chr != nextch) {
-            long fpos = sizeof(fhdr) + (fhdr.isfixed ? 0 : wtsize);
-            for(nextch = fhdr.minchar; nextch != chr; nextch++) {
-                fpos += ((charwdt(nextch) + 7) >> 3) * fhdr.height;
+            //long fpos = sizeof(fhdr) + (fhdr.isfixed ? 0 : wtsize);
+            fpos = sizeof(fhdr);
+            if (fhdr.isfixed) {
+                fpos += ((fhdr.width + 7) >> 3) * (chr - fhdr.minchar) * fhdr.height;
+                nextch = chr;
+            } else {
+                fpos += wtsize;
+                for(nextch = fhdr.minchar; nextch != chr; nextch++) {
+                    fpos += ((wtable[nextch - fhdr.minchar] + 7) >> 3) * fhdr.height;
+                    //fpos += ((charwdt(nextch) + 7) >> 3) * fhdr.height;
+                }
             }
             fseek(fontfp,fpos,SEEK_SET);
         }

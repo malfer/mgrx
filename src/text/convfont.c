@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, fonts can be sparse
+ **
  **/
 
 #include "libgrx.h"
@@ -24,29 +26,30 @@ static const GrFont *cvfont;
 
 static int charwdt(int chr)
 {
-	chr -= cvfont->h.minchar;
-	if((unsigned int)chr >= cvfont->h.numchars) return(-1);
-	return(cvfont->chrinfo[chr].width);
+    chr -= cvfont->h.minchar;
+    if ((unsigned int)chr >= cvfont->h.numchars) return(-1);
+    return (cvfont->chrinfo[chr].width);
 }
 
 static int bitmap(int chr,int w,int h,char *buffer)
 {
-	chr -= cvfont->h.minchar;
-	if((unsigned int)chr >= cvfont->h.numchars)       return(FALSE);
-	if((unsigned int)w != cvfont->chrinfo[chr].width) return(FALSE);
-	if((unsigned int)h != cvfont->h.height)           return(FALSE);
-	memcpy(
-	    buffer,
-	    &cvfont->bitmap[cvfont->chrinfo[chr].offset],
-	    ((w + 7) >> 3) * h
-	);
-	return(TRUE);
+    chr -= cvfont->h.minchar;
+    if ((unsigned int)chr >= cvfont->h.numchars)       return (FALSE);
+    if (cvfont->chrinfo[chr].width == 0)               return (FALSE); // a sparse font
+    if ((unsigned int)w != cvfont->chrinfo[chr].width) return (FALSE);
+    if ((unsigned int)h != cvfont->h.height)           return (FALSE);
+    memcpy(
+        buffer,
+        &cvfont->bitmap[cvfont->chrinfo[chr].offset],
+        ((w + 7) >> 3) * h
+    );
+    return (TRUE);
 }
 
 GrFont *GrBuildConvertedFont(const GrFont *from,int cvt,int w,int h,int minch,int maxch)
 {
-	cvfont = from;
-	if(!cvfont) return(NULL);
-	return(_GrBuildFont(&from->h,cvt,w,h,minch,maxch,charwdt,bitmap,FALSE));
+    cvfont = from;
+    if (!cvfont) return(NULL);
+    return (_GrBuildFont(&from->h,cvt,w,h,minch,maxch,charwdt,bitmap,FALSE));
 }
 

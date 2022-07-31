@@ -1,3 +1,43 @@
+2022-07-31 ----------- MGRX 1.4.0 released
+2022-07-25 Two new GrGUI functions:
+             void GUIObjectUpdList(GUIObject *o, void **reg, int nreg, int vreg, int sreg);
+             void GUIObjectUpdDList(GUIObject *o, void **reg, int nreg, int sreg);
+           they let update the List parameters without access through the
+           GUIObject struct.
+           Speedy a bit the load of sparse fonts.
+           List and DList objects can have zero registers.
+2022-07-25 Added two unicode fonts to the fonts subdirectorie:
+             unifont.fnt  16 16 proportional 5
+               Converted from Unifont, dual license, GPL2 & OFL, 57071 glyphs
+             unimk20.fnt  20 20 proportional 5
+               Converted from Markus Kuhn X11 misc-fixed unicode fonts, using
+               the 10x20 and 20x20ja fonts, public domain, 23098 glyphs
+             Both font are sparse proportional fonts, but really are fixed ones
+             with single and double wide chars.
+2022-07-16 Added sparse attribute to the GrFontHeader struct and let fonts to
+           be sparse, with glyphs undefined between min and max glyphs. This is
+           achieved simply letting the width of a glyph to be zero and obviusly
+           not having associated bitmap, so the offset attribute is irrelevant.
+           The font can be sparse if the sparse attribute is true. Fonts drivers
+           could set it when loading a font. At this moment only the grx format
+           can be sparse and only for proportional fonts using the same trick
+           mentioned. Note that loading a sparse proportional grx font will fail
+           in previous MGRX versions. The motivation for this change is to be
+           able to build unicode encoded fonts that only include a subset of
+           characters without them becoming huge files.
+           Changed all necesary source code to support sparse fonts.
+           Added usedefg and defglyph attributes to the GrFontHeader struct to
+           let fonts declare a default glyph, that funcionality will be added
+           later.
+2022-07-15 New funtion that bypass the normal MGRX algo to find a font:
+             GrFont *GrLoadFontFile(char *name, char *driver);
+           Solved bug in _GrScanPolygon, when scaning big polygons sometimes
+           the scan table overflowed.
+           Solved bug in src/wideline/drwcpoly.c, the intersect1 doesn't work
+           well if the generate rectangles are near paralells, so check and
+           use intersect2 in that cases. Nevertheless a better code is nedded.
+           Move licenses to the licenses subdir and clarify copying.grx.
+           New test/polytedb.c double buffer version of polytest.c
 2022-03-27 ----------- MGRX 1.3.6 released
 2022-03-18 For the W32 driver changed theALT_0..9,A..Z recognition to be more
            generic and work for any keboard (like the Greek one)

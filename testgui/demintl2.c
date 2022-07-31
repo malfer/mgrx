@@ -46,6 +46,7 @@
 #define COMMAND_FONT_ISO88591     204
 #define COMMAND_FONT_MGRX         205
 #define COMMAND_FONT_CP437EXT     206
+#define COMMAND_FONT_UNICODE      207
 #define COMMAND_UENC_CP437        211
 #define COMMAND_UENC_CP850        212
 #define COMMAND_UENC_CP1252       213
@@ -78,6 +79,7 @@
 #define COMMAND_LOADFONT_ISO59    340
 #define COMMAND_LOADFONT_MGRX     400
 #define COMMAND_LOADFONT_CP437EXT 440
+#define COMMAND_LOADFONT_UNICODE  460
 #define COMMAND_LOADFONT_LAST     499
 
 /* tiles ids */
@@ -116,6 +118,7 @@ static GrFont *grf_CP1252 = NULL;
 static GrFont *grf_ISO88591 = NULL;
 static GrFont *grf_MGRX = NULL;
 static GrFont *grf_CP437Ext = NULL;
+static GrFont *grf_Unicode = NULL;
 static GrFont *texta_font = NULL;
 
 static char *font_name_CP437 = "pc8x16.fnt";
@@ -124,6 +127,7 @@ static char *font_name_CP1252 = "ter-114b.res";
 static char *font_name_ISO88591 = "ncen22b.fnt";
 static char *font_name_MGRX = "tmgrx22b.fnt";
 static char *font_name_CP437Ext = "px8x18.fnt";
+static char *font_name_Unicode = "unifont.fnt";
 static char *stext_font = NULL;
 
 char *abouttext[3] = {
@@ -261,7 +265,7 @@ int main()
 
 static void setup(int restartonlygui)
 {
-    static char *wintitle = "MGRX+GrGUI 1.3.6, the graphics library";
+    static char *wintitle = "MGRX+GrGUI 1.4.0, the graphics library";
 
     if (!restartonlygui) {
         GrSetMode(GR_width_height_bpp_graphics, globalw, globalh, globalbpp);
@@ -332,6 +336,13 @@ static void setup_fonts(void)
     }
     //GrFontSetEncoding(grf_CP437Ext, GR_FONTENC_CP437EXT);
 
+    if (grf_Unicode == NULL) grf_Unicode = GrLoadFont(font_name_Unicode);
+    if (grf_Unicode == NULL) {
+        sprintf(aux,"%s not found", font_name_Unicode);
+        disaster(aux);
+    }
+    //GrFontSetEncoding(grf_Unicode, GR_FONTENC_UNICODE);
+
     if (texta_font == NULL) {
         texta_font = grf_CP437;
         stext_font = font_name_CP437;
@@ -359,13 +370,14 @@ static void setup_menus(void)
 
     static GUIMenu menu1 = {1, 13, 0, itemsm1};
 
-    static GUIMenuItem itemsm2[14] = {
+    static GUIMenuItem itemsm2[15] = {
         {GUI_MI_MENU, 1, "&1 Select CP437 font", '1', NULL, 0, 21, 0}, 
         {GUI_MI_MENU, 1, "&2 Select CP850 font", '2', NULL, 0, 22, 0}, 
         {GUI_MI_MENU, 0, "&3 Select CP1252 font", '3', NULL, 0, 23, 0}, 
         {GUI_MI_MENU, 1, "&4 Select ISO8859-1 font", '4', NULL, 0, 24, 0}, 
         {GUI_MI_MENU, 1, "&5 Select MGRX font", '5', NULL, 0, 25, 0}, 
         {GUI_MI_MENU, 1, "&6 Select CP437Ext font", '6', NULL, 0, 26, 0}, 
+        {GUI_MI_MENU, 1, "&7 Select Unicode font", '7', NULL, 0, 27, 0}, 
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
         {GUI_MI_OPER, 1, "&Save content to demintl2.out", 'S', NULL, 0, COMMAND_TP_SAVE, 0},
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
@@ -375,7 +387,7 @@ static void setup_menus(void)
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
         {GUI_MI_OPER, 1, "&No clipboard limit", 'N', NULL, 0, COMMAND_TP_NOLIMIT, 0}};
 
-    static GUIMenu menu2 = {2, 14, 0, itemsm2};
+    static GUIMenu menu2 = {2, 15, 0, itemsm2};
 
     static GUIMenuItem itemsm21[7] = {
         {GUI_MI_OPER, 1, "&A pc6x8.fnt", 'A', NULL, 0, COMMAND_LOADFONT_CP437+1, 0}, 
@@ -449,6 +461,12 @@ static void setup_menus(void)
 
     static GUIMenu menu26 = {26, 5, 0, itemsm26};
 
+    static GUIMenuItem itemsm27[2] = {
+        {GUI_MI_OPER, 1, "&A unifont.fnt", 'A', NULL, 0, COMMAND_LOADFONT_UNICODE+1, 0},
+        {GUI_MI_OPER, 1, "&B unimk20.fnt", 'B', NULL, 0, COMMAND_LOADFONT_UNICODE+2, 0}};
+
+    static GUIMenu menu27 = {27, 2, 0, itemsm27};
+
     static GUIMenuItem itemsm3[11] = {
         {GUI_MI_OPER, 1, "&About", 'A', NULL, 0, COMMAND_DLG_ABOUT, 0},
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
@@ -485,6 +503,7 @@ static void setup_menus(void)
     GUIMenuRegister(&menu24);
     GUIMenuRegister(&menu25);
     GUIMenuRegister(&menu26);
+    GUIMenuRegister(&menu27);
     GUIMenuRegister(&menu3);
     GUIMenuBarSet(&menubar);
 }
@@ -576,7 +595,8 @@ static void setup_groups(void)
 #define PX1 80
 #define PY0 0
 #define INCRY 42
-#define NOBJECTSP1 16
+#define NOBJECTSP1 17
+#define FNAMETOLOAD_ID 999
 
     static char *listuenc[8] = {
         "CP437",
@@ -595,22 +615,23 @@ static void setup_groups(void)
 
     grp1 = GUIGroupCreate(NOBJECTSP1, 16, 32);
     GUIObjectSetLabel(&(grp1->o[0]), 0, PX0, PY0-20, 160, 20, GrNOCOLOR, EGAC_BLACK, "Set FontEncoding");
-    GUIObjectSetButton(&(grp1->o[1]), 1, PX0, PY0, 80, 40, EGAC_BLUE, EGAC_YELLOW, "CP437", COMMAND_FONT_CP437, 101, 1);
-    GUIObjectSetButton(&(grp1->o[2]), 2, PX1, PY0, 80, 40, EGAC_BLUE, EGAC_YELLOW, "CP850", COMMAND_FONT_CP850, 101, 0);
-    GUIObjectSetButton(&(grp1->o[3]), 3, PX0, PY0+INCRY*1, 80, 40, EGAC_BLUE, EGAC_YELLOW, "CP1252", COMMAND_FONT_CP1252, 101, 0);
-    GUIObjectSetButton(&(grp1->o[4]), 4, PX1, PY0+INCRY*1, 80, 40, EGAC_BLUE, EGAC_YELLOW, "8859-1", COMMAND_FONT_ISO88591, 101, 0);
-    GUIObjectSetButton(&(grp1->o[5]), 5, PX0, PY0+INCRY*2, 80, 40, EGAC_BLUE, EGAC_YELLOW, "MGRX", COMMAND_FONT_MGRX, 101, 0);
-    GUIObjectSetButton(&(grp1->o[6]), 6, PX1, PY0+INCRY*2, 80, 40, EGAC_BLUE, EGAC_YELLOW, "437Ext", COMMAND_FONT_CP437EXT, 101, 0);
-    GUIObjectSetLabel(&(grp1->o[7]), 7, PX0, PY0+INCRY*3.6-20, 160, 20, GrNOCOLOR, EGAC_BLACK, "Set UserEncoding");
-    GUIObjectSetList(&(grp1->o[8]),  8, PX0, PY0+INCRY*3.6, 160, 30, EGAC_WHITE, EGAC_BLACK, (void **)listuenc, 8, 8, GrGetUserEncoding());
-    GUIObjectSetLabel(&(grp1->o[9]), 9, PX0, PY0+INCRY*5-20, 160, 20, GrNOCOLOR, EGAC_BLACK, "Tests");
-    GUIObjectSetButton(&(grp1->o[10]), 10, PX0, PY0+INCRY*5, 80, 40, EGAC_BROWN, EGAC_WHITE, "Glyphs", COMMAND_TEST1, 0, 0);
-    GUIObjectSetButton(&(grp1->o[11]), 11, PX1, PY0+INCRY*5, 80, 40, EGAC_BROWN, EGAC_WHITE, "Chars", COMMAND_TEST2, 0, 0);
-    GUIObjectSetButton(&(grp1->o[12]), 12, PX0, PY0+INCRY*6, 80, 40, EGAC_BROWN, EGAC_WHITE, "Strings", COMMAND_TEST3, 0, 0);
-    GUIObjectSetButton(&(grp1->o[13]), 13, PX1, PY0+INCRY*6, 80, 40, EGAC_BROWN, EGAC_WHITE, "LoadFile", COMMAND_TEST4, 0, 0);
-    GUIObjectSetEntry(&(grp1->o[14]), 14, PX0, PY0+INCRY*7.1, 160, 30, EGAC_WHITE, EGAC_BLACK, 90, "demintl2.c");
-    GUIObjectSetButton(&(grp1->o[15]), 15, PX0, PY0+INCRY*8, 160, 40, EGAC_RED, EGAC_WHITE, "Exit", COMMAND_EXIT, 0, 0);
-    if (savefnamegrp1) GUIGroupSetText(grp1, 14, savefnamegrp1);
+    GUIObjectSetButton(&(grp1->o[1]), 1, PX0, PY0, 45, 40, EGAC_BLUE, EGAC_YELLOW, "437", COMMAND_FONT_CP437, 101, 1);
+    GUIObjectSetButton(&(grp1->o[2]), 2, PX0+45, PY0, 70, 40, EGAC_BLUE, EGAC_YELLOW, "437Ext", COMMAND_FONT_CP437EXT, 101, 0);
+    GUIObjectSetButton(&(grp1->o[3]), 3, PX0+115, PY0, 45, 40, EGAC_BLUE, EGAC_YELLOW, "850", COMMAND_FONT_CP850, 101, 0);
+    GUIObjectSetButton(&(grp1->o[4]), 4, PX0, PY0+INCRY*1, 80, 40, EGAC_BLUE, EGAC_YELLOW, "CP1252", COMMAND_FONT_CP1252, 101, 0);
+    GUIObjectSetButton(&(grp1->o[5]), 5, PX1, PY0+INCRY*1, 80, 40, EGAC_BLUE, EGAC_YELLOW, "8859-1", COMMAND_FONT_ISO88591, 101, 0);
+    GUIObjectSetButton(&(grp1->o[6]), 6, PX0, PY0+INCRY*2, 80, 40, EGAC_BLUE, EGAC_YELLOW, "MGRX", COMMAND_FONT_MGRX, 101, 0);
+    GUIObjectSetButton(&(grp1->o[7]), 7, PX1, PY0+INCRY*2, 80, 40, EGAC_BLUE, EGAC_YELLOW, "Unicode", COMMAND_FONT_UNICODE, 101, 0);
+    GUIObjectSetLabel(&(grp1->o[8]), 8, PX0, PY0+INCRY*3.6-20, 160, 20, GrNOCOLOR, EGAC_BLACK, "Set UserEncoding");
+    GUIObjectSetList(&(grp1->o[9]),  9, PX0, PY0+INCRY*3.6, 160, 30, EGAC_WHITE, EGAC_BLACK, (void **)listuenc, 8, 8, GrGetUserEncoding());
+    GUIObjectSetLabel(&(grp1->o[10]), 10, PX0, PY0+INCRY*5-20, 160, 20, GrNOCOLOR, EGAC_BLACK, "Tests");
+    GUIObjectSetButton(&(grp1->o[11]), 11, PX0, PY0+INCRY*5, 80, 40, EGAC_BROWN, EGAC_WHITE, "Glyphs", COMMAND_TEST1, 0, 0);
+    GUIObjectSetButton(&(grp1->o[12]), 12, PX1, PY0+INCRY*5, 80, 40, EGAC_BROWN, EGAC_WHITE, "Chars", COMMAND_TEST2, 0, 0);
+    GUIObjectSetButton(&(grp1->o[13]), 13, PX0, PY0+INCRY*6, 80, 40, EGAC_BROWN, EGAC_WHITE, "Strings", COMMAND_TEST3, 0, 0);
+    GUIObjectSetButton(&(grp1->o[14]), 14, PX1, PY0+INCRY*6, 80, 40, EGAC_BROWN, EGAC_WHITE, "LoadFile", COMMAND_TEST4, 0, 0);
+    GUIObjectSetEntry(&(grp1->o[15]), FNAMETOLOAD_ID, PX0, PY0+INCRY*7.1, 160, 30, EGAC_WHITE, EGAC_BLACK, 90, "demintl2.c");
+    GUIObjectSetButton(&(grp1->o[16]), 16, PX0, PY0+INCRY*8, 160, 40, EGAC_RED, EGAC_WHITE, "Exit", COMMAND_EXIT, 0, 0);
+    if (savefnamegrp1) GUIGroupSetText(grp1, FNAMETOLOAD_ID, savefnamegrp1);
     GUIGroupSetSelected(grp1, saveselectedgrp1, 0);
     GUIGroupSetPanel(grp1, tile2->p);
 }
@@ -620,7 +641,7 @@ static void setup_groups(void)
 static void unsetup(void)
 {
     if (savefnamegrp1) free(savefnamegrp1);
-    savefnamegrp1 = GUIGroupGetText(grp1, 14, GR_UTF8_TEXT);
+    savefnamegrp1 = GUIGroupGetText(grp1, FNAMETOLOAD_ID, GR_UTF8_TEXT);
     saveselectedgrp1 = GUIGroupGetSelected(grp1);
     saveselectedtile = GUITilesGetSelected();
     GUIGroupDestroy(grp1);
@@ -722,6 +743,11 @@ static int process_command(GrEvent *ev)
         case COMMAND_FONT_CP437EXT :
             texta_font = grf_CP437Ext;
             stext_font = font_name_CP437Ext;
+            restart_paint(0);
+            return 1;
+        case COMMAND_FONT_UNICODE :
+            texta_font = grf_Unicode;
+            stext_font = font_name_Unicode;
             restart_paint(0);
             return 1;
 
@@ -873,6 +899,8 @@ static int process_loadfont(long nfont)
         "tmgrx32b.fnt", "tmgrx32n.fnt"};
     static char* cp437ext_fonts[5] = {
         "px8x18.fnt", "px11x22.fnt", "px14x28.fnt", "px16x36.fnt", "px16x36b.fnt"};
+    static char* unicode_fonts[2] = {
+        "unifont.fnt", "unimk20.fnt"};
     int selected;
     char aux[81];
     
@@ -951,6 +979,21 @@ static int process_loadfont(long nfont)
         restart_paint(1);
         return 1;
     }
+    if ((nfont >= COMMAND_LOADFONT_UNICODE+1) && (nfont <= COMMAND_LOADFONT_UNICODE+2)) {
+        selected = nfont - COMMAND_LOADFONT_UNICODE - 1;
+        GrUnloadFont(grf_Unicode);
+        font_name_Unicode = unicode_fonts[selected];
+        grf_Unicode = GrLoadFont(font_name_Unicode);
+        if (grf_Unicode == NULL) {
+            sprintf(aux,"%s not found", font_name_Unicode);
+            disaster(aux);
+        }
+        texta_font = grf_Unicode;
+        stext_font = font_name_Unicode;
+        GUIMenuSetUniqueTag(27, nfont, 2);
+        restart_paint(1);
+        return 1;
+    }
     return 0;
 }
 
@@ -992,6 +1035,9 @@ static void restart_groups(void)
             break;
         case GR_FONTENC_CP437EXT:
             command_fontenc = COMMAND_FONT_CP437EXT;
+            break;
+        case GR_FONTENC_UNICODE:
+            command_fontenc = COMMAND_FONT_UNICODE;
             break;
     }
         
@@ -1046,6 +1092,9 @@ static void dotest(int n)
     
     GUITPHideTCursor(textpanel1);
     GUITPGetStatus(textpanel1, &tast);
+    GrMouseEraseCursor();
+    GrMouseSetInternalCursor(GR_MCUR_TYPE_GLASS, GrWhite(), GrBlack());
+    GrMouseDisplayCursor();
     switch (n) {
         case 1:
             GUITPNewLine(textpanel1);
@@ -1061,6 +1110,7 @@ static void dotest(int n)
                 if (count >= 32) {
                     count = 0;
                     GUITPNewLine(textpanel1);
+                    GrEventFlush(); // a compromise
                 }
             }
             if (count > 0) GUITPNewLine(textpanel1);
@@ -1083,6 +1133,7 @@ static void dotest(int n)
                 if (count >= 32) {
                     count = 0;
                     GUITPNewLine(textpanel1);
+                    GrEventFlush(); // a compromise
                 }
             }
             if (count > 0) GUITPNewLine(textpanel1);
@@ -1108,6 +1159,9 @@ static void dotest(int n)
             file_listing();
             break;
     }
+    GrMouseEraseCursor();
+    GrMouseSetInternalCursor(GR_MCUR_TYPE_ARROW, GrWhite(), GrBlack());
+    GrMouseDisplayCursor();
     GUITPTextColorIndex(textpanel1, textpanel1fgcolorindex);
     GUITPShowTCursor(textpanel1);
 }
@@ -1269,7 +1323,7 @@ static void file_listing(void)
     //int l;
     long etime0, etime1, etime2;
     
-    s = GUIGroupGetText(grp1, 14, GR_UTF8_TEXT);
+    s = GUIGroupGetText(grp1, FNAMETOLOAD_ID, GR_UTF8_TEXT);
     if (s == NULL) return;
 
     f = fopen(s, "r");

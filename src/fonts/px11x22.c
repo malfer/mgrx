@@ -1,5 +1,5 @@
 /**
- ** PX11X22.C ---- GRX 2.0 font converted to C by 'GrDumpFont()'
+ ** PX11X22.C ---- MGRX font converted to C by 'GrDumpFont()'
  **/
 
 #define  GrFont_PX11x22     FONTNAME_TEMPORARY_REDIRECTION
@@ -1637,7 +1637,12 @@ struct {
             1,  		    /* underline width */
             0,  		    /* lowest character code in font */
             322,  		    /* number of characters in font */
-            9   		    /* encoding */
+            9,  		    /* font encoding (if known) */
+            0,  		    /* is this font sparse? */
+            0,  		    /* use default glyph? */
+            0,  		    /* unused to align */
+            0,  		    /* unused to align */
+            0   		    /* default glyph */
         },
         (char *)GrFont_PX11x22_bits,/* character bitmap array */
         0,                          /* auxiliary bitmap */

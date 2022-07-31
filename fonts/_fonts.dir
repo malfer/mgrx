@@ -314,3 +314,7 @@ tmgrx28b.fnt 14 28 fixed        6
 tmgrx28n.fnt 14 28 fixed        6
 tmgrx32b.fnt 16 32 fixed        6
 tmgrx32n.fnt 16 32 fixed        6
+# Converted from Unifont, dual license, GPL2 & OFL
+unifont.fnt  16 16 proportional 5
+# Converted from Markus Kuhn X11 misc-fixed unicode fonts, public domain 
+unimk20.fnt  20 20 proportional 5

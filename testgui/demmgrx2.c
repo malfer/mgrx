@@ -3,7 +3,7 @@
  **                 grgui, only objects and dialogs, drawing and double
  **                 buffering managed directly, like the old demomgrx.c
  **
- ** Copyright (C) 2000,2001,2005,2008,2019, 2021 Mariano Alvarez Fernandez
+ ** Copyright (C) 2000,2001,2005,2008,2019,2021,2022 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This is a test/demo file of the GRX graphics library.
@@ -34,10 +34,10 @@ static int gheight = 480;
 static int gbpp = 16;
 
 char *wintitle =
-    "MGRX+GrGUI 1.3.6, the graphics library";
+    "MGRX+GrGUI 1.4.0, the graphics library";
 
 char *animatedtext[2] = {
-    "MGRX 1.3.6, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.4.0, the graphics library for DJGPPv2, Linux, X11 and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
 #if defined(__XWIN__) || defined(__WIN32__)
@@ -519,7 +519,7 @@ static void paint_screen(void)
 
 static void the_title(int x, int y)
 {
-    char *t1 = "MGRX 1.3.6";
+    char *t1 = "MGRX 1.4.0";
     char *t2 = "test programs launcher";
 
     grt_centered.txo_fgcolor = EGAC_LIGHTGREEN;

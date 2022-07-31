@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, fonts can be sparse
+ **
  **/
 
 #include <ctype.h>
@@ -27,6 +29,7 @@ int GrDumpFnaFont(const GrFont *f, char *fileName)
     int x, y, width, bytes;
     char *buffer;
 
+    if (f->h.sparse) return 0; // .fna format can not store sparse fonts
     FILE *fp = fopen(fileName, "w");
     if(!fp) return 0;
 

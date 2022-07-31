@@ -188,6 +188,9 @@ static int header(GrFontHeader *hdr)
     hdr->minchar      = fhtp->firstch;
     hdr->numchars     = fhtp->nchrs;
     hdr->encoding     = 0; /* GR_FONTENC_UNKNOWN */
+    hdr->sparse       = FALSE;
+    hdr->usedefg      = FALSE;
+    hdr->defglyph     = 0;
     DBGPRINTF(DBG_FONT,(
         "Font header:\n"
         "  name         = %s\n"

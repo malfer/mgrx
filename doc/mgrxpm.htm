@@ -8,12 +8,12 @@
 
 <center>
 <h1><font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
-<small>1.3.6</small></h1>
+<small>1.4.0</small></h1>
 <h1>a C graphics library for DOS, Linux console &amp; X11 and Win32</h1>
 <h2>Programmer's Manual</h2>
 <p>Based on the original GRX manual written by: Csaba Biegl on August 10, 1992
 <p>Adapted for MGRX by: Mariano Alvarez Fern&aacute;ndez on August 1, 2005
-<p>Last update: March 20, 2022
+<p>Last update: July 28, 2022
 </center>
 
 <!--- ===================================================================== --->
@@ -1678,7 +1678,8 @@ the <b>MGRX</b> own format. Some of these fonts were converted from VGA fonts,
 these fonts have all 256 characters from the CP437 or CP850 codepage. Some
 fonts were converted from fonts in the MIT X11 distribution, these are ASCII
 or ISO-8859-1 coded. A group of fonts were converted from the Terminus font
-and are MGRX512 encoded. The following fonts are included:
+and are MGRX512 encoded. There are too two big unicode fonts. The following
+fonts are included:
 <pre>
 <b>Font file name       Family  Description</b>
 pc&lt;W>x&lt;H>[t].fnt     pc      pc font, fixed, CP437
@@ -1695,6 +1696,8 @@ ncen&lt;H>[b][i].fnt    ncen    X11, proportional, new century schoolbook, ISO-8
 symb&lt;H>.fnt          symbol  X11, proportional, greek letters, symbols 
 tms&lt;H>[b][i].fnt     times   X11, proportional, times, ISO-8859-1
 tmgrx&lt;H>[b].fnt      tmgrx   Ter, fixed, MGRX512
+unifont.fnt          unifont Converted from Unifont, propotional, Unicode
+unimk20.fnt          unimk   X11, propotional, Unicode
 </pre>
 <p>&nbsp;&nbsp;In the font names &lt;W> means the font width, &lt;H> the font
 height. Many font families have bold and/or italic variants. The files
@@ -1722,16 +1725,15 @@ extern  GrFont          GrFont_PX14x28;
 
 <p>&nbsp;&nbsp;Other fonts must be loaded with the <code>GrLoadFont</code>
 function. If the font file name starts with any path separator character
-or character sequence ('<drive letter>:', '/' or '\') then it is loaded
+or character sequence ('&lt;drive letter>:', '/' or '\') then it is loaded
 from the specified directory, otherwise the library try load the font first
 from the current directory and next from the default font path. The font
 path can be set up with the <code>GrSetFontPath</code> function. If the font
 path is not set then the value of the 'GRXFONT' environment variable is used
-as the font path. If <code>GrLoadFont</code> is called again with the name
-of an already loaded font then it will return a pointer to the result of the
-first loading. Font loading routines return NULL if the font was not found.
-When not needed any more, fonts can be unloaded (i.e. the storage occupied
-by them freed) by calling <code>GrUnloadFont</code>.
+as the font path. <code>GrLoadFont</code> will try every font driver, adding
+the driver extension if necesary. Font loading routines return NULL if the
+font was not found. When not needed any more, fonts can be unloaded (i.e.
+the storage occupied by them freed) by calling <code>GrUnloadFont</code>.
 
 <p>&nbsp;&nbsp;The prototype declarations for these functions:
 <pre>
@@ -1764,6 +1766,13 @@ these defines:
 <p>&nbsp;&nbsp;<code>GR_FONTCVT_SKIPCHARS</code> needs 'minch' and 'maxch'
 arguments.
 <p>&nbsp;&nbsp;<code>GR_FONTCVT_RESIZE</code> needs 'w' and 'h' arguments.
+
+<p>&nbsp;&nbsp;The function:
+<pre>
+GrFont *GrLoadFontFile(char *name, char *driver);
+</pre>
+<p>will try to load the named font file using the font driver specified
+bypassing the normal lookup.
 
 <p>&nbsp;&nbsp;The function:
 <pre>

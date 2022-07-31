@@ -29,7 +29,7 @@
 
 /* Version of MGRX API */
 
-#define MGRX_VERSION_API 0x0136
+#define MGRX_VERSION_API 0x0140
 
 /* these are the supported configurations: */
 #define MGRX_VERSION_GCC_386_DJGPP       1       /* DJGPP v2 */
@@ -898,22 +898,27 @@ typedef struct _GR_fontHeader {         /* font descriptor */
         unsigned int  baseline;             /* baseline pixel pos (from top) */
         unsigned int  ulpos;                /* underline pixel pos (from top) */
         unsigned int  ulheight;             /* underline width */
-        unsigned int  minchar;              /* lowest character code in font */
-        unsigned int  numchars;             /* number of characters in font */
+        unsigned int  minchar;              /* lowest glyph code in font */
+        unsigned int  numchars;             /* number of glyphs in font */
         unsigned int  encoding;             /* font encoding (if known) */
+        char     sparse;                    /* is this font sparse? */
+        char     usedefg;                   /* use default glyph? TODO */
+        char     unused1;                   /* unused to align */
+        char     unused2;                   /* unused to align */
+        unsigned int  defglyph;             /* default glyph */
 } GrFontHeader;
 
-typedef struct _GR_fontChrInfo {        /* character descriptor */
-        unsigned int  width;                /* width of this character */
+typedef struct _GR_fontChrInfo {        /* glyph descriptor */
+        unsigned int  width;                /* width of this glyph */
         unsigned int  offset;               /* offset from start of bitmap */
 } GrFontChrInfo;
 
 typedef struct _GR_font {               /* the complete font */
         struct   _GR_fontHeader h;          /* the font info structure */
-        char     *bitmap;                   /* character bitmap array */
-        char     *auxmap;                   /* map for rotated & underline chrs */
-        unsigned int  minwidth;             /* width of narrowest character */
-        unsigned int  maxwidth;             /* width of widest character */
+        char     *bitmap;                   /* glyph bitmap array */
+        char     *auxmap;                   /* map for rotated & underline glyphs */
+        unsigned int  minwidth;             /* width of narrowest glyph */
+        unsigned int  maxwidth;             /* width of widest glyph */
         unsigned int  auxsize;              /* allocated size of auxiliary map */
         unsigned int  auxnext;              /* next free byte in auxiliary map */
         unsigned int  *auxoffs[7];          /* offsets to completed aux chars */
@@ -933,18 +938,20 @@ extern  GrFont          GrFont_PX14x28;
 GrFont *GrGetDefaultFont();  /* GrFont_PC8x14 if not changed */
 void GrSetDefaultFont(GrFont *font);
 
+void GrSetFontPath(char *path_list);
 GrFont *GrLoadFont(char *name);
 GrFont *GrLoadConvertedFont(char *name,int cvt,int w,int h,int minch,int maxch);
 GrFont *GrBuildConvertedFont(const GrFont *from,int cvt,int w,int h,int minch,int maxch);
+/* next funtion bypass the normal MGRX algo to find a font */
+GrFont *GrLoadFontFile(char *name, char *driver);
 
 void GrUnloadFont(GrFont *font);
 int GrDumpFont(const GrFont *font,char *CsymbolName,char *fileName);
 int GrDumpFnaFont(const GrFont *font,char *fileName);
 int GrDumpGrxFont(const GrFont *font,char *fileName);
-void GrSetFontPath(char *path_list);
 
 /*
- * In these functions chr is a font char index, not a real char
+ * In these functions chr is a font glyph index, not a real char
  * recode it before use if you want to work with real chars
  */
 int  GrFontCharPresent(const GrFont *font,unsigned int chr);
@@ -999,8 +1006,9 @@ void GrTextXY(int x,int y,char *text,GrColor fg,GrColor bg);
 
 #ifndef GRX_SKIP_INLINES
 #define GrFontCharPresent(f,ch) (                                              \
-        ((unsigned int)(ch) < (f)->h.minchar) ? 0 :                            \
-        (((unsigned int)(ch) - (f)->h.minchar) < (f)->h.numchars)              \
+        ((unsigned int)(ch) < (f)->h.minchar) ? 0 : (                          \
+        (((unsigned int)(ch) - (f)->h.minchar) >= (f)->h.numchars) ? 0 :       \
+        (f->chrinfo[(unsigned int)(ch) - (f)->h.minchar].width > 0) )          \
 )
 #define GrFontCharWidth(f,ch) (                                                \
         GrFontCharPresent(f,ch) ?                                              \

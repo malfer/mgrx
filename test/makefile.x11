@@ -71,6 +71,7 @@ PROGS=  xarctest     \
 	xpnmtest     \
 	xpngtest     \
 	xpolytest    \
+	xpolytedb    \
 	xrgbtest     \
 	xsbctest     \
 	xscroltst    \

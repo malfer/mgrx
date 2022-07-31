@@ -1,5 +1,5 @@
 /**
- ** pc6x8.c ---- GRX 2.0 font converted to C by 'GrDumpFont()'
+ ** pc6x8.c ---- MGRX font converted to C by 'GrDumpFont()'
  **
  **/
  
@@ -541,7 +541,12 @@ struct {
 	    1,			    /* underline width */
 	    0,			    /* lowest character code in font */
 	    256,		    /* number of characters in font */
-        GR_FONTENC_CP437 /* encoding */
+        GR_FONTENC_CP437, /* encoding */
+        0,  		    /* is this font sparse? */
+        0,  		    /* use default glyph? */
+        0,  		    /* unused to align */
+        0,  		    /* unused to align */
+        0   		    /* default glyph */
 	},
 	(char *)GrFont_PC6x8_bits,  /* character bitmap array */
 	0,			    /* auxiliary bitmap */

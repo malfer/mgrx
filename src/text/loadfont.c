@@ -14,6 +14,9 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 220715 M.Alvarez, added GrLoadFontFile function that bypass the
+ **                   normal MGRX algo to find a font
+ **
  **/
 
 #include <string.h>
@@ -31,7 +34,7 @@ static GrFont *doit(char *fname,char *path,int cvt,int w,int h,int lo,int hi)
     char pathname[200];
     char tempstring[200];
     int  plen;
-    
+
     GRX_ENTER();
     res = NULL;
     strcpy(pathname,path);
@@ -128,4 +131,41 @@ GrFont *GrLoadConvertedFont(char *name,int cvt,int w,int h,int minc,int maxc)
 GrFont *GrLoadFont(char *name)
 {
     return(GrLoadConvertedFont(name,GR_FONTCVT_NONE,0,0,0,0));
+}
+
+GrFont *GrLoadFontFile(char *name, char *driver)
+{
+    GrFontDriver **fd;
+    GrFontHeader hdr;
+    GrFont *f, *res;
+    char tempstring[200];
+
+    GRX_ENTER();
+    res = NULL;
+    DBGPRINTF(DBG_FONT,("opening font %s driver %s\n", name, driver));
+    hdr.name   = &tempstring[0];
+    hdr.family = &tempstring[100];
+    for(fd = _GrFontDriverTable; (*fd) != NULL; fd++) {
+        if (strcmp(driver, (*fd)->name) == 0) {
+            if(!((*fd)->openfile)(name)) break;
+            if(!((*fd)->header)(&hdr)) {
+                DBGPRINTF(DBG_FONT,("fd->header failed for %s\n", name));
+                (*fd)->cleanup();
+                break;
+            }
+            f = _GrBuildFont(&hdr, GR_FONTCVT_NONE, 0, 0, 0, 0,
+                             (*fd)->charwdt,
+                             (*fd)->bitmap,
+                             (*fd)->scalable);
+            if(!f) {
+                DBGPRINTF(DBG_FONT,("GrLoadFontFile failed for %s\n", name));
+                (*fd)->cleanup();
+                break;
+            }
+            (*fd)->cleanup();
+            res = f;
+            break;
+        }
+    }
+    GRX_RETURN(res);
 }

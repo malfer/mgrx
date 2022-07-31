@@ -20,20 +20,22 @@
 #include "mgrxkeys.h"
 
 #define FONT "../fonts/tms38b.fnt"
+char *hello1 = " Hello world ! ";
+char *hello2 = " Hello world !! ";
 
 static void print_hellos(int x, int y, GrTextOption *opt,
                          GrPattern *p1, GrPattern *p2, int hv)
 {
     if (hv) {
-        GrPatternDrawString(" Hello world ! ", 15, x, y, opt, p1);
-        GrPatternDrawString(" Hello world ! ", 15, x+40, y+4, opt, p2);
-        GrPatternDrawStringExt(" Hello world !! ", 16, x+90, y, opt, p1);
-        GrPatternDrawStringExt(" Hello world !! ", 16, x+130, y+4, opt, p2);
+        GrPatternDrawString(hello1, 15, x, y, opt, p1);
+        GrPatternDrawString(hello1, 15, x+40, y+4, opt, p2);
+        GrPatternDrawStringExt(hello2, 16, x+90, y, opt, p1);
+        GrPatternDrawStringExt(hello2, 16, x+130, y+4, opt, p2);
     } else {
-        GrPatternDrawString(" Hello world ! ", 15, x, y, opt, p1);
-        GrPatternDrawString(" Hello world ! ", 15, x+4, y+40, opt, p2);
-        GrPatternDrawStringExt(" Hello world !! ", 16, x, y+90, opt, p1);
-        GrPatternDrawStringExt(" Hello world !! ", 16, x+4, y+130, opt, p2);
+        GrPatternDrawString(hello1, 15, x, y, opt, p1);
+        GrPatternDrawString(hello1, 15, x+4, y+40, opt, p2);
+        GrPatternDrawStringExt(hello2, 16, x, y+90, opt, p1);
+        GrPatternDrawStringExt(hello2, 16, x+4, y+130, opt, p2);
     }
 }
 

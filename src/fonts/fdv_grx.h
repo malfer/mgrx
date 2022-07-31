@@ -31,6 +31,11 @@
  *  +-----------------------+
  *  |     BITMAP            |
  *  +-----------------------+
+ * 
+ *  MGRX, from version 1.4.0, can read
+ *  proportional sparse fonts (with
+ *  glyphs with width=0 and no bitmap)
+ * 
  */
 
 #define GRX_NAMEWIDTH   16

@@ -108,7 +108,7 @@ void _GrScanPolygon(int n,int pt[][2],GrFiller *f,GrFillArg c)
     }
 
     edges = (edge *)malloc(sizeof(edge) * (n + 2));
-    scans = (scan *)malloc(sizeof(scan) * (n + 8));
+    scans = (scan *)malloc(sizeof(scan) * ((n * 2) + 2));
     if(edges && scans) {
         /*
          * Build the edge table. Store only those edges which are in the

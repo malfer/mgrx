@@ -65,6 +65,7 @@ PROGS=	arctest     \
 	pnmtest     \
 	pngtest     \
 	polytest    \
+	polytedb    \
 	rgbtest     \
 	sbctest     \
 	scroltst    \

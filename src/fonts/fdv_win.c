@@ -198,6 +198,9 @@ static int header(GrFontHeader *hdr)
         hdr->minchar = fhdr.first_char;
         hdr->numchars = fhdr.last_char - fhdr.first_char + 1;
         hdr->encoding = 0; /* GR_FONTENC_UNKNOWN */
+        hdr->sparse = FALSE;
+        hdr->usedefg = FALSE;
+        hdr->defglyph = 0;
         res = TRUE;
     }
 

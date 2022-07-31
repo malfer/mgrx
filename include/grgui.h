@@ -366,6 +366,8 @@ void GUIObjectSetRegList(GUIObject *o, int id, int x, int y, int width, int heig
 void GUIObjectSetEdit(GUIObject *o, int id, int x, int y, int width, int height,
                       GrColor bg, GrColor fg, int type, int maxlen, void *initext);
 
+void GUIObjectUpdList(GUIObject *o, void **reg, int nreg, int vreg, int sreg);
+void GUIObjectUpdDList(GUIObject *o, void **reg, int nreg, int sreg);
 
 /**
  ** GROUPS of objects

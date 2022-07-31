@@ -194,7 +194,6 @@ void setup_tiles(void)
     grp1 = GUIGroupCreate(2, 12, 12);
     if (grp1 == NULL) exit(1);
     h = GrSizeY() - TILE1H - 32;
-    //GUIObjectSetDList(&(grp1->o[0]), 0, 0, 0, 160, h-45, EGAC_WHITE, EGAC_BLACK, (void **)listopt, 10, 0);
     GUIObjectSetDList(&(grp1->o[0]), 0, 0, 0, 160, h-45, EGAC_WHITE, EGAC_BLACK, (void **)dirfnt, ndirfnt, actfnt);
     GUIObjectSetButton(&(grp1->o[1]), 1, 0, h-40, 160, 40, EGAC_RED, EGAC_WHITE, "Exit", COMMAND_EXIT, 0, 0);
     GUIGroupSetSelected(grp1, saveselectedgrp1, 0);
@@ -204,9 +203,16 @@ void setup_tiles(void)
 
 int loadfont(int n)
 {
+    char s[81];
+    char *ps[1] = {s};
+
     if (glbfnt) GrUnloadFont(glbfnt);
     glbfnt = GrLoadFont(dirfnt[n]);
-    if (glbfnt == NULL) return -1;
+    if (glbfnt == NULL) {
+        sprintf(s, "Error opening %s", dirfnt[n]);
+        GUICDialogInfo("Error", (void **)ps, 1, "Ok");
+        return -1;
+    }
     actfnt = n;
 
     return 0;

@@ -47,6 +47,7 @@ PROGS=  arctest.exe     \
 	pnmtest.exe     \
 	pngtest.exe     \
 	polytest.exe    \
+	polytedb.exe    \
 	rgbtest.exe     \
 	sbctest.exe     \
 	scroltst.exe    \
