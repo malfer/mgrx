@@ -1,5 +1,6 @@
 # Ignore objects and archives.
 *.[oa]
+*.lo
 .directory
 # Ignore bin programs
 bin/bin2c
@@ -39,6 +40,7 @@ test/pixmtest
 test/pngtest
 test/pnmtest
 test/polytest
+test/polytedb
 test/rgbtest
 test/sbctest
 test/scroltst
@@ -78,6 +80,7 @@ test/xpixmtest
 test/xpngtest
 test/xpnmtest
 test/xpolytest
+test/xpolytedb
 test/xrgbtest
 test/xsbctest
 test/xscroltst

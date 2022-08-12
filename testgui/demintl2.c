@@ -265,7 +265,7 @@ int main()
 
 static void setup(int restartonlygui)
 {
-    static char *wintitle = "MGRX+GrGUI 1.4.0, the graphics library";
+    static char *wintitle = "MGRX+GrGUI 1.4.1, the graphics library";
 
     if (!restartonlygui) {
         GrSetMode(GR_width_height_bpp_graphics, globalw, globalh, globalbpp);

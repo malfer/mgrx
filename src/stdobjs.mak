@@ -259,7 +259,6 @@ GRGUI_1 = $(OP)grgui/setup$(OX) \
 	$(OP)grgui/oreglist$(OX) \
 	$(OP)grgui/oedit$(OX) \
 	$(OP)grgui/group$(OX) \
-	$(OP)grgui/textarea$(OX) \
 	$(OP)grgui/rawdl$(OX) \
 	$(OP)grgui/rawdl2$(OX) \
 	$(OP)grgui/rawtedit$(OX) \

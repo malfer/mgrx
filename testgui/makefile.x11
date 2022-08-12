@@ -12,7 +12,7 @@ INCDIR=  -I../include
 # Enable this line for static linked test progs (default)
 MGRXX = ../lib/$(GRX_LIB_SUBDIR)/libmgrxX.a
 # or this if you've already installed the shared libs
-#MGRXX = -L../lib/$(GRX_LIB_SUBDIR) -lmgrxX
+#MGRXX = -lmgrxX
 
 ifeq ($(SET_XSUIDROOT),y)
 EXECBITS = 4755
@@ -66,7 +66,7 @@ PROGS=  xgrgui01    \
 
 all: $(PROGS)
 
-$(PROGS): x%: %.o $(MGRXX)
+$(PROGS): x%: %.o
 	$(CC) $(LDOPT) -o $@ $*.o $(LIBS)
 	chmod $(EXECBITS) $@
 

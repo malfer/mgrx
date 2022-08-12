@@ -1,3 +1,7 @@
+2022-08-11 ----------- MGRX 1.4.1 released
+2022-08-09 Deleted src/grgui/textarea.c and his references. It was deprecated
+           but it had references to non existent functions, so linking with the
+           shared library failed (reported by Panagiotis Papasotiriou).
 2022-07-31 ----------- MGRX 1.4.0 released
 2022-07-25 Two new GrGUI functions:
              void GUIObjectUpdList(GUIObject *o, void **reg, int nreg, int vreg, int sreg);

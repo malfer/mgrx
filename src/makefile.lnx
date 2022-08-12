@@ -133,9 +133,9 @@ clean:
 	rm -f utilprog/*.o
 
 cleanall: clean
-ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+#ifeq ($(INCLUDE_SHARED_SUPPORT),y)
 	rm -f $(MGRXSHna) $(MGRXSHli)
-endif
+#endif
 	rm -f $(MGRXST)
 	rm -f $(UTILP) $(UTILPS)
 
@@ -157,17 +157,17 @@ endif
 
 uninstall:
 	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXST))
-ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+#ifeq ($(INCLUDE_SHARED_SUPPORT),y)
 	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSH))
 	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHli))
 	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHna))
-endif
+#endif
 	rm -f $(INSTALLDIR)/include/mgrx.h
 	rm -f $(INSTALLDIR)/include/mgrxkeys.h
 	rm -f $(INSTALLDIR)/include/mgrxcolr.h
-ifeq ($(INCLUDE_GRGUI),y)
+#ifeq ($(INCLUDE_GRGUI),y)
 	rm -f $(INSTALLDIR)/include/grgui.h
-endif
+#endif
 
 setsuid: $(UTILPS)
 ifeq ($(SET_SUIDROOT),y)

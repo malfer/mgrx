@@ -14,7 +14,7 @@ CCOPT +=
 # Enable this line for static linked test progs (default)
 MGRX = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.a
 # or this if you've already installed the shared libs
-#MGRX = -L../lib/$(GRX_LIB_SUBDIR) -lmgrx
+#MGRX = -lmgrx
 
 ifeq ($(SET_SUIDROOT),y)
 EXECBITS = 4755
@@ -81,15 +81,15 @@ PROGS=	arctest     \
 
 all:    $(PROGS) demomgrx demointl
 
-demomgrx: demomgrx.o gfaz.o $(MGRX)
+demomgrx: demomgrx.o gfaz.o
 	$(CC) $(LDOPT) -o demomgrx demomgrx.o gfaz.o $(LIBS)
 	chmod $(EXECBITS) demomgrx
 
-demointl: demointl.o gfaz.o $(MGRX)
+demointl: demointl.o gfaz.o
 	$(CC) $(LDOPT) -o demointl demointl.o gfaz.o $(LIBS)
 	chmod $(EXECBITS) demointl
 
-$(PROGS): % : %.o $(MGRX)
+$(PROGS): % : %.o
 
 clean:
 	rm -f *.o $(PROGS) demomgrx demointl

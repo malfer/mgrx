@@ -1,4 +1,4 @@
-Welcome to MGRX 1.4.0!
+Welcome to MGRX 1.4.1!
 
 MGRX is a 2D graphics C library derived from the GRX library. GRX was
 originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC
@@ -47,7 +47,7 @@ MGRX installation instructions
 Requirements:
 -------------
 
-  The source files and fonts:  mgrx140.tar.gz or mgrx140s.zip
+  The source files and fonts:  mgrx141.tar.gz or mgrx141s.zip
   This document:               readme
   
 Dependencies:
@@ -77,12 +77,12 @@ A. Unpacking the MGRX archive
 
   3) Unpack the MGRX archive:
 
-         tar xzvf mgrx140.tar.gz   (1)
+         tar xzvf mgrx141.tar.gz   (1)
      or
-         unzip mgrx140s.zip        (2)
+         unzip mgrx141s.zip        (2)
 
-     (1) This will create the subdirectory 'mgrx140'.
-     (2) This will create the subdirectory 'contrib/mgrx140'.
+     (1) This will create the subdirectory 'mgrx141'.
+     (2) This will create the subdirectory 'contrib/mgrx141'.
 
 B. Edit "makedefs.grx"
 ----------------------

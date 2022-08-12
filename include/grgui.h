@@ -403,43 +403,6 @@ GUIDialog * GUIGroupDialogCreate(void *title, GUIGroup *go,
                                  int (*proevfn)(void *, GrEvent *));
 
 /**
- ** TEXTAREA (Deprecated, use GUITextPanel instead)
- **/
-
-typedef struct _guiTextArea GUITextArea;
-
-typedef struct{
-    int nlines;            // actual number of lines
-    int tclpos;            // text cursor line pos
-    int tccpos;            // text cursor char pos
-    int ncscr;             // min nº chars fitting on screen
-    int fmline, fmch;      // line&col first char of marked area
-    int lmline, lmch;      // line&col last char of marked area
-    int full;              // text buffer is full
-} GUITAStatus;
-
-GUITextArea * GUITACreate(GUIPanel *p, GrFont *f, int maxlines);
-void GUITASetPanel(GUITextArea *ta, GUIPanel *p);
-void GUITASetFont(GUITextArea *ta, GrFont *f);
-void GUITASetBgColor(GUITextArea *ta, GrColor c);
-void GUITASetTextColors(GUITextArea *ta, GrColor fg, GrColor bg);
-void GUITASetCursorColor(GUITextArea *ta, GrColor c);
-void GUITADestroy(GUITextArea *ta);
-void GUITAShowCursor(GUITextArea *ta);
-void GUITAHideCursor(GUITextArea *ta);
-void GUITAMoveCursor(GUITextArea *ta, int nline, int nchar, int setmark);
-void GUITAMoveCursorRel(GUITextArea *ta, int incrl, int incrc, int setmark);
-void GUITAReDraw(GUITextArea *ta);
-void GUITAClear(GUITextArea *ta);
-void GUITANewLine(GUITextArea *ta);
-void GUITAPutChar(GUITextArea *ta, long ch, int chrtype);
-void GUITAPutString(GUITextArea *ta, void *s, int len, int chrtype);
-void GUITAPrintChar(GUITextArea *ta, long ch, int chrtype);
-void GUITAGetStatus(GUITextArea *ta, GUITAStatus *tast);
-void *GUITAGetString(GUITextArea *ta, int nline, int chrtype);
-int GUITAProcessEvent(GUITextArea *ta, GrEvent *ev);
-
-/**
  ** TEXTPANEL text editor in a panel
  **/
 
