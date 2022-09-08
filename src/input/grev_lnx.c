@@ -107,7 +107,7 @@ int _GrEventInit(void)
     }
 
     s = getenv("LANG");
-    if (strstr(s,"UTF-8"))
+    if (s && strstr(s,"UTF-8"))
       kbsysencoding = GRENC_UTF_8;
     else {
       s = getenv("MGRXKBSYSENCODING");
