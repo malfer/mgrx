@@ -1,7 +1,7 @@
 /**
- ** showfnt3.c ---- show the MGRX font collection
+ ** showfnt2.c ---- show the MGRX font collection
  **
- ** Copyright (c) 2020, 20021 Mariano Alvarez Fernandez (malfer@telefonica.net)
+ ** Copyright (c) 2020-2022 Mariano Alvarez Fernandez (malfer@telefonica.net)
  **
  ** This is a test/demo file of the GRX graphics library.
  ** You can use GRX test/demo files as you want.
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 {
     GrEvent ev;
     int ret;
-    
+
     if (argc >= 4) {
         gwidth = atoi(argv[1]);
         gheight = atoi(argv[2]);
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
         GrSetMode(GR_width_height_bpp_graphics, gwidth, gheight, gbpp);
         GrGenEgaColorTable();
         GUIInit(1, 1);
-        
+
         setup_tiles();
 
         GUITilePaint(IDT_INFO);
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
                 break;
             }
         }
-    
+
         saveselectedgrp1 = GUIGroupGetSelected(grp1);
         saveselectedtile = GUITilesGetSelected();
         GUIGroupDestroy(grp1);
@@ -151,7 +151,7 @@ void setup_tiles(void)
 {
 #define TILE1H 30
 #define TILE2W 192
-    
+
     int h;
 
     GUIScrollbarsSetColors(EGAC_LIGHTGRAY, EGAC_DARKGRAY);
@@ -166,7 +166,7 @@ void setup_tiles(void)
     gt3 = GUITileCreate(IDT_SHOW, GUI_TT_ACTIVEBORDER, TILE2W, TILE1H,
                         GrSizeX()-TILE2W, GrSizeY()-TILE1H);
     if (gt1 == NULL || gt2 == NULL || gt3 == NULL) exit(1);
-    
+
     GUIPanelSetClCallBacks(gt1->p, paint_tile1, NULL);
     GUIPanelSetUserData(gt1->p, (void *)&ud1);
     ud1.gt = gt1;

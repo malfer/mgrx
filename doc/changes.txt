@@ -1,3 +1,30 @@
+2023-02-21 ----------- MGRX 1.4.2 released
+2023-02-05 During setdriver time, instead of trying the detect function of every driver
+           and select the driver with more modes, select the first detected driver from
+           the driver table. Changed the DOS driver order to get VESA first, next
+           VGA, next EGA.
+2023-02-03 Moved src/input/ninput.h to src/include/ninput.h
+2023-01-30 New experimental KMS/DRM driver for linux console:
+             Disabled by default, to enable it set USE_LNDRM_DRIVER to 'y' in
+             the makedefs.grx file and do a full compilation.
+             You need the libdrm developper files to compile it.
+             To test the driver set the environment variable MGRXDRV to
+             "linuxdrm" because by default the "linuxfb" one is used.
+             If there are more than one active connector found only the first
+             one is used.
+             By default it try to open the "/dev/dri/card0" device file, if you
+             want to open another one set the environment variable DRMDEVICE
+             previously.
+             Added _GrCloseVideoDriver() to the end_graphics function in
+             demomgrx.c and demmgrx2.c to release the device file before calling
+             another program, so it can be master by default.
+2022-10-11 Solved a warning using gcc v12 in src/shape/scanellp.c
+           (reported by Panagiotis Papasotiriou).
+2022-10-06 Better conformance managing UTF-8 illformed code points, see the
+           Unicode stardard, conformance D92.
+2022-10-04 src/input/grev_lnx.c: ckeck pointer before calling strstr()
+           (by Caramelli via Github).
+2022-09-06 Reenable dependency of the static library in test programs makefiles
 2022-08-11 ----------- MGRX 1.4.1 released
 2022-08-09 Deleted src/grgui/textarea.c and his references. It was deprecated
            but it had references to non existent functions, so linking with the

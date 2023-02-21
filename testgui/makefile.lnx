@@ -11,10 +11,12 @@ INCDIR=  -I../include
 
 CCOPT +=
 
-# Enable this line for static linked test progs (default)
+# Enable this two lines for static linked test progs (default)
 MGRX = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.a
-# or this if you've already installed the shared libs
+DMGRX = $(MGRX)
+# or these if you've already installed the shared libs
 #MGRX = -lmgrx
+#DMGRX =
 
 ifeq ($(SET_SUIDROOT),y)
 EXECBITS = 4755
@@ -23,6 +25,10 @@ EXECBITS = 0755
 endif
 
 ADDON_LIBS =
+
+ifeq ($(USE_LNDRM_DRIVER),y)
+ADDON_LIBS += -ldrm
+endif
 
 ifeq ($(HAVE_LIBJPEG),y)
   ADDON_LIBS += -ljpeg
@@ -60,15 +66,15 @@ PROGS=  grgui01    \
 
 all:    $(PROGS)
 
-$(PROGS): % : %.o
+$(PROGS): % : %.o $(DMGRX)
 
 clean:
-	rm -f *.o $(PROGS) demomgrx demointl
+	rm -f *.o $(PROGS)
 
-setsuid: $(PROGS) demomgrx demointl
+setsuid: $(PROGS)
 ifeq ($(SET_SUIDROOT),y)
-	chown root $(PROGS) demomgrx demointl
-	chmod $(EXECBITS) $(PROGS) demomgrx demointl
+	chown root $(PROGS)
+	chmod $(EXECBITS) $(PROGS)
 else
 	@echo "Nothing to do, SET_SUIDROOT is not set to 'y' in makedefs.grx"
 endif

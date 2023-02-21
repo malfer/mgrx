@@ -34,10 +34,10 @@ static int gheight = 480;
 static int gbpp = 16;
 
 char *wintitle =
-    "MGRX+GrGUI 1.4.1, the graphics library";
+    "MGRX+GrGUI 1.4.2, the graphics library";
 
 char *animatedtext[2] = {
-    "MGRX 1.4.1, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.4.2, the graphics library for DJGPPv2, Linux, X11 and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
 #if defined(__XWIN__) || defined(__WIN32__)
@@ -317,10 +317,13 @@ static void ini_graphics(void)
 
 static void end_graphics(void)
 {
+    void _GrCloseVideoDriver(void);
+
     if (grcglobdb) GrDestroyContext(grcglobdb);
     if (grcglob) GrDestroyContext(grcglob);
     GUIEnd();
     GrSetMode(GR_default_text);
+    _GrCloseVideoDriver();
 }
 
 /************************************************************************/
@@ -519,7 +522,7 @@ static void paint_screen(void)
 
 static void the_title(int x, int y)
 {
-    char *t1 = "MGRX 1.4.1";
+    char *t1 = "MGRX 1.4.2";
     char *t2 = "test programs launcher";
 
     grt_centered.txo_fgcolor = EGAC_LIGHTGREEN;

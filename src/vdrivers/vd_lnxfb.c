@@ -46,6 +46,7 @@
 #define  NUM_MODES    80        /* max # of supported modes */
 #define  NUM_EXTS     15        /* max # of mode extensions */
 
+static char *default_fbname = "/dev/fb0";
 static int initted = -1;
 static int fbfd = -1;
 static int ttyfd = -1;
@@ -54,57 +55,8 @@ static struct fb_var_screeninfo fbvar;
 static char *fbuffer = NULL;
 static int ingraphicsmode = 0;
 
-int _lnxfb_waiting_to_switch_console = 0;
-
-static int detect(void)
-{
-    char *fbname;
-    char *default_fbname = "/dev/fb0";
-
-    if (initted < 0) {
-        initted = 0;
-        fbname = getenv("FRAMEBUFFER");
-        if (fbname == NULL)
-            fbname = default_fbname;
-        fbfd = open(fbname, O_RDWR);
-        if (fbfd == -1)
-            return FALSE;
-        ioctl(fbfd, FBIOGET_FSCREENINFO, &fbfix);
-        ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
-        if (fbfix.type != FB_TYPE_PACKED_PIXELS)
-            return FALSE;
-        ttyfd = open("/dev/tty", O_RDONLY);
-        initted = 1;
-    }
-    return ((initted > 0) ? TRUE : FALSE);
-}
-
-static void reset(void)
-{
-    struct vt_mode vtm;
-
-    if (fbuffer) {
-        memset(fbuffer, 0, fbvar.yres * fbfix.line_length);
-        munmap(fbuffer, fbfix.smem_len);
-        fbuffer = NULL;
-    }
-    if (fbfd != -1) {
-        close(fbfd);
-        fbfd = -1;
-    }
-    if (ttyfd > -1) {
-        ioctl(ttyfd, KDSETMODE, KD_TEXT);
-        vtm.mode = VT_AUTO;
-        vtm.relsig = 0;
-        vtm.acqsig = 0;
-        ioctl(ttyfd, VT_SETMODE, &vtm);
-        signal(SIGUSR1, SIG_IGN);
-        close(ttyfd);
-        ttyfd = -1;
-        ingraphicsmode = 0;
-    }
-    initted = -1;
-}
+extern int _lnx_waiting_to_switch_console;
+extern void (*_LnxSwitchConsoleAndWait)(void);
 
 void _LnxfbSwitchToConsoleVt(unsigned short vt)
 {
@@ -116,7 +68,7 @@ void _LnxfbSwitchToConsoleVt(unsigned short vt)
     if (ttyfd < 0) return;
     if (ioctl(ttyfd, VT_GETSTATE, &vtst) < 0) return;
     myvt = vtst.v_active;
-    if (vt == myvt) return; 
+    if (vt == myvt) return;
 
     grc = GrCreateContext(GrScreenX(), GrScreenY(), NULL, NULL);
     if (grc != NULL) {
@@ -142,7 +94,7 @@ void _LnxfbSwitchConsoleAndWait(void)
     unsigned short myvt;
     GrContext *grc;
 
-    _lnxfb_waiting_to_switch_console = 0;
+    _lnx_waiting_to_switch_console = 0;
     if (!ingraphicsmode) return;
     if (ttyfd < 0) return;
     if (ioctl(ttyfd, VT_GETSTATE, &vtst) < 0) return;
@@ -170,76 +122,13 @@ void _LnxfbSwitchConsoleAndWait(void)
 
 void _LnxfbRelsigHandle(int sig)
 {
-    _lnxfb_waiting_to_switch_console = 1;
+    _lnx_waiting_to_switch_console = 1;
     signal(SIGUSR1, _LnxfbRelsigHandle);
 }
 
-static void loadcolor(int c, int r, int g, int b)
-{
-    __u16 red, green, blue, transp;
-    struct fb_cmap cmap;
-
-    red = (r << 8);
-    green = (g << 8);
-    blue = (b << 8);
-    transp = 0;
-    cmap.start = c;
-    cmap.len = 1;
-    cmap.red = &red;
-    cmap.green = &green;
-    cmap.blue = &blue;
-    cmap.transp = &transp;
-    ioctl(fbfd, FBIOPUTCMAP, &cmap);
-}
-
-static int setmode(GrVideoMode * mp, int noclear)
-{
-    struct vt_mode vtm;
-
-    fbuffer = mp->extinfo->frame = mmap(NULL,
-                                        fbfix.smem_len,
-                                        PROT_READ | PROT_WRITE,
-                                        MAP_SHARED, fbfd, 0);
-    if (fbuffer == MAP_FAILED) {
-        fbuffer = NULL;
-        mp->extinfo->frame = NULL;
-        return FALSE;
-    }
-
-    if (mp->extinfo->frame && ttyfd > -1) {
-        ioctl(ttyfd, KDSETMODE, KD_GRAPHICS);
-        vtm.mode = VT_PROCESS;
-        vtm.relsig = SIGUSR1;
-        vtm.acqsig = 0;
-        ioctl(ttyfd, VT_SETMODE, &vtm);
-        signal(SIGUSR1, _LnxfbRelsigHandle);
-        ingraphicsmode = 1;
-    }
-    if (mp->extinfo->frame && !noclear)
-        memset(mp->extinfo->frame, 0, fbvar.yres * fbfix.line_length);
-    return ((mp->extinfo->frame) ? TRUE : FALSE);
-}
-
-static int settext(GrVideoMode * mp, int noclear)
-{
-    struct vt_mode vtm;
-
-    if (fbuffer) {
-        memset(fbuffer, 0, fbvar.yres * fbfix.line_length);
-        munmap(fbuffer, fbfix.smem_len);
-        fbuffer = NULL;
-    }
-    if (ttyfd > -1) {
-        ioctl(ttyfd, KDSETMODE, KD_TEXT);
-        vtm.mode = VT_AUTO;
-        vtm.relsig = 0;
-        vtm.acqsig = 0;
-        ioctl(ttyfd, VT_SETMODE, &vtm);
-        signal(SIGUSR1, SIG_IGN);
-        ingraphicsmode = 0;
-    }
-    return TRUE;
-}
+static void loadcolor(int c, int r, int g, int b);
+static int setmode(GrVideoMode * mp, int noclear);
+static int settext(GrVideoMode * mp, int noclear);
 
 GrVideoModeExt grtextextfb = {
     GR_frameText,                /* frame driver */
@@ -379,18 +268,154 @@ static void add_video_mode(GrVideoMode * mp, GrVideoModeExt * ep,
     }
 }
 
+static int detect(void)
+{
+    static int detected = -1;
+    char *fbname;
+    int fd;
+    struct fb_fix_screeninfo fix;
+
+    if (detected > -1) goto end2;
+
+    detected = 0;
+    fbname = getenv("FRAMEBUFFER");
+    if (fbname == NULL) fbname = default_fbname;
+    fd = open(fbname, O_RDWR);
+    if (fd < 0) goto end2;
+    ioctl(fd, FBIOGET_FSCREENINFO, &fix);
+    if (fix.type != FB_TYPE_PACKED_PIXELS) goto end1;
+    detected = 1;
+
+end1:
+    close(fd);
+end2:
+    return ((detected > 0) ? TRUE : FALSE);
+}
+
 static int init(char *options)
 {
-    if (detect()) {
-        GrVideoMode mode, *modep = &modes[1];
-        GrVideoModeExt ext, *extp = &exts[0];
+    char *fbname;
+    GrVideoMode mode, *modep = &modes[1];
+    GrVideoModeExt ext, *extp = &exts[0];
+
+    if (initted < 0) {
+        initted = 0;
+        fbname = getenv("FRAMEBUFFER");
+        if (fbname == NULL) fbname = default_fbname;
+        fbfd = open(fbname, O_RDWR);
+        if (fbfd < 0) {
+            return FALSE;
+        }
+        ioctl(fbfd, FBIOGET_FSCREENINFO, &fbfix);
+        ioctl(fbfd, FBIOGET_VSCREENINFO, &fbvar);
+        if (fbfix.type != FB_TYPE_PACKED_PIXELS) {
+            close(fbfd);
+            return FALSE;
+        }
         memset(modep, 0, (sizeof(modes) - sizeof(modes[0])));
         if ((build_video_mode(&mode, &ext))) {
             add_video_mode(&mode, &ext, &modep, &extp);
         }
-        return (TRUE);
+        ttyfd = open("/dev/tty", O_RDONLY);
+        _LnxSwitchConsoleAndWait = &_LnxfbSwitchConsoleAndWait;
+        initted = 1;
     }
-    return (FALSE);
+    return ((initted > 0) ? TRUE : FALSE);
+}
+
+static void reset(void)
+{
+    struct vt_mode vtm;
+
+    if (fbuffer) {
+        memset(fbuffer, 0, fbvar.yres * fbfix.line_length);
+        munmap(fbuffer, fbfix.smem_len);
+        fbuffer = NULL;
+    }
+    if (fbfd != -1) {
+        close(fbfd);
+        fbfd = -1;
+    }
+    if (ttyfd > -1) {
+        ioctl(ttyfd, KDSETMODE, KD_TEXT);
+        vtm.mode = VT_AUTO;
+        vtm.relsig = 0;
+        vtm.acqsig = 0;
+        ioctl(ttyfd, VT_SETMODE, &vtm);
+        signal(SIGUSR1, SIG_IGN);
+        close(ttyfd);
+        ttyfd = -1;
+        ingraphicsmode = 0;
+    }
+    _LnxSwitchConsoleAndWait = NULL;
+    initted = -1;
+}
+
+static void loadcolor(int c, int r, int g, int b)
+{
+    __u16 red, green, blue, transp;
+    struct fb_cmap cmap;
+
+    red = (r << 8);
+    green = (g << 8);
+    blue = (b << 8);
+    transp = 0;
+    cmap.start = c;
+    cmap.len = 1;
+    cmap.red = &red;
+    cmap.green = &green;
+    cmap.blue = &blue;
+    cmap.transp = &transp;
+    ioctl(fbfd, FBIOPUTCMAP, &cmap);
+}
+
+static int setmode(GrVideoMode * mp, int noclear)
+{
+    struct vt_mode vtm;
+
+    fbuffer = mp->extinfo->frame = mmap(NULL,
+                                        fbfix.smem_len,
+                                        PROT_READ | PROT_WRITE,
+                                        MAP_SHARED, fbfd, 0);
+    if (fbuffer == MAP_FAILED) {
+        fbuffer = NULL;
+        mp->extinfo->frame = NULL;
+        return FALSE;
+    }
+
+    if (mp->extinfo->frame && ttyfd > -1) {
+        ioctl(ttyfd, KDSETMODE, KD_GRAPHICS);
+        vtm.mode = VT_PROCESS;
+        vtm.relsig = SIGUSR1;
+        vtm.acqsig = 0;
+        ioctl(ttyfd, VT_SETMODE, &vtm);
+        signal(SIGUSR1, _LnxfbRelsigHandle);
+        ingraphicsmode = 1;
+    }
+    if (mp->extinfo->frame && !noclear)
+        memset(mp->extinfo->frame, 0, fbvar.yres * fbfix.line_length);
+    return ((mp->extinfo->frame) ? TRUE : FALSE);
+}
+
+static int settext(GrVideoMode * mp, int noclear)
+{
+    struct vt_mode vtm;
+
+    if (fbuffer) {
+        memset(fbuffer, 0, fbvar.yres * fbfix.line_length);
+        munmap(fbuffer, fbfix.smem_len);
+        fbuffer = NULL;
+    }
+    if (ttyfd > -1) {
+        ioctl(ttyfd, KDSETMODE, KD_TEXT);
+        vtm.mode = VT_AUTO;
+        vtm.relsig = 0;
+        vtm.acqsig = 0;
+        ioctl(ttyfd, VT_SETMODE, &vtm);
+        signal(SIGUSR1, SIG_IGN);
+        ingraphicsmode = 0;
+    }
+    return TRUE;
 }
 
 GrVideoDriver _GrVideoDriverLINUXFB = {

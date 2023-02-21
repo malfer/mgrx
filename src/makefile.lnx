@@ -20,6 +20,12 @@ ifdef MGRX_DEFAULT_FONT_PATH
 CCOPT += -DMGRX_DEFAULT_FONT_PATH=\"$(MGRX_DEFAULT_FONT_PATH)\"
 endif
 
+ifeq ($(USE_LNDRM_DRIVER),y)
+CCOPT += -DLNDRM_DRIVER
+INCDIR+= -I/usr/include/libdrm
+ADDON_LIBS += -ldrm
+endif
+
 ifeq ($(SET_SUIDROOT),y)
 EXECBITS = 4755
 else
@@ -77,6 +83,10 @@ O=      $(STD_O)                \
 	input/clb_gen.o         \
 	misc/lnxmisc.o          \
 	vdrivers/vd_lnxfb.o
+
+ifeq ($(USE_LNDRM_DRIVER),y)
+O+=	vdrivers/vd_lndrm.o
+endif
 
 ifeq ($(INCLUDE_GRGUI),y)
 O+=	$(GRGUI_1)

@@ -24,8 +24,10 @@
 
 #if defined(__MSDOS__) || defined(__WIN32__)
 #define PPMIMGOUT "..\\testimg\\memtest.ppm"
+#define PNGIMGOUT "..\\testimg\\memtest.png"
 #else
 #define PPMIMGOUT "../testimg/memtest.ppm"
+#define PNGIMGOUT "../testimg/memtest.png"
 #endif
 
 int main(int argc, char **argv)
@@ -91,6 +93,7 @@ int main(int argc, char **argv)
 
     GrSetContext( NULL );
     GrSaveContextToPpm( NULL,PPMIMGOUT,"GRX MemTest" );
+    //GrSaveContextToPng( NULL,PNGIMGOUT );
     printf("Saved output in: %s\n", PPMIMGOUT);
 
     return 0;

@@ -217,27 +217,78 @@ int _GrRecode_ISO88591_UCS2(unsigned char src, long *des)
 
 int _GrRecode_UTF8_UCS2(const unsigned char *src, long *des)
 {
-  if (src[0] < 0x80) {  /* one byte */
-    *des = src[0];
-    return 1;
-  }
-  if (((src[0] & 0xe0) == 0xc0) && ((src[1] & 0xc0) == 0x80)) { /* two bytes */
-    *des = (((long)(src[0]) & 0x1f) << 6) | ((long)(src[1]) & 0x3f);
-    return 2;
-  }
-  if (((src[0] & 0xf0) == 0xe0) && ((src[1] & 0xc0) == 0x80) &&
-      ((src[2] & 0xc0) == 0x80)) { /* three bytes */
-    *des = (((long)(src[0]) & 0x0f) << 12) | (((long)(src[1]) & 0x3f) << 6) |
-           ((long)(src[2]) & 0x3f);
-    return 3;
-  }
-  if (((src[0] & 0xf8) == 0xf0) && ((src[1] & 0xc0) == 0x80) &&
-      ((src[2] & 0xc0) == 0x80) && ((src[3] & 0xc0) == 0x80)) { /* four bytes */
-    *des = (((long)(src[0]) & 0x07) << 18) | (((long)(src[1]) & 0x3f) << 12) |
-           (((long)(src[2]) & 0x3f) << 6) | ((long)(src[3]) & 0x3f);
-    return 4;
-  }
-  return 0;
+/* When converting any illformed UCP will be changed to 0xFFFD,
+ * see Unicode stardard, conformance D92 */
+    int nb = 1;
+
+    if (src[0] < 0x80) {  /* ASCII one byte */
+        *des = src[0];
+        return nb;
+    }
+    if (src[0] >= 0xC2 && src[0] <= 0xDF) { /* two bytes */
+        if ((src[1] & 0xC0) != 0x80) {
+            goto ILLFORMED;
+        }
+        *des = (((unsigned int)(src[0]) & 0x1f) << 6) |
+               ((unsigned int)(src[1]) & 0x3f);
+        return 2;
+    }
+    if ((src[0] & 0xf0) == 0xe0) { /* three bytes */
+        if (src[0] == 0xE0) {
+            if (src[1] < 0xA0 || src[1] > 0xBF) {
+                goto ILLFORMED;
+            }
+        } else if (src[0] == 0xED) {
+            if (src[1] < 0x80 || src[1] > 0x9F) {
+                goto ILLFORMED;
+            }
+        } else {
+            if ((src[1] & 0xC0) != 0x80) {
+            goto ILLFORMED;
+            }
+        }
+        if ((src[2] & 0xC0) != 0x80) {
+            nb = 2;
+            goto ILLFORMED;
+        }
+        *des = (((unsigned int)(src[0]) & 0x0f) << 12) |
+               (((unsigned int)(src[1]) & 0x3f) << 6) |
+               ((unsigned int)(src[2]) & 0x3f);
+        return 3;
+    }
+    if (src[0] >= 0xF0 && src[0] <= 0xF4) { /* four bytes */
+    /* NOTE, because 4 bytes are out of UCS2 range even if they are well
+     * formed we will return 0xFFFD ever, but with the correct byte count */
+        if (src[0] == 0xF0) {
+            if (src[1] < 0x90 || src[1] > 0xBF) {
+                goto ILLFORMED;
+            }
+        } else if (src[0] == 0xF4) {
+            if (src[1] < 0x80 || src[1] > 0x8F) {
+                goto ILLFORMED;
+            }
+        } else {
+            if ((src[1] & 0xC0) != 0x80) {
+            goto ILLFORMED;
+            }
+        }
+        if ((src[2] & 0xC0) != 0x80) {
+            nb = 2;
+            goto ILLFORMED;
+        }
+        if ((src[3] & 0xC0) != 0x80) {
+            nb = 3;
+            goto ILLFORMED;
+        }
+        *des = (unsigned int)0xFFFD;
+        return 4;
+    }
+
+    // Here for forbiden bytes in UTF-8 C0-C1, F5-FF
+
+ILLFORMED:
+    *des = (unsigned int)0xFFFD;
+    return nb;
 }
 
 int _GrRecode_mgrx512_UCS2(unsigned short src, long *des)
@@ -676,29 +727,28 @@ int _GrRecode_UCS2_ISO88591(long src, unsigned char *des)
 
 int _GrRecode_UCS2_UTF8(long src, unsigned char *des)
 {
-  des[0] = des[1] = des[2] = des[3] = 0;
-
-  if (src < 0x80) {  /* one byte */
-    des[0] = src;
-    return 1;
-  }
-  if (src < 0x800) { /* two bytes */
-    des[0] = 0xc0 | (src >> 6);
-    des[1] = 0x80 | (src & 0x3f);
-    return 2;
-  }
-  if (src < 0x10000) {/* three bytes */
-    des[0] = 0xe0 | (src >> 12);
-    des[1] = 0x80 | ((src >> 6) & 0x3f);
-    des[2] = 0x80 | (src & 0x3f);
+    des[0] = des[1] = des[2] = des[3] = 0;
+    
+    if (src < 0x80) {  /* one byte */
+        des[0] = src;
+        return 1;
+    }
+    if (src < 0x800) { /* two bytes */
+        des[0] = 0xc0 | (src >> 6);
+        des[1] = 0x80 | (src & 0x3f);
+        return 2;
+    }
+    if (src < 0xD800 || (src > 0xDFFF && src < 0x10000)) { /* three bytes */
+        des[0] = 0xe0 | (src >> 12);
+        des[1] = 0x80 | ((src >> 6) & 0x3f);
+        des[2] = 0x80 | (src & 0x3f);
+        return 3;
+    }
+    /* out of BMP range or surrogates returns 0xFFFD */
+    des[0] = 0xEF;
+    des[1] = 0xBF;
+    des[2] = 0xBD;
     return 3;
-  }
-  /* four bytes */
-  des[0] = 0xf0 | ((src >> 18) & 0x07);
-  des[1] = 0x80 | ((src >> 12) & 0x3f);
-  des[2] = 0x80 | ((src >> 6) & 0x3f);
-  des[3] = 0x80 | (src & 0x3f);
-  return 4;
 }
 
 int _GrRecode_UCS2_mgrx512(long src, long *des)
@@ -874,7 +924,7 @@ int _GrRecode_UCS2_CP437Ext(long src, long *des)
   return 0;
 }
 
-int GrRecodeEvent(GrEvent *ev, int srcenc, int desenc)
+int _GrRecodeEvent(GrEvent *ev, int srcenc, int desenc)
 {
   long aux;
   unsigned char caux[4];
@@ -1290,12 +1340,7 @@ int GrStrLen(const void *text, int chrtype)
       }
       return length;
     case GR_UTF8_TEXT:
-      cs = (unsigned char *)text;
-      while(*cs) {
-        if ((*cs & 0xc0) != 0x80) length++;
-        cs++;
-      }
-      return length;
+      return GrUTF8StrLen((unsigned char *)text);
     case GR_WORD_TEXT:
     case GR_UCS2_TEXT:
       ss = (unsigned short *)text;
@@ -1313,14 +1358,96 @@ int GrStrLen(const void *text, int chrtype)
 
 int GrUTF8StrLen(const unsigned char *s)
 {
-  int l8 = 0;
+    int nch = 0;
 
-  while (*s) {
-    if ((*s & 0xc0) != 0x80) l8++;
-    s++;
-  }
-      
-  return l8;
+    while (*s) {
+        // ASCII (1 byte)
+        if (s[0] < 0x80) {
+            nch++; s++;
+            continue;
+        }
+
+        // two bytes
+        if (s[0] >= 0xC2 && s[0] <= 0xDF) {
+            if ((s[1] & 0xC0) != 0x80) {
+                // ILLFORMED, consume 1 byte
+                nch++; s++;
+                continue;
+            }
+            nch++; s += 2;
+            continue;
+        }
+
+        // three bytes
+        if ((s[0] & 0xf0) == 0xe0) {
+            if (s[0] == 0xE0) {
+                if (s[1] < 0xA0 || s[1] > 0xBF) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            } else if (s[0] == 0xED) {
+                if (s[1] < 0x80 || s[1] > 0x9F) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            } else {
+                if ((s[1] & 0xC0) != 0x80) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            }
+            if ((s[2] & 0xC0) != 0x80) {
+                // ILLFORMED, consume 2 bytes
+                nch++; s += 2;
+                continue;
+            }
+            nch++; s += 3;
+            continue;
+        }
+
+        // four bytes
+        if (s[0] >= 0xF0 && s[0] <= 0xF4) {
+            if (s[0] == 0xF0) {
+                if (s[1] < 0x90 || s[1] > 0xBF) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            } else if (s[0] == 0xF4) {
+                if (s[1] < 0x80 || s[1] > 0x8F) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            } else {
+                if ((s[1] & 0xC0) != 0x80) {
+                    // ILLFORMED, consume 1 byte
+                    nch++; s++;
+                    continue;
+                }
+            }
+            if ((s[2] & 0xC0) != 0x80) {
+                // ILLFORMED, consume 2 bytes
+                nch++; s += 2;
+                continue;
+            }
+            if ((s[3] & 0xC0) != 0x80) {
+                // ILLFORMED, consume 3 bytes
+                nch++; s += 3;
+                continue;
+            }
+            nch++; s += 4;
+            continue;
+        }
+
+        // Here for forbiden bytes in UTF-8 C0-C1, F5-FF
+        nch++; s++;
+   }
+
+    return nch;
 }
 
 /* returns a char[4] packed in a long */
@@ -1328,21 +1455,12 @@ long GrNextUTF8Char(const unsigned char *s, int *nb)
 {
   long res = 0;
   unsigned char *caux;
+  long des;
   int i;
 
   caux = (unsigned char *)&res;
 
-  *nb = 1; /* default one byte */
-
-  if (((s[0] & 0xe0) == 0xc0) && ((s[1] & 0xc0) == 0x80)) { /* two bytes */
-    *nb = 2;
-  } else if (((s[0] & 0xf0) == 0xe0) && ((s[1] & 0xc0) == 0x80) &&
-      ((s[2] & 0xc0) == 0x80)) { /* three bytes */
-    *nb = 3;
-  } else if (((s[0] & 0xf8) == 0xf0) && ((s[1] & 0xc0) == 0x80) &&
-      ((s[2] & 0xc0) == 0x80) && ((s[3] & 0xc0) == 0x80)) { /* four bytes */
-    *nb = 4;
-  }
+  *nb = _GrRecode_UTF8_UCS2(s, &des);
 
   for (i=0; i<*nb; i++)
     caux[i] = s[i];

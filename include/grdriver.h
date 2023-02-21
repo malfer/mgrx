@@ -105,8 +105,8 @@ _GrVideoDriverVESA,                     /* generic VESA Super VGA driver */
 _GrVideoDriverXWIN,                     /* X11 interface */
 _GrVideoDriverXF86DGA,                  /* XFree86 DGA interface */
 
-_GrVideoDriverSVGALIB,                  /* Linux SVGALIB interface */
-_GrVideoDriverLINUXFB,                  /* Linux framebuffer */
+_GrVideoDriverLINUXFB,                  /* Linux framebuffer driver */
+_GrVideoDriverLINUXDRM,                 /* Linux KMS/DRM driver */
 
 _GrVideoDriverWIN32,                    /* WIN32 interface */
 

@@ -1,4 +1,4 @@
-Welcome to MGRX 1.4.1!
+Welcome to MGRX 1.4.2!
 
 MGRX is a 2D graphics C library derived from the GRX library. GRX was
 originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC
@@ -13,7 +13,8 @@ Supported platforms
   MGRX supports the following four platforms:
 
   - DOS using the DJGPPv2 compiler; with EGA, VGA, VESA and memory drivers
-  - Linux console using the gcc compiler; with framebuffer and memory drivers
+  - Linux console using the gcc compiler; with framebuffer, KMS/DRM
+    (experimental) and memory drivers
   - Linux X11 using the gcc compiler; with x11(windowed) and memory drivers
   - Win32 using the TDM-GCC compiler (a Mingw32 distribution); with w32
     (windowed) and memory drivers
@@ -47,7 +48,7 @@ MGRX installation instructions
 Requirements:
 -------------
 
-  The source files and fonts:  mgrx141.tar.gz or mgrx141s.zip
+  The source files and fonts:  mgrx142.tar.gz or mgrx142s.zip
   This document:               readme
   
 Dependencies:
@@ -60,6 +61,10 @@ Dependencies:
   Anyway it's easy to install the binary libraries in Linux and DJGPP. And
   for the TDM-GCC (Win32) compiler you can download a precompiled package
   from the MGRX site.
+
+  For linux console if the KMS/DRM driver is enabled the libdrm library
+  will be needed, normally it is included in most linux distributions by
+  default, but you will need to install the developper files.
 
 A. Unpacking the MGRX archive
 -----------------------------
@@ -77,12 +82,12 @@ A. Unpacking the MGRX archive
 
   3) Unpack the MGRX archive:
 
-         tar xzvf mgrx141.tar.gz   (1)
+         tar xzvf mgrx142.tar.gz   (1)
      or
-         unzip mgrx141s.zip        (2)
+         unzip mgrx142s.zip        (2)
 
-     (1) This will create the subdirectory 'mgrx141'.
-     (2) This will create the subdirectory 'contrib/mgrx141'.
+     (1) This will create the subdirectory 'mgrx142'.
+     (2) This will create the subdirectory 'contrib/mgrx142'.
 
 B. Edit "makedefs.grx"
 ----------------------
@@ -92,7 +97,7 @@ B. Edit "makedefs.grx"
 
   Some things you can change:
 
-  - not to include GrGUI, set INCLUDE_GRGUI=n
+  - to not include GrGUI, set INCLUDE_GRGUI=n
 
   - remove support for reading/writing JPEG files, set HAVE_LIBJPEG=n
 
@@ -111,6 +116,9 @@ B. Edit "makedefs.grx"
 
   - For linux console and X11 if your glibc version is < 2.17 you need to
     set NEED_LIBRT=y
+
+  - To enable the experimental KMS/DRM driver in linux console you need
+    to set USE_LNDRM_DRIVER=y
 
 C. Compiling MGRX
 -----------------
@@ -249,20 +257,27 @@ Environment variables for using MGRX programs
 
        export MGRXFONT=<directory for the MGRX fonts>
 
-  4) the linux framebuffer driver opens the "/dev/fb0" device file by
+  4) The linux framebuffer driver opens the "/dev/fb0" device file by
      default, if you want to open an alternate device file, set the
      $FRAMEBUFFER environment variable:
 
        export FRAMEBUFFER=<device file>
 
-Running mgrx programs for Linux framebuffer
-===========================================
+  5) The linux KMS/DRM driver opens the "/dev/dri/card0" device file by
+     default, if you want to open an alternate device file, set the
+     $DRMDEVICE environment variable:
 
-  On most Linux distributios the device framebuffer "/dev/fb0" and the mouse
-  device "/dev/input/mice" are not accesible to normal users by default. So
-  to run mgrx programs for Linux framebuffer you have to choose one of these
-  solutions (beware that you are changing the security policy of your
-  distribution, but as a programmer you know better :)
+       export DRMDEVICE=<device file>
+
+Running mgrx programs for Linux framebuffer and KMS/DRM drivers
+===============================================================
+
+  On most Linux distributios the device framebuffer "/dev/fb0", the  KMS/DRM
+  device "/dev/dri/card0" and the mouse device "/dev/input/mice" are not
+  accesible to normal users by default. So to run mgrx programs for Linux
+  console you have to choose one of these solutions (beware that you are
+  changing the security policy of your distribution, but as a programmer
+  you know better :)
 
   - run the program with root supersuser, either changing user or using
     the sudo command.
@@ -270,11 +285,21 @@ Running mgrx programs for Linux framebuffer
   - set the root suid for your mgrx programs (read the "chmod" man page
     to know how to do it).
 
-  - change the "/dev/fb0" and "/dev/input/mice" permissions (with root).
+  - change the "/dev/fb0", "/dev/dri/card0" and "/dev/input/mice"
+    permissions (with root).
 
   - add your user to the "video" and "input" groups, editing (with root)
     the "/etc/group" file. I think this is the best solution (it seems
     to be the default in Raspbian, so nothing to do in that case).
+
+Using the experimental KMS/DRM driver
+=====================================
+
+  If you have enabled the experimental KMS/DRM driver you need to set the
+  $MGRXDRV environment variable to use it, because by default the framebuffer
+  driver will be used:
+
+     export MGRXDRV=linuxdrm
 
 Help
 ====

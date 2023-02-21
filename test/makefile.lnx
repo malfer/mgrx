@@ -11,10 +11,12 @@ INCDIR=  -I../include
 
 CCOPT +=
 
-# Enable this line for static linked test progs (default)
+# Enable this two lines for static linked test progs (default)
 MGRX = ../lib/$(GRX_LIB_SUBDIR)/libmgrx.a
-# or this if you've already installed the shared libs
+DMGRX = $(MGRX)
+# or these if you've already installed the shared libs
 #MGRX = -lmgrx
+#DMGRX =
 
 ifeq ($(SET_SUIDROOT),y)
 EXECBITS = 4755
@@ -23,6 +25,10 @@ EXECBITS = 0755
 endif
 
 ADDON_LIBS =
+
+ifeq ($(USE_LNDRM_DRIVER),y)
+ADDON_LIBS += -ldrm
+endif
 
 ifeq ($(HAVE_LIBJPEG),y)
   ADDON_LIBS += -ljpeg
@@ -81,15 +87,15 @@ PROGS=	arctest     \
 
 all:    $(PROGS) demomgrx demointl
 
-demomgrx: demomgrx.o gfaz.o
+demomgrx: demomgrx.o gfaz.o $(DMGRX)
 	$(CC) $(LDOPT) -o demomgrx demomgrx.o gfaz.o $(LIBS)
 	chmod $(EXECBITS) demomgrx
 
-demointl: demointl.o gfaz.o
+demointl: demointl.o gfaz.o $(DMGRX)
 	$(CC) $(LDOPT) -o demointl demointl.o gfaz.o $(LIBS)
 	chmod $(EXECBITS) demointl
 
-$(PROGS): % : %.o
+$(PROGS): % : %.o $(DMGRX)
 
 clean:
 	rm -f *.o $(PROGS) demomgrx demointl

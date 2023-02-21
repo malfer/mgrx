@@ -29,7 +29,7 @@
 
 /* Version of MGRX API */
 
-#define MGRX_VERSION_API 0x0141
+#define MGRX_VERSION_API 0x0142
 
 /* these are the supported configurations: */
 #define MGRX_VERSION_GCC_386_DJGPP       1       /* DJGPP v2 */
@@ -202,7 +202,7 @@ typedef enum _GR_videoAdapters {
         GR_EGA,                             /* EGA adapter */
         GR_XWIN,                            /* X11 driver */
         GR_WIN32,                           /* WIN32 driver */
-        GR_LNXFB,                           /* Linux framebuffer */
+        GR_LNXFB,                           /* Linux console driver */
         GR_MEM                              /* memory only driver */
 } GrVideoAdapter;
 

@@ -29,4 +29,4 @@ int _GrGetKbSysEncoding(void);
 
 /* intl support, recode functions */
 
-int GrRecodeEvent(GrEvent *ev, int srcenc, int desenc);
+int _GrRecodeEvent(GrEvent *ev, int srcenc, int desenc);

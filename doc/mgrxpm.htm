@@ -8,12 +8,12 @@
 
 <center>
 <h1><font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
-<small>1.4.1</small></h1>
+<small>1.4.2</small></h1>
 <h1>a C graphics library for DOS, Linux console &amp; X11 and Win32</h1>
 <h2>Programmer's Manual</h2>
 <p>Based on the original GRX manual written by: Csaba Biegl on August 10, 1992
 <p>Adapted for MGRX by: Mariano Alvarez Fern&aacute;ndez on August 1, 2005
-<p>Last update: July 28, 2022
+<p>Last update: February 21, 2023
 </center>
 
 <!--- ===================================================================== --->
@@ -25,11 +25,11 @@ GRX was originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC co
 <p>&nbsp;&nbsp;<b>MGRX</b> supports four platforms:
 <ul>
 <li>DOS (using the DJGPPv2 32bit compiler) with VGA and VESA compliant cards.
-<li>Linux console (using the gcc compiler) on top of the framebuffer.
+<li>Linux console (using the gcc compiler) on top of the framebuffer or KMS/DRM (experimental).
 <li>Linux X11 (using the gcc compiler) running in a window.
 <li>Win32 (tested with the TDM-GCC compiler, a Mingw32 distribution) running in a window.
 </ul>
-<p>&nbsp;&nbsp;For the Linux framebuffer and the Linux X11 versions three architectures
+<p>&nbsp;&nbsp;For the Linux console and the Linux X11 versions three architectures
 are supported: i386 (32bit), x86_64 (64bit) and ARM (32bit, tested in a Raspberry Pi 4
 using Raspbian).
 <p>&nbsp;&nbsp;Additionally <b>MGRX</b> can work without graphic output using the
@@ -150,6 +150,8 @@ previously installed)
 <li>Linux X11 (ARM): gcc -o helomgrx helomgrx.c -D__XWIN__ -lmgrxX -lX11
 <li>Linux console (ARM): gcc -o helomgrx helomgrx.c -lmgrx
 </ul>
+<p>If you have enabled the experimental Linux console KMS/DRM driver add "-ldrm" to the
+command.
 
 <!--- ===================================================================== --->
 <hr>
@@ -187,8 +189,8 @@ the same format as the environment variable:
 </pre>
 <p>available drivers are for:
 <ul>
-<li>DOS => stdega, stdvga, VESA, memory
-<li>Linux console => linuxfb, memory
+<li>DOS => VESA, stdvga, stdega, memory
+<li>Linux console => linuxfb, linuxdrm, memory
 <li>Linux X11 => xwin, memory
 <li>Win32 => win32, memory
 </ul>
@@ -219,7 +221,7 @@ typedef enum _GR_videoAdapters {
   GR_EGA,                /* EGA adapter */
   GR_XWIN,               /* X11 driver */
   GR_WIN32,              /* W32 driver */
-  GR_LNXFB,              /* Linux FB driver */
+  GR_LNXFB,              /* Linux console driver */
   GR_MEM                 /* memory only driver */
 } GrVideoAdapter;
 </pre>

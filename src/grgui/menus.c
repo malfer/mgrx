@@ -283,6 +283,9 @@ int GUIMenuGetDims(int idmenu, int *width, int *height)
     GUIMenu *m;
     GUIMenuDims md;
 
+    *width = 0;  // for don't show warnings of not initialized vars
+    *height = 0;
+
     m = search_menu_reg(idmenu);
     if (m == NULL) return -1;
 

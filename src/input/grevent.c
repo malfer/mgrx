@@ -438,7 +438,7 @@ static int preproccess_event(GrEvent *ev)
                 return 1;
             }
             if ((ev->p2 != GRKEY_KEYCODE) && (kbsysencoding != usrenc)) {
-                GrRecodeEvent(ev, kbsysencoding, usrenc);
+                _GrRecodeEvent(ev, kbsysencoding, usrenc);
             }
             ev->type = GREV_KEY;
         }

@@ -56,11 +56,12 @@ static enum { normal, test, wait } kbd_mode;
 static int mou_filedsc;
 static int mou_buttons;
 
-extern int _lnxfb_waiting_to_switch_console;
-extern void _LnxfbSwitchConsoleAndWait(void);
+int _lnx_waiting_to_switch_console = 0;
+void (*_LnxSwitchConsoleAndWait)(void) = NULL;
+void (*_LnxFlushGraphics)(void) = NULL;
 
 static int kbd_lastmod = 0;
-static int kbsysencoding = 0;
+static int kbsysencoding = -1;
 
 static void kbd_restore(void);
 static void kbd_init(void);
@@ -107,7 +108,7 @@ int _GrEventInit(void)
     }
 
     s = getenv("LANG");
-    if (strstr(s,"UTF-8"))
+    if (s && strstr(s,"UTF-8"))
       kbsysencoding = GRENC_UTF_8;
     else {
       s = getenv("MGRXKBSYSENCODING");
@@ -151,8 +152,8 @@ int _GrReadInputs(void)
     int nev = 0;
     int mb = 0, mx = 0, my = 0, wh = 0;
 
-    if (_lnxfb_waiting_to_switch_console)
-        _LnxfbSwitchConsoleAndWait();
+    if (_lnx_waiting_to_switch_console && _LnxSwitchConsoleAndWait)
+        (*_LnxSwitchConsoleAndWait)();
 
     if (MOUINFO->msstatus == 2) {
         if (_ReadPS2MouseData(&mb, &mx, &my, &wh)) {
@@ -263,6 +264,7 @@ int _GrReadInputs(void)
     }
 
     if (nev == 0) {
+        if (_LnxFlushGraphics) (*_LnxFlushGraphics)();
         usleep(1000L);   // wait 1 ms to not eat 100% cpu
     }
 
@@ -584,8 +586,8 @@ static int validKey(int key, int valid)
 
 static int _CheckKeyboardHit(void)
 {
-    if (_lnxfb_waiting_to_switch_console)
-        _LnxfbSwitchConsoleAndWait();
+    if (_lnx_waiting_to_switch_console && _LnxSwitchConsoleAndWait)
+        (*_LnxSwitchConsoleAndWait)();
 
     if (!kbd_initted) {
         kbd_init();
@@ -618,8 +620,8 @@ static int _ReadCharFromKeyboard(void)
         return (getc(stdin));
     }
     do {
-        if (_lnxfb_waiting_to_switch_console)
-            _LnxfbSwitchConsoleAndWait();
+        if (_lnx_waiting_to_switch_console && _LnxSwitchConsoleAndWait)
+            (*_LnxSwitchConsoleAndWait)();
 
         if (kbd_lastchr != EOF) {
             key = kbd_lastchr;

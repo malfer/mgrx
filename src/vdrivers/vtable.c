@@ -21,9 +21,9 @@
 
 #if defined(__MSDOS__)
 GrVideoDriver *_GrVideoDriverTable[] = {
-    &_GrVideoDriverSTDEGA,
-    &_GrVideoDriverSTDVGA,
     &_GrVideoDriverVESA,
+    &_GrVideoDriverSTDVGA,
+    &_GrVideoDriverSTDEGA,
     &_GrDriverMEM,
     NULL
 #endif
@@ -41,6 +41,9 @@ GrVideoDriver *_GrVideoDriverTable[] = {
 #if defined(__linux__) && !defined(__XWIN__)
 GrVideoDriver *_GrVideoDriverTable[] = {
     &_GrVideoDriverLINUXFB,
+#if defined(LNDRM_DRIVER)
+    &_GrVideoDriverLINUXDRM,
+#endif
     &_GrDriverMEM,
     NULL
 #endif

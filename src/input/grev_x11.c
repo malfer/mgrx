@@ -38,7 +38,7 @@
 #include "arith.h"
 
 static int kbd_lastmod = 0;
-static int kbsysencoding = 0;
+static int kbsysencoding = -1;
 static int utf8support = 0;
 
 static int _XKeyEventToGrKey(XKeyEvent *xkey, long *p1, long *p2);
@@ -63,6 +63,7 @@ int _GrEventInit(void)
     Pixmap csource, cmask;
     XColor cfore, cback;
     Cursor curs;
+    char *s;
 
     if (!_XGrDisplay) {
         return 0;
@@ -86,7 +87,9 @@ int _GrEventInit(void)
     }
     else {
         utf8support = 0;
-        kbsysencoding = GRENC_ISO_8859_1;
+        s = getenv("MGRXKBSYSENCODING");
+        if (s != NULL) kbsysencoding = GrFindEncoding(s);
+        if (kbsysencoding < 0) kbsysencoding = GRENC_ISO_8859_1;
     }
 
     return 1;

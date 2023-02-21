@@ -16,6 +16,9 @@
  **
  ** 211110 M.Alvarez, added GrSetDriverExt
  ** 211121 M.Alvarez, added MGRXMINWG environment variable
+ ** 230203 M.Alvarez, instead of try the detect function on every driver and use
+ **                   the one with more modes get the first detected driver from
+ **                   the driver table
  **/
 
 #include <ctype.h>
@@ -112,17 +115,13 @@ int GrSetDriverExt(char *drvspec, char *drvopt)
             if (!found) return(FALSE);
         }
     }
-    if (!drv) {
+    if (!drv) { /* get the first detected driver from the driver table */
         GrVideoDriver *dp;
-        int ii, maxmodes = 0;
+        int ii;
         for (ii = 0; (dp = _GrVideoDriverTable[ii]) != NULL; ii++) {
             if (dp->detect && (*dp->detect)()) {
-                int nm = 0;
-                for ( ; dp; dp = dp->inherit) nm += dp->nmodes;
-                if (nm > maxmodes) {
-                    drv = _GrVideoDriverTable[ii];
-                    maxmodes = nm;
-                }
+                drv = _GrVideoDriverTable[ii];
+                break;
             }
         }
         if(!drv) return(FALSE);

@@ -130,6 +130,7 @@ static GrVideoMode modes[] = {
     { FALSE,  0, 1600, 1200,  0x00,     0, 0,    &grxwinext  },
     { FALSE,  0, 1440,  900,  0x00,     0, 0,    &grxwinext  },
     { FALSE,  0, 1680, 1050,  0x00,     0, 0,    &grxwinext  },
+    { FALSE,  0, 1920, 1080,  0x00,     0, 0,    &grxwinext  },
     { FALSE,  0, 1920, 1200,  0x00,     0, 0,    &grxwinext  },
     { FALSE,  0, 2560, 1440,  0x00,     0, 0,    &grxwinext  },
     { FALSE,  0, 3840, 2160,  0x00,     0, 0,    &grxwinext  },
@@ -396,7 +397,7 @@ static int init(char *options)
     }
 
     previous_error_handler = XSetErrorHandler(error_handler);
-    
+
     _XGrScreen = DefaultScreen(_XGrDisplay);
     _XGrDepth = depth = DefaultDepth(_XGrDisplay, _XGrScreen);
     _XGrMaxWidth = DisplayWidth(_XGrDisplay, _XGrScreen);

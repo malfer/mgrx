@@ -5,7 +5,7 @@
 
 # Specify version of MGRX
 # Currently only used to generate name of shared libraries for linux
-MGRX_VERSION=1.4.1
+MGRX_VERSION=1.4.2
 
 # Specify if you want to include GrGUI in the MGRX lib
 INCLUDE_GRGUI=y
@@ -93,6 +93,9 @@ INSTALLDIR=/usr/local
 
 # Set to 'n'
 SET_SUIDROOT=n
+
+# Set to 'y' if you want to enable the KMS/DRM driver (experimental)
+USE_LNDRM_DRIVER=n
 
 endif
 

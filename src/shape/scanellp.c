@@ -48,60 +48,58 @@ void _GrScanEllipse(int xc,int yc,int xa,int ya,GrFiller *f,GrFillArg c,int fill
         int scans[ya+1];
         int  row   = ya;
         int  col   = 0;
-        if(scans != NULL) {
-            long yasq  = umul32(ya,ya);
-            long xasq  = umul32(xa,xa);
-            long xasq2 = xasq + xasq;
-            long yasq2 = yasq + yasq;
-            long xasq4 = xasq2 + xasq2;
-            long yasq4 = yasq2 + yasq2;
-            long error = (xasq2 * (row - 1) * row) + (yasq2 * (1 - xasq)) + xasq;
-            while((xasq * row) > (yasq * col)) {
-                if(error >= 0) {
-                    scans[row] = col;
-                    row--;
-                    error -= xasq4 * row;
-                }
-                error += yasq2 * (3 + (col << 1));
-                col++;
-            }
-            error = (yasq2 * (col + 1) * col) + 
-                    (xasq2 * ((row * (row - 2)) + 1)) +
-                    (yasq  * (1 - xasq2));
-            while(row >= 0) {
+        long yasq  = umul32(ya,ya);
+        long xasq  = umul32(xa,xa);
+        long xasq2 = xasq + xasq;
+        long yasq2 = yasq + yasq;
+        long xasq4 = xasq2 + xasq2;
+        long yasq4 = yasq2 + yasq2;
+        long error = (xasq2 * (row - 1) * row) + (yasq2 * (1 - xasq)) + xasq;
+        while((xasq * row) > (yasq * col)) {
+            if(error >= 0) {
                 scans[row] = col;
-                if(error <= 0) {
-                    col++;
-                    error += yasq4 * col;
-                }
                 row--;
-                error += xasq2 * (2 - (row << 1));
+                error -= xasq4 * row;
             }
-            for(row = y1; row <= y2; row++) {
-                col = iabs(yc - row);
-                if(!filled && (col < ya)) {
-                    x1 = xc - scans[col];
-                    x2 = xc - scans[col + 1];
-                    if(x1 < x2) x2--;
-                    do {
-                        clip_ordxrange_(CURC,x1,x2,break,CLIP_EMPTY_MACRO_ARG);
-                        (*f->scan)((x1  + CURC->gc_xoffset),
-                                   (row + CURC->gc_yoffset),
-                                   (x2  - x1 + 1),c);
-                    } while (0);
-                    x1 = xc + scans[col + 1];
-                    x2 = xc + scans[col];
-                    if(x1 < x2) x1++;
-                }
-                else {
-                    x1 = xc - scans[col];
-                    x2 = xc + scans[col];
-                }
-                clip_ordxrange_(CURC,x1,x2,continue,CLIP_EMPTY_MACRO_ARG);
-                (*f->scan)((x1  + CURC->gc_xoffset),
-                           (row + CURC->gc_yoffset),
-                           (x2  - x1 + 1),c);
+            error += yasq2 * (3 + (col << 1));
+            col++;
+        }
+        error = (yasq2 * (col + 1) * col) + 
+        (xasq2 * ((row * (row - 2)) + 1)) +
+        (yasq  * (1 - xasq2));
+        while(row >= 0) {
+            scans[row] = col;
+            if(error <= 0) {
+                col++;
+                error += yasq4 * col;
             }
+            row--;
+            error += xasq2 * (2 - (row << 1));
+        }
+        for(row = y1; row <= y2; row++) {
+            col = iabs(yc - row);
+            if(!filled && (col < ya)) {
+                x1 = xc - scans[col];
+                x2 = xc - scans[col + 1];
+                if(x1 < x2) x2--;
+                do {
+                    clip_ordxrange_(CURC,x1,x2,break,CLIP_EMPTY_MACRO_ARG);
+                    (*f->scan)((x1  + CURC->gc_xoffset),
+                               (row + CURC->gc_yoffset),
+                               (x2  - x1 + 1),c);
+                } while (0);
+                x1 = xc + scans[col + 1];
+                x2 = xc + scans[col];
+                if(x1 < x2) x1++;
+            }
+            else {
+                x1 = xc - scans[col];
+                x2 = xc + scans[col];
+            }
+            clip_ordxrange_(CURC,x1,x2,continue,CLIP_EMPTY_MACRO_ARG);
+            (*f->scan)((x1  + CURC->gc_xoffset),
+                       (row + CURC->gc_yoffset),
+                       (x2  - x1 + 1),c);
         }
     }
     mouse_unblock();
