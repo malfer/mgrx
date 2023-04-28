@@ -34,10 +34,10 @@ static int gheight = 480;
 static int gbpp = 16;
 
 char *wintitle =
-    "MGRX+GrGUI 1.4.2, the graphics library";
+    "MGRX+GrGUI 1.4.3, the graphics library";
 
 char *animatedtext[2] = {
-    "MGRX 1.4.2, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.4.3, the graphics library for DJGPPv2, Linux, X11 and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
 #if defined(__XWIN__) || defined(__WIN32__)
@@ -60,7 +60,7 @@ static int need_restart = 1;
 #define PPMIMGOUT "../testimg/demmgrx2.ppm"
 #endif
 
-#define NDEMOS 56
+#define NDEMOS 58
 
 #define ID_ARCTEST   1
 #define ID_BB1TEST   2
@@ -85,20 +85,22 @@ static int need_restart = 1;
 #define ID_LIFEDB   21
 #define ID_LINETEST 22
 #define ID_MOUSETST 23
-#define ID_PATRTEST 24
-#define ID_PCIRCTST 25
-#define ID_PIXMTEST 26
-#define ID_PNMTEST  27
-#define ID_PNGTEST  28
-#define ID_POLYTEST 29
-#define ID_RGBTEST  30
-#define ID_SBCTEST  31
-#define ID_SCROLTST 32
-#define ID_SPEEDTST 33
-#define ID_TEXTPATT 34
-#define ID_WINCLIP  35
-#define ID_WINTEST  36
-#define ID_WRSZTEST 37
+#define ID_MPOLTEST 24
+#define ID_PATRTEST 25
+#define ID_PCIRCTST 26
+#define ID_PIXMTEST 27
+#define ID_PNMTEST  28
+#define ID_PNGTEST  29
+#define ID_POLYTEST 30
+#define ID_POLYTEDB 31
+#define ID_RGBTEST  32
+#define ID_SBCTEST  33
+#define ID_SCROLTST 34
+#define ID_SPEEDTST 35
+#define ID_TEXTPATT 36
+#define ID_WINCLIP  37
+#define ID_WINTEST  38
+#define ID_WRSZTEST 39
 #define ID_DEMINTL2 40
 #define ID_GUIEX01  41
 #define ID_GUIEX02  42
@@ -149,12 +151,14 @@ static ProgTable ptable[NDEMOS] = {
     {ID_LIFEDB, "life_db", "life_db.c -> Double buffer version of life"},
     {ID_LINETEST, "linetest", "linetest.c -> test wide and patterned lines"},
     {ID_MOUSETST, "mousetst", "mousetst.c -> test mouse cursor and mouse/keyboard input"},
+    {ID_MPOLTEST, "mpoltest", "mpoltest.c -> test multipolygons"},
     {ID_PATRTEST, "patrtest", "patrtest.c -> test pattern filled and patterned shapes"},
     {ID_PCIRCTST, "pcirctst", "pcirctst.c -> test custom circle and ellipse rendering"},
     {ID_PIXMTEST, "pixmtest", "pixmtest.c -> test pixmap functions"},
     {ID_PNMTEST, "pnmtest", "pnmtext.c -> text context to pnm functions"},
     {ID_PNGTEST, "pngtest", "pngtext.c -> text context to png functions"},
     {ID_POLYTEST, "polytest", "polytest.c -> test polygon rendering"},
+    {ID_POLYTEDB, "polytedb", "polytedb.c -> double buffer version of polytest"},
     {ID_RGBTEST, "rgbtest", "rgbtest.c -> show 256 color RGB palette"},
     {ID_SBCTEST, "sbctest", "sbctest.c -> test subcontext operations"},
     {ID_SCROLTST, "scroltst", "scroltst.c -> test virtual screen set/scroll"},
@@ -401,7 +405,7 @@ static void ini_groups(void)
 #define PY8 362
 
 #define NBUTTONSP1 26
-#define NBUTTONSP2 17
+#define NBUTTONSP2 19
 #define NBUTTONSP3 17
 
     bgrp1 = GUIGroupCreate(NBUTTONSP1, 16, 30);
@@ -434,23 +438,25 @@ static void ini_groups(void)
     GUIGroupSetSelected(bgrp1, 0, 0);
 
     bgrp2= GUIGroupCreate(NBUTTONSP2, 16, 30);
-    GUIObjectSetButton(&(bgrp2->o[0]),   0, PX0, PY0, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PatrTest", ID_PATRTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[1]),   1, PX0, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PcircTst", ID_PCIRCTST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[2]),   2, PX0, PY2, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PixmTest", ID_PIXMTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[3]),   3, PX0, PY3, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PnmTest", ID_PNMTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[4]),   4, PX0, PY4, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PngTest", ID_PNGTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[5]),   5, PX0, PY5, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "PolyTest", ID_POLYTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[6]),   6, PX0, PY6, 100, 40, EGAC_BLUE, EGAC_YELLOW, "RgbTest", ID_RGBTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[7]),   7, PX0, PY7, 100, 40, EGAC_BLUE, EGAC_YELLOW, "SbcTest", ID_SBCTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[8]),   8, PX0, PY8, 100, 40, EGAC_BLUE, EGAC_YELLOW, "ScrolTst", ID_SCROLTST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[9]),   9, PX1, PY0, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "SpeedTst", ID_SPEEDTST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[10]), 10, PX1, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "TextPatt", ID_TEXTPATT, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[11]), 11, PX1, PY2, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinClip", ID_WINCLIP, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[12]), 12, PX1, PY3, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinTest", ID_WINTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[13]), 13, PX1, PY4, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WRszTest", ID_WRSZTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[14]), 14, PX2, PY6, 100, 40, EGAC_GREEN, EGAC_WHITE, "Page 3", ID_PAGE3, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[15]), 15, PX2, PY7, 100, 40, EGAC_BROWN, EGAC_WHITE, "ModeTest", ID_MODETEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[16]), 16, PX2, PY8, 100, 40, EGAC_RED, EGAC_WHITE, "Exit", ID_EXIT, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[0]),   0, PX0, PY0, 100, 40, EGAC_BLUE, EGAC_YELLOW, "MpolTest", ID_MPOLTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[1]),   1, PX0, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PatrTest", ID_PATRTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[2]),   2, PX0, PY2, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PcircTst", ID_PCIRCTST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[3]),   3, PX0, PY3, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PixmTest", ID_PIXMTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[4]),   4, PX0, PY4, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PnmTest", ID_PNMTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[5]),   5, PX0, PY5, 100, 40, EGAC_BLUE, EGAC_YELLOW, "PngTest", ID_PNGTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[6]),   6, PX0, PY6, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "PolyTest", ID_POLYTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[7]),   7, PX0, PY7, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "PolyTeDb", ID_POLYTEDB, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[8]),   8, PX0, PY8, 100, 40, EGAC_BLUE, EGAC_YELLOW, "RgbTest", ID_RGBTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[9]),   9, PX1, PY0, 100, 40, EGAC_BLUE, EGAC_YELLOW, "SbcTest", ID_SBCTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[10]),  10, PX1, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "ScrolTst", ID_SCROLTST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[11]),  11, PX1, PY2, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "SpeedTst", ID_SPEEDTST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[12]), 12, PX1, PY3, 100, 40, EGAC_BLUE, EGAC_YELLOW, "TextPatt", ID_TEXTPATT, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[13]), 13, PX1, PY4, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinClip", ID_WINCLIP, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[14]), 14, PX1, PY5, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinTest", ID_WINTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[15]), 15, PX1, PY6, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WRszTest", ID_WRSZTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[16]), 16, PX2, PY6, 100, 40, EGAC_GREEN, EGAC_WHITE, "Page 3", ID_PAGE3, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[17]), 17, PX2, PY7, 100, 40, EGAC_BROWN, EGAC_WHITE, "ModeTest", ID_MODETEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[18]), 18, PX2, PY8, 100, 40, EGAC_RED, EGAC_WHITE, "Exit", ID_EXIT, 0, 0);
     GUIGroupSetSelected(bgrp2, 0, 0);
 
     bgrp3= GUIGroupCreate(NBUTTONSP3, 16, 30);
@@ -522,7 +528,7 @@ static void paint_screen(void)
 
 static void the_title(int x, int y)
 {
-    char *t1 = "MGRX 1.4.2";
+    char *t1 = "MGRX 1.4.3";
     char *t2 = "test programs launcher";
 
     grt_centered.txo_fgcolor = EGAC_LIGHTGREEN;
@@ -624,7 +630,7 @@ static int pev_command(GrEvent * ev)
         for (i = 0; i < NDEMOS; i++) {
             if (ev->p1 == ptable[i].cid) {
                 if ((ev->p1 == ID_ARCTEST) || (ev->p1 == ID_POLYTEST) ||
-                    (ev->p1 == ID_SPEEDTST)) {
+                    (ev->p1 == ID_POLYTEDB) ||(ev->p1 == ID_SPEEDTST)) {
                     GUICDialogInfo("Warning", (void **)infonotest, 2, "Ok");
                     return 1;
                 }

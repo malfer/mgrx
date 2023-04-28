@@ -50,6 +50,7 @@ test/winclip
 test/wintest
 test/wrsztest
 test/i18ntest
+test/mpoltest
 fonts/showfont
 # Ignore x11 test programs
 test/xarctest
@@ -90,6 +91,7 @@ test/xwinclip
 test/xwintest
 test/xwrsztest
 test/xi18ntest
+test/xmpoltest
 # Ignore testgui programs
 testgui/grgui01
 testgui/grgui02

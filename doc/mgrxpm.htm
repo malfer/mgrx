@@ -8,12 +8,12 @@
 
 <center>
 <h1><font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
-<small>1.4.2</small></h1>
+<small>1.4.3</small></h1>
 <h1>a C graphics library for DOS, Linux console &amp; X11 and Win32</h1>
 <h2>Programmer's Manual</h2>
 <p>Based on the original GRX manual written by: Csaba Biegl on August 10, 1992
 <p>Adapted for MGRX by: Mariano Alvarez Fern&aacute;ndez on August 1, 2005
-<p>Last update: February 21, 2023
+<p>Last update: April 13, 2023
 </center>
 
 <!--- ===================================================================== --->
@@ -53,6 +53,7 @@ memory driver.
 <li><a href="#pbpg">Patterns (bitmap, pixmaps and gradients)</a>
 <li><a href="#pfgpri">Pattern filled graphics primitives</a>
 <li><a href="#pld">Patterned line drawing</a>
+<li><a href="#mpoly">Multipolygons</a>
 <li><a href="#enc">About text encoding</a>
 <li><a href="#td">Text drawing</a>
 <li><a href="#utf8">Special UTF-8 text type considerations</a>
@@ -1519,6 +1520,46 @@ void GrPatndAlignEllipseArc(int xo,int yo,int xc,int yc,int xa,int ya,
 void GrPatndAlignPolyLine(int xo,int yo,int numpts,int points[][2],GrLinePattern *lp);
 void GrPatndAlignPolygon(int xo,int yo,int numpts,int points[][2],GrLinePattern *lp);
 </pre>
+
+<!--- ===================================================================== --->
+<hr>
+<h2><a name="mpoly">Multipolygons</a></h2>
+
+<p>&nbsp;&nbsp;New in <b>MGRX</b> 1.4.3 version are multipolygons, they let fill
+and draw a group of polygons at once, so figures with holes can be drawn and
+filled. A multipolygon must be defined with a GrMultiPointArray structure:</p>
+<pre>
+typedef struct {
+    int npoints;            // number of points
+    int closed;             // closed polygon if != 0 (not used for fill)
+    int (*points)[2];       // Points array
+} GrPointArray;
+
+typedef struct {
+    int npa;                // number of point arrays
+    GrPointArray p[1];      // Points arrays (not actual size)
+} GrMultiPointArray;
+</pre>
+<p>&nbsp;&nbsp;You can fill a multipolygon with a solid color or a pattern
+using next functions:</p>
+<pre>
+void GrFilledMultiPolygon(GrMultiPointArray *mpa,GrColor c);
+void GrPatternFilledMultiPolygon(GrMultiPointArray *mpa,GrPattern *p);
+void GrPatAlignFilledMultiPolygon(int xo,int yo,GrMultiPointArray *mpa,GrPattern *p);
+</pre>
+<p>&nbsp;&nbsp;And draw the multipolygon borders with a solid color or a pattern,
+even with a specific thick like we explained in previous chapters:</p>
+<pre>
+void GrMultiPolygon(GrMultiPointArray *mpa,GrColor c);
+void GrCustomMultiPolygon(GrMultiPointArray *mpa,const GrLineOption *o);
+void GrPatternedMultiPolygon(GrMultiPointArray *mpa,GrLinePattern *lp);
+void GrPatndAlignMultiPolygon(int xo,int yo,GrMultiPointArray *mpa,GrLinePattern *lp);
+</pre>
+<p>&nbsp;&nbsp;Note that you can not achieve the fill effect on multipolygons
+using normal fill polygon functions, but the draw functions are convenient
+functions only, the same effect can be reached using the normal polygon
+(for closed ones) or polyline (for opened ones) functions iterating over
+each member of the GrMultiPointArray struct.</p>
 
 <!--- ===================================================================== --->
 <hr>

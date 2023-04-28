@@ -61,14 +61,6 @@ STD_3 = $(OP)fonts/fdv_bgi$(OX)     \
 
 STD_4 = $(OP)gcursors/bldcurs$(OX)  \
 	$(OP)gcursors/drawcurs$(OX) \
-	$(OP)image/ialloc$(OX)      \
-	$(OP)image/ibuild$(OX)      \
-	$(OP)image/ifbox$(OX)       \
-	$(OP)image/ihline$(OX)      \
-	$(OP)image/iinverse$(OX)    \
-	$(OP)image/imginlne$(OX)    \
-	$(OP)image/iplot$(OX)       \
-	$(OP)image/istretch$(OX)    \
 	$(OP)input/mouinfo$(OX)     \
 	$(OP)input/mouinlne$(OX)    \
 	$(OP)input/mscursor$(OX)    \
@@ -89,10 +81,12 @@ STD_5 = $(OP)pattern/fillpatt$(OX)  \
 	$(OP)pattern/patfline$(OX)  \
 	$(OP)pattern/patfplot$(OX)  \
 	$(OP)pattern/patfpoly$(OX)  \
+	$(OP)pattern/patfmpol$(OX)  \
 	$(OP)pattern/patternf$(OX)  \
 	$(OP)pattern/pattfldf$(OX)  \
 	$(OP)pattern/pattline$(OX)  \
 	$(OP)pattern/pattpoly$(OX)  \
+	$(OP)pattern/pattmpol$(OX)  \
 	$(OP)pattern/pfcirc$(OX)    \
 	$(OP)pattern/pfcirca$(OX)   \
 	$(OP)pattern/pfelli$(OX)    \
@@ -135,14 +129,17 @@ STD_7 = $(OP)shape/circle1$(OX)     \
 	$(OP)shape/fillell1$(OX)    \
 	$(OP)shape/fillell2$(OX)    \
 	$(OP)shape/fillpoly$(OX)    \
+	$(OP)shape/fillmpol$(OX)    \
 	$(OP)shape/flood$(OX)       \
 	$(OP)shape/floodfil$(OX)    \
 	$(OP)shape/genellip$(OX)    \
 	$(OP)shape/polygon$(OX)     \
 	$(OP)shape/polyline$(OX)    \
+	$(OP)shape/mpolygon$(OX)    \
 	$(OP)shape/scancnvx$(OX)    \
 	$(OP)shape/scanellp$(OX)    \
 	$(OP)shape/scanpoly$(OX)    \
+	$(OP)shape/scanmpol$(OX)    \
 	$(OP)shape/solidfil$(OX)
 
 STD_8 = $(OP)text/buildaux$(OX)     \
@@ -235,6 +232,7 @@ STD_11= $(OP)utils/resize$(OX)      \
 	$(OP)wideline/custline$(OX) \
 	$(OP)wideline/custplne$(OX) \
 	$(OP)wideline/custpoly$(OX) \
+	$(OP)wideline/custmpol$(OX) \
 	$(OP)wideline/drwcpoly$(OX) \
 	$(OP)i18n/gri18n$(OX)
 

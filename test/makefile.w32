@@ -57,7 +57,8 @@ PROGS=  arctest.exe     \
 	biggtest.exe    \
 	cusptest.exe    \
 	clrtable.exe    \
-	wrsztest.exe
+	wrsztest.exe    \
+	mpoltest.exe
 
 all: 	$(PROGS) \
 	demomgrx.exe \

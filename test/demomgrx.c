@@ -1,7 +1,7 @@
 /**
  ** demomgrx.c ---- MGRX Test programs launcher
  **
- ** Copyright (C) 2000,2001,2005,2008,2019,2020, 2021 Mariano Alvarez Fernandez
+ ** Copyright (C) 2000,2001,2005,2008,2019-2023 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This is a test/demo file of the GRX graphics library.
@@ -32,10 +32,10 @@ static int gheight = 480;
 static int gbpp = 16;
 
 char *wintitle =
-    "MGRX 1.4.2, the graphics library";
+    "MGRX 1.4.3, the graphics library";
 
 char *animatedtext[2] = {
-    "MGRX 1.4.2, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.4.3, the graphics library for DJGPPv2, Linux, X11 and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
 #if defined(__XWIN__) || defined(__WIN32__)
@@ -56,7 +56,7 @@ static int need_restart = 1;
 #define PPMIMGOUT "../testimg/demogrx.ppm"
 #endif
 
-#define NDEMOS 42
+#define NDEMOS 43
 
 #define ID_ARCTEST   1
 #define ID_BB1TEST   2
@@ -81,21 +81,22 @@ static int need_restart = 1;
 #define ID_LIFEDB   21
 #define ID_LINETEST 22
 #define ID_MOUSETST 23
-#define ID_PATRTEST 24
-#define ID_PCIRCTST 25
-#define ID_PIXMTEST 26
-#define ID_PNMTEST  27
-#define ID_PNGTEST  28
-#define ID_POLYTEST 29
-#define ID_POLYTEDB 30
-#define ID_RGBTEST  31
-#define ID_SBCTEST  32
-#define ID_SCROLTST 33
-#define ID_SPEEDTST 34
-#define ID_TEXTPATT 35
-#define ID_WINCLIP  36
-#define ID_WINTEST  37
-#define ID_WRSZTEST 38
+#define ID_MPOLTEST 24
+#define ID_PATRTEST 25
+#define ID_PCIRCTST 26
+#define ID_PIXMTEST 27
+#define ID_PNMTEST  28
+#define ID_PNGTEST  29
+#define ID_POLYTEST 30
+#define ID_POLYTEDB 31
+#define ID_RGBTEST  32
+#define ID_SBCTEST  33
+#define ID_SCROLTST 34
+#define ID_SPEEDTST 35
+#define ID_TEXTPATT 36
+#define ID_WINCLIP  37
+#define ID_WINTEST  38
+#define ID_WRSZTEST 39
 #define ID_MODETEST 50
 #define ID_PAGE1    81
 #define ID_PAGE2    82
@@ -131,6 +132,7 @@ static ProgTable ptable[NDEMOS] = {
     {ID_LIFEDB, "life_db", "life_db.c -> Double buffer version of life"},
     {ID_LINETEST, "linetest", "linetest.c -> test wide and patterned lines"},
     {ID_MOUSETST, "mousetst", "mousetst.c -> test mouse cursor and mouse/keyboard input"},
+    {ID_MPOLTEST, "mpoltest", "mpoltest.c -> test multipolygons"},
     {ID_PATRTEST, "patrtest", "patrtest.c -> test pattern filled and patterned shapes"},
     {ID_PCIRCTST, "pcirctst", "pcirctst.c -> test custom circle and ellipse rendering"},
     {ID_PIXMTEST, "pixmtest", "pixmtest.c -> test pixmap functions"},
@@ -196,24 +198,25 @@ static Button bp1[NBUTTONSP1] = {
     {PX2, PY8, 100, 40, IND_RED, IND_WHITE, "Exit", 0, ID_EXIT}
 };
 
-#define NBUTTONSP2  18
+#define NBUTTONSP2  19
 
 static Button bp2[NBUTTONSP2] = {
-    {PX0, PY0, 100, 40, IND_BLUE, IND_YELLOW, "PatrTest", BSTATUS_SELECTED, ID_PATRTEST},
-    {PX0, PY1, 100, 40, IND_BLUE, IND_YELLOW, "PcircTst", 0, ID_PCIRCTST},
-    {PX0, PY2, 100, 40, IND_BLUE, IND_YELLOW, "PixmTest", 0, ID_PIXMTEST},
-    {PX0, PY3, 100, 40, IND_BLUE, IND_YELLOW, "PnmTest", 0, ID_PNMTEST},
-    {PX0, PY4, 100, 40, IND_BLUE, IND_YELLOW, "PngTest", 0, ID_PNGTEST},
-    {PX0, PY5, 100, 40, IND_BLUE, IND_YELLOW, "PolyTest", 0, ID_POLYTEST},
-    {PX0, PY6, 100, 40, IND_BLUE, IND_YELLOW, "PolyTeDb", 0, ID_POLYTEDB},
-    {PX0, PY7, 100, 40, IND_BLUE, IND_YELLOW, "RgbTest", 0, ID_RGBTEST},
-    {PX0, PY8, 100, 40, IND_BLUE, IND_YELLOW, "SbcTest", 0, ID_SBCTEST},
-    {PX1, PY0, 100, 40, IND_BLUE, IND_YELLOW, "ScrolTst", 0, ID_SCROLTST},
-    {PX1, PY1, 100, 40, IND_BLUE, IND_YELLOW, "SpeedTst", 0, ID_SPEEDTST},
-    {PX1, PY2, 100, 40, IND_BLUE, IND_YELLOW, "TextPatt", 0, ID_TEXTPATT},
-    {PX1, PY3, 100, 40, IND_BLUE, IND_YELLOW, "WinClip", 0, ID_WINCLIP},
-    {PX1, PY4, 100, 40, IND_BLUE, IND_YELLOW, "WinTest", 0, ID_WINTEST},
-    {PX1, PY5, 100, 40, IND_BLUE, IND_YELLOW, "WRszTest", 0, ID_WRSZTEST},
+    {PX0, PY0, 100, 40, IND_BLUE, IND_YELLOW, "MpolTest", BSTATUS_SELECTED, ID_MPOLTEST},
+    {PX0, PY1, 100, 40, IND_BLUE, IND_YELLOW, "PatrTest", 0, ID_PATRTEST},
+    {PX0, PY2, 100, 40, IND_BLUE, IND_YELLOW, "PcircTst", 0, ID_PCIRCTST},
+    {PX0, PY3, 100, 40, IND_BLUE, IND_YELLOW, "PixmTest", 0, ID_PIXMTEST},
+    {PX0, PY4, 100, 40, IND_BLUE, IND_YELLOW, "PnmTest", 0, ID_PNMTEST},
+    {PX0, PY5, 100, 40, IND_BLUE, IND_YELLOW, "PngTest", 0, ID_PNGTEST},
+    {PX0, PY6, 100, 40, IND_BLUE, IND_YELLOW, "PolyTest", 0, ID_POLYTEST},
+    {PX0, PY7, 100, 40, IND_BLUE, IND_YELLOW, "PolyTeDb", 0, ID_POLYTEDB},
+    {PX0, PY8, 100, 40, IND_BLUE, IND_YELLOW, "RgbTest", 0, ID_RGBTEST},
+    {PX1, PY0, 100, 40, IND_BLUE, IND_YELLOW, "SbcTest", 0, ID_SBCTEST},
+    {PX1, PY1, 100, 40, IND_BLUE, IND_YELLOW, "ScrolTst", 0, ID_SCROLTST},
+    {PX1, PY2, 100, 40, IND_BLUE, IND_YELLOW, "SpeedTst", 0, ID_SPEEDTST},
+    {PX1, PY3, 100, 40, IND_BLUE, IND_YELLOW, "TextPatt", 0, ID_TEXTPATT},
+    {PX1, PY4, 100, 40, IND_BLUE, IND_YELLOW, "WinClip", 0, ID_WINCLIP},
+    {PX1, PY5, 100, 40, IND_BLUE, IND_YELLOW, "WinTest", 0, ID_WINTEST},
+    {PX1, PY6, 100, 40, IND_BLUE, IND_YELLOW, "WRszTest", 0, ID_WRSZTEST},
     {PX2, PY6, 100, 40, IND_GREEN, IND_WHITE, "Page 1", 0, ID_PAGE1},
     {PX2, PY7, 100, 40, IND_BROWN, IND_WHITE, "ModeTest", 0, ID_MODETEST},
     {PX2, PY8, 100, 40, IND_RED, IND_WHITE, "Exit", 0, ID_EXIT}
@@ -435,7 +438,7 @@ static void paint_screen(void)
 
 static void the_title(int x, int y)
 {
-    char *t1 = "MGRX 1.4.2";
+    char *t1 = "MGRX 1.4.3";
     char *t2 = "test programs launcher";
 
     grt_centered.txo_fgcolor = LIGHTGREEN;

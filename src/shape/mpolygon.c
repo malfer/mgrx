@@ -1,8 +1,8 @@
 /**
- ** image.h ---- Source Image Utility
+ ** mpolygon.c ---- draw a multi-polygon
  **
- ** by Michal Stencl Copyright (c) 1998
- ** <e-mail>    - [stenclpmd@ba.telecom.sk]
+ ** Copyright (C) 2023 Mariano Alvarez Fernandez
+ ** [e-mail: malfer@telefonica.net]
  **
  ** This file is part of the GRX graphics library.
  **
@@ -14,22 +14,20 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
- ** modifications by Hartmut Schirmer (c) 1998
- **
  **/
 
-#ifndef __IMAGE_H_INCLUDED__
-#define __IMAGE_H_INCLUDED__
-
-#ifndef __LIBGRX_H_INCLUDED__
 #include "libgrx.h"
-#endif
+#include "shapes.h"
 
-#ifndef GrImage
-#define GrImage GrPixmap
-#endif
+void GrMultiPolygon(GrMultiPointArray *mpa,GrColor c)
+{
+    int k;
+    GrFillArg fval;
 
-int _GrImageTestSize(int wdt,int hgt);
-GrImage *_GrImageAllocate(GrContext *ctx, int nwidth,int nheight);
+    fval.color = c;
 
-#endif
+    for (k=0; k<mpa->npa; k++) {
+        _GrDrawPolygon(mpa->p[k].npoints,mpa->p[k].points,
+                       &_GrSolidFiller,fval,mpa->p[k].closed);
+    }
+}

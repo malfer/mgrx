@@ -4,7 +4,7 @@
  ** Copyright (c) 1995 Csaba Biegl, 820 Stirrup Dr, Nashville, TN 37221
  ** [e-mail: csaba@vuse.vanderbilt.edu]
  **
- ** Copyright (C) 2006-2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2006-2023 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net] 
  ** Heavily modified for MGRX
  **
@@ -29,7 +29,7 @@
 
 /* Version of MGRX API */
 
-#define MGRX_VERSION_API 0x0142
+#define MGRX_VERSION_API 0x0143
 
 /* these are the supported configurations: */
 #define MGRX_VERSION_GCC_386_DJGPP       1       /* DJGPP v2 */
@@ -1248,54 +1248,28 @@ GrPixmap *GrPixmapInverse(GrPixmap *p,int flag);
 GrPixmap *GrPixmapStretch(GrPixmap *p,int nwidth,int nheight);
 
 /* ================================================================== */
-/*                      IMAGE MANIPULATION                            */
-/* THESE FUNCTIONS ARE DEPRECATED AND WILL BE DELETED IN THE FUTURE   */
+/*                  MULTI-POLYGON DRAWING AND FILLING                 */
 /* ================================================================== */
 
-/*
- *  by Michal Stencl Copyright (c) 1998 for GRX
- *  <e-mail>    - [stenclpmd@ba.telecom.sk]
- */
+typedef struct {
+    int npoints;            // number of points
+    int closed;             // closed polygon if != 0 (not used for fill)
+    int (*points)[2];       // Points array
+} GrPointArray;
 
-#ifndef GrImage
-#define GrImage GrPixmap
-#endif
+typedef struct {
+    int npa;                // number of point arrays
+    GrPointArray p[1];      // Points arrays (not actual size)
+} GrMultiPointArray;
 
-/* Flags for GrImageInverse() */
+void GrFilledMultiPolygon(GrMultiPointArray *mpa,GrColor c);
+void GrPatternFilledMultiPolygon(GrMultiPointArray *mpa,GrPattern *p);
+void GrPatAlignFilledMultiPolygon(int xo,int yo,GrMultiPointArray *mpa,GrPattern *p);
 
-#define GR_IMAGE_INVERSE_LR  0x01  /* inverse left right */
-#define GR_IMAGE_INVERSE_TD  0x02  /* inverse top down */
-
-GrImage *GrImageBuild(const char *pixels,int w,int h,const GrColorTableP colors);
-void     GrImageDestroy(GrImage *i);
-void     GrImageDisplay(int x,int y, GrImage *i);
-void     GrImageDisplayExt(int x1,int y1,int x2,int y2, GrImage *i);
-void     GrImageFilledBoxAlign(int xo,int yo,int x1,int y1,int x2,int y2,GrImage *p);
-void     GrImageHLineAlign(int xo,int yo,int x,int y,int width,GrImage *p);
-void     GrImagePlotAlign(int xo,int yo,int x,int y,GrImage *p);
-
-GrImage *GrImageInverse(GrImage *p,int flag);
-GrImage *GrImageStretch(GrImage *p,int nwidth,int nheight);
-
-GrImage *GrImageFromPattern(GrPattern *p);
-GrImage *GrImageFromContext(GrContext *c);
-GrImage *GrImageBuildUsedAsPattern(const char *pixels,int w,int h,const GrColorTableP colors);
-
-GrPattern *GrPatternFromImage(GrImage *p);
-
-
-#ifndef GRX_SKIP_INLINES
-#define GrImageFromPattern(p) \
-        (((p) && ((p)->gp_ptype == GR_PTYPE_PIXMAP)) ? (&(p)->gp_pixmap) : NULL)
-#define GrImageFromContext(c) \
-        (GrImage *)GrConvertToPixmap(c)
-#define GrPatternFromImage(p) \
-        (GrPattern *)(p)
-#define GrImageBuildUsedAsPattern(pixels,w,h,colors) \
-        (GrImage *)GrBuildPixmap(pixels,w,h,colors);
-#define GrImageDestroy(i)   \
-          GrDestroyPattern((GrPattern *)(i));
-#endif
+void GrMultiPolygon(GrMultiPointArray *mpa,GrColor c);
+void GrCustomMultiPolygon(GrMultiPointArray *mpa,const GrLineOption *o);
+void GrPatternedMultiPolygon(GrMultiPointArray *mpa,GrLinePattern *lp);
+void GrPatndAlignMultiPolygon(int xo,int yo,GrMultiPointArray *mpa,GrLinePattern *lp);
 
 /* ================================================================== */
 /*               DRAWING IN USER WINDOW COORDINATES                   */

@@ -83,7 +83,8 @@ PROGS=	arctest     \
 	cusptest    \
 	clrtable    \
 	i18ntest    \
-	wrsztest
+	wrsztest    \
+	mpoltest
 
 all:    $(PROGS) demomgrx demointl
 
