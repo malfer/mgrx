@@ -1,7 +1,7 @@
 /**
  ** rawtedit.c ---- Mini GUI for MGRX, raw text editor
  **
- ** Copyright (C) 2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2022-2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This file is part of the GRX graphics library.
@@ -120,6 +120,7 @@ static void erase_char(GUIRawTEdit *ta, int draw);
 
 static int in_marqued_area(GUIRawTEdit *ta, int line, int col);
 static void reset_marqued_area(GUIRawTEdit *ta, int draw);
+static void set_marqued_area(GUIRawTEdit *ta, int fl, int fc, int ll, int lc, int draw);
 static void expand_marqued_area(GUIRawTEdit *ta, int draw);
 static int delete_marqued_area(GUIRawTEdit *ta, int draw);
 static void paste_marqued_area(GUIRawTEdit *ta, int draw);
@@ -134,8 +135,8 @@ static int nd_del_char_from_to(GUIRawTEdit *ta, int line, int fc, int lc);
 static int nd_join_lines(GUIRawTEdit *ta, int line);
 static unsigned short * nd_get_ucs2text(GUIRawTEdit *ta, int fline, int fc,
                                         int lline, int lc, int *len);
-static int nd_put_ucs2text(GUIRawTEdit *ta, unsigned short *buf,
-                           int len, int line, int col);
+//static int nd_put_ucs2text(GUIRawTEdit *ta, unsigned short *buf,
+//                           int len, int line, int col);
 static int nd_add_char(GUIRawTEdit *ta, int line, int col, long ch, int chrtype);
 static int nd_new_line(GUIRawTEdit *ta, int line, int col);
 static int nd_setfg_char_from_to(GUIRawTEdit *ta, int line, int fc, int lc);
@@ -348,6 +349,32 @@ void GUIRTETextColorIndex(GUIRawTEdit *ta, int cfgi)
 
 /**************************************************************************/
 
+void GUIRTETextColorIndexMA(GUIRawTEdit *ta, int cfgi, int draw)
+{
+    // this funcction set the fg color and apply to the marqued area
+    if (ta == NULL) return;
+
+    ta->cfgicolor = cfgi;
+
+    if (setfg_marqued_area(ta) && draw)
+        GUIRTEReDraw(ta);
+}
+
+/**************************************************************************/
+
+void GUIRTEBgColorIndex(GUIRawTEdit *ta, int bgi, int draw)
+{
+    // this funcction set the bg color
+    if (ta == NULL) return;
+
+    ta->bgicolor = bgi;
+
+    if (draw)
+        GUIRTEReDraw(ta);
+}
+
+/**************************************************************************/
+
 void GUIRTECursorColorIndex(GUIRawTEdit *ta, int tci)
 {
     if (ta == NULL) return;
@@ -521,6 +548,77 @@ void GUIRTEPutMultiString(GUIRawTEdit *ta, void *s, int len, int chrtype, int dr
 
 /**************************************************************************/
 
+void GUIRTEResetMA(GUIRawTEdit *ta, int draw)
+{
+    if (ta == NULL) return;
+
+    if (draw) {
+        GrSetClipBox(ta->xpos, ta->ypos, ta->xpos+ta->width-1, ta->ypos+ta->height-1);
+        hide_tcursor(ta);
+    }
+    reset_marqued_area(ta, draw);
+    if (draw) {
+        show_tcursor(ta);
+        GrResetClipBox();
+    }
+}
+
+/**************************************************************************/
+
+void GUIRTESetMA(GUIRawTEdit *ta, int fl, int fc, int ll, int lc, int draw)
+{
+    if (ta == NULL) return;
+
+    if (draw) {
+        GrSetClipBox(ta->xpos, ta->ypos, ta->xpos+ta->width-1, ta->ypos+ta->height-1);
+        hide_tcursor(ta);
+    }
+    set_marqued_area(ta, fl, fc, ll, lc, draw);
+    if (draw) {
+        show_tcursor(ta);
+        GrResetClipBox();
+    }
+}
+
+/**************************************************************************/
+
+int GUIRTECopyMA(GUIRawTEdit *ta, int clear, int draw)
+{
+    int ret;
+
+    if (ta == NULL) return 0;
+
+    if (draw) {
+        GrSetClipBox(ta->xpos, ta->ypos, ta->xpos+ta->width-1, ta->ypos+ta->height-1);
+        hide_tcursor(ta);
+    }
+    ret = copy_marqued_area(ta, clear, draw);
+    if (draw) {
+        show_tcursor(ta);
+        GrResetClipBox();
+    }
+    return ret;
+}
+
+/**************************************************************************/
+
+void GUIRTEPasteMA(GUIRawTEdit *ta, int draw)
+{
+    if (ta == NULL) return;
+
+    if (draw) {
+        GrSetClipBox(ta->xpos, ta->ypos, ta->xpos+ta->width-1, ta->ypos+ta->height-1);
+        hide_tcursor(ta);
+    }
+    paste_marqued_area(ta, draw);
+    if (draw) {
+        show_tcursor(ta);
+        GrResetClipBox();
+    }
+}
+
+/**************************************************************************/
+
 void GUIRTEReDraw(GUIRawTEdit *ta)
 {
     if (ta == NULL) return;
@@ -531,32 +629,6 @@ void GUIRTEReDraw(GUIRawTEdit *ta)
     redraw(ta);
     show_tcursor(ta);
     GrResetClipBox();
-}
-
-/**************************************************************************/
-
-void GUIRTETextColorIndexMA(GUIRawTEdit *ta, int cfgi, int draw)
-{
-    // this funcction set the fg color and apply to the marqued area
-    if (ta == NULL) return;
-
-    ta->cfgicolor = cfgi;
-
-    if (setfg_marqued_area(ta) && draw)
-        GUIRTEReDraw(ta);
-}
-
-/**************************************************************************/
-
-void GUIRTEBgColorIndex(GUIRawTEdit *ta, int bgi, int draw)
-{
-    // this funcction set the bg color
-    if (ta == NULL) return;
-
-    ta->bgicolor = bgi;
-
-    if (draw)
-        GUIRTEReDraw(ta);
 }
 
 /**************************************************************************/
@@ -719,6 +791,12 @@ static int process_event(GUIRawTEdit *ta, GrEvent *ev)
             return 1;
         } else if (ev->p1 == GRMOUSE_LB_RELEASED) {
             ta->pressed = 0;
+            return 1;
+        } else if (ev->p1 == GRMOUSE_B6_RELEASED) {
+            scroll_xorg(ta, ta->xorg-5);
+            return 1;
+        } else if (ev->p1 == GRMOUSE_B7_RELEASED) {
+            scroll_xorg(ta, ta->xorg+5);
             return 1;
         }
     } else if (ev->type == GREV_MMOVE) {
@@ -1343,26 +1421,31 @@ static void add_char(GUIRawTEdit *ta, long ch, int chrtype, int draw)
 
 static void add_string(GUIRawTEdit *ta, void *s, int len, int chrtype, int draw)
 {
-    unsigned short *text2;
-    int i, newchrtype, ind;
+    unsigned short *sword = (unsigned short *)s;
+    unsigned char *sbyte = (unsigned char *)s;
+    int i, ind, nb;
+    int chwide = 1;
+    long ch;
 
     if (len <= 0) len = GrStrLen(s, chrtype);
-    text2 = GrTextRecodeToUCS2(s, len, chrtype);
-    if (text2 == NULL) return;
-    newchrtype = GR_UCS2_TEXT;
-    if (chrtype == GR_BYTE_TEXT || chrtype == GR_WORD_TEXT)
-        newchrtype = GR_WORD_TEXT; // so we can draw glyphs if necesary
+
+    if (chrtype == GR_UCS2_TEXT || chrtype == GR_WORD_TEXT) chwide = 2;
+    else if (chrtype == GR_UTF8_TEXT) chwide = 0; // variable wide
 
     delete_marqued_area(ta, draw);
 
     ind = 0;
     for (i=0; i<len; i++) {
-        if (!nd_add_char(ta, ta->tclpos, ta->tccpos+ind, text2[i], newchrtype))
+        if (chwide == 0) {
+            ch = GrNextUTF8Char(s, &nb);
+            s += nb;
+        } else {
+            ch = (chwide == 1) ? sbyte[i] : sword[i];
+        }
+        if (!nd_add_char(ta, ta->tclpos, ta->tccpos+ind, ch, chrtype))
             break;
         ind++;
     }
-
-    free(text2);
 
     ta->tccpos += ind;
     ta->tcclast = ta->tccpos;
@@ -1374,23 +1457,29 @@ static void add_string(GUIRawTEdit *ta, void *s, int len, int chrtype, int draw)
 
 static void add_multistring(GUIRawTEdit *ta, void *s, int len, int chrtype, int draw)
 {
-    unsigned short *text2;
-    int i, newchrtype, ind;
+    unsigned short *sword = (unsigned short *)s;
+    unsigned char *sbyte = (unsigned char *)s;
+    int i, ind, nb, needredraw = 0;
+    int chwide = 1;
+    long ch;
 
     if (len <= 0) len = GrStrLen(s, chrtype);
-    text2 = GrTextRecodeToUCS2(s, len, chrtype);
-    if (text2 == NULL) return;
-    newchrtype = GR_UCS2_TEXT;
-    if (chrtype == GR_BYTE_TEXT || chrtype == GR_WORD_TEXT)
-        newchrtype = GR_WORD_TEXT; // so we can draw glyphs if necesary
+
+    if (chrtype == GR_UCS2_TEXT || chrtype == GR_WORD_TEXT) chwide = 2;
+    else if (chrtype == GR_UTF8_TEXT) chwide = 0; // variable wide
 
     delete_marqued_area(ta, draw);
 
     ind = 0;
     for (i=0; i<len; i++) {
-        if (text2[i] == '\n') {
+        if (chwide == 0) {
+            ch = GrNextUTF8Char(s, &nb);
+            s += nb;
+        } else {
+            ch = (chwide == 1) ? sbyte[i] : sword[i];
+        }
+        if (ch == '\n') {
             if (ind > 0) {
-                if (draw) redraw_line_from(ta, ta->tclpos, ta->tccpos, 1);
                 ta->tccpos += ind;
                 ind = 0;
             }
@@ -1398,18 +1487,18 @@ static void add_multistring(GUIRawTEdit *ta, void *s, int len, int chrtype, int 
             ta->tclpos += 1;
             ta->tccpos = 0;
             if (ta->l[ta->tclpos].y >= ta->height) scroll_down(ta);
-            if (draw) redraw(ta);
+            needredraw = 1;
         } else {
-            if (!nd_add_char(ta, ta->tclpos, ta->tccpos+ind, text2[i], newchrtype))
+            if (!nd_add_char(ta, ta->tclpos, ta->tccpos+ind, ch, chrtype))
                 break;
             ind++;
         }
     }
 
-    free(text2);
+    if (draw && needredraw) redraw(ta);
 
     if (ind > 0) {
-        if (draw) redraw_line_from(ta, ta->tclpos, ta->tccpos, 1);
+        if (draw && !needredraw) redraw_line_from(ta, ta->tclpos, ta->tccpos, 1);
         ta->tccpos += ind;
     }
     ta->tcclast = ta->tccpos;
@@ -1518,6 +1607,38 @@ static void reset_marqued_area(GUIRawTEdit *ta, int draw)
 
 /**************************************************************************/
 
+static void set_marqued_area(GUIRawTEdit *ta, int fl, int fc, int ll, int lc, int draw)
+{
+    if (fl < 0) { // fl < 0 set all
+        fl = 0;
+        fc = 0;
+        ll = ta->nlines - 1;
+        lc = ta->l[ll].len;
+    } else {
+        if (ll < fl) ll = fl;
+        if (ll >= ta->nlines) ll = ta->nlines - 1;
+        if (fl > ll) fl = ll;
+        if (fc < 0) fc = 0;
+        if (fc > ta->l[fl].len) fc = ta->l[fl].len;
+        if (lc < 0) lc = 0;
+        if (lc > ta->l[ll].len) lc = ta->l[ll].len;
+        if (fl == ll && lc < fc) lc = fc;
+    }
+
+    if (draw) hide_tcursor(ta);
+    ta->fmline = ta->pvmline = fl;
+    ta->fmch = ta->pvmch = fc;
+    ta->lmline = ta->tclpos = ll;
+    ta->lmch = ta->tccpos = lc;
+    scroll_toshow_tc(ta, 0);
+    if (draw) {
+        redraw(ta);
+        show_tcursor(ta);
+    }
+}
+
+/**************************************************************************/
+
 static void expand_marqued_area(GUIRawTEdit *ta, int draw)
 {
     int fmline, lmline;
@@ -1572,6 +1693,8 @@ static int delete_marqued_area(GUIRawTEdit *ta, int draw)
 
     if ((ta->fmline == ta->lmline) && (ta->fmch == ta->lmch)) return 0;
 
+    if (draw) hide_tcursor(ta);
+
     for (i=0; i<(ta->lmline - ta->fmline - 1); i++) {
         nd_del_line(ta, ta->fmline+1);
     }
@@ -1589,7 +1712,6 @@ static int delete_marqued_area(GUIRawTEdit *ta, int draw)
     reset_marqued_area(ta, 0);
 
     if (draw) {
-        hide_tcursor(ta);
         while (ta->l[ta->tclpos].y >= ta->height) scroll_down(ta);
         while (ta->l[ta->tclpos].y < ta->ybits) scroll_up(ta);
         redraw(ta);
@@ -1631,26 +1753,18 @@ static void paste_marqued_area(GUIRawTEdit *ta, int draw)
 
     status = GrIsClipBoardReadyToGet();
     if (status != 1) return;
-    
+
     len = GrGetClipBoardLen(&(ta->partloaded));
     if (len <=0) return;
 
     buf = GrGetClipBoard(len, GR_UCS2_TEXT);
     if (buf == NULL) return;
 
-    delete_marqued_area(ta, 0);
-
-    nd_put_ucs2text(ta, buf, len, ta->tclpos, ta->tccpos);
+    if (draw) hide_tcursor(ta);
+    add_multistring(ta, buf, len, GR_UCS2_TEXT, draw);
+    if (draw) show_tcursor(ta);
 
     free(buf);
-
-    if (draw) {
-        hide_tcursor(ta);
-        while (ta->l[ta->tclpos].y >= ta->height) scroll_down(ta);
-        while (ta->l[ta->tclpos].y < ta->ybits) scroll_up(ta);
-        redraw(ta);
-        show_tcursor(ta);
-    }
 }
 
 /**************************************************************************/
@@ -1914,7 +2028,7 @@ static unsigned short * nd_get_ucs2text(GUIRawTEdit *ta, int fline, int fc,
 }
 
 /**************************************************************************/
-
+/*
 static int nd_put_ucs2text(GUIRawTEdit *ta, unsigned short *buf,
                            int len, int line, int col)
 {
@@ -1937,7 +2051,7 @@ static int nd_put_ucs2text(GUIRawTEdit *ta, unsigned short *buf,
 
     return 1;
 }
-
+*/
 /**************************************************************************/
 
 static int nd_add_char(GUIRawTEdit *ta, int line, int col, long ch, int chrtype)

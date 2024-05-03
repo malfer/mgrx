@@ -55,7 +55,8 @@ int main(int argc, char **argv)
     printf("Set driver specs to \"%s\"\n", drspec);
     
     GrSetDriver( drspec );
-    GrSetMode( GR_default_graphics );
+    //GrSetMode( GR_default_graphics );
+    GrSetMode( GR_width_height_bpp_graphics, gwidth, gheight, gbpp);
     printf("FrameDriver: %s\n", GrFrameDriverName(GrScreenFrameMode()));
 
     x = GrSizeX();

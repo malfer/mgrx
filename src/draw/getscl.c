@@ -30,22 +30,20 @@ const GrColor *GrGetScanlineC(GrContext *ctx,int x1,int x2,int yy)
 /*                      (w = |x2-y1|+1)                             */
 /*           Output data is valid until next GRX call !             */
 {
-	GrColor *res = NULL;
-	if (ctx == NULL) ctx = CURC;
-	/* don't accept any clipping .... */
-	clip_hline_(ctx,x1,x2,yy,goto done,goto done);
-	mouse_block(ctx,x1,yy,x2,yy);
-	res = (*ctx->gc_driver->getindexedscanline)(
-	    &ctx->gc_frame,
-	    x1 + ctx->gc_xoffset,
-	    yy + ctx->gc_yoffset,
-	    x2 - x1 + 1,
-	    NULL
-	);
-	mouse_unblock();
-done:   return res;
+    GrColor *res = NULL;
+    if (ctx == NULL) ctx = CURC;
+    /* don't accept any clipping .... */
+    clip_hline_(ctx,x1,x2,yy,goto done,goto done);
+    mouse_block(ctx,x1,yy,x2,yy);
+    res = (*ctx->gc_driver->getscanline)(
+        &ctx->gc_frame,
+        x1 + ctx->gc_xoffset,
+        yy + ctx->gc_yoffset,
+        x2 - x1 + 1);
+    mouse_unblock();
+    done:   return res;
 }
 
 const GrColor *(GrGetScanline)(int x1,int x2,int yy) {
-  return GrGetScanlineC(NULL, x1,x2,yy);
+    return GrGetScanlineC(NULL, x1,x2,yy);
 }

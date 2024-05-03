@@ -1,4 +1,4 @@
-Welcome to MGRX 1.4.3!
+Welcome to MGRX 1.5.0!
 
 MGRX is a 2D graphics C library derived from the GRX library. GRX was
 originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC
@@ -10,21 +10,26 @@ specifically designed for MGRX.
 Supported platforms
 ===================
 
-  MGRX supports the following four platforms:
+  MGRX supports the following five platforms:
 
   - DOS using the DJGPPv2 compiler; with EGA, VGA, VESA and memory drivers
-  - Linux console using the gcc compiler; with framebuffer, KMS/DRM
-    (experimental) and memory drivers
+  - Linux console using the gcc compiler; with framebuffer, KMS/DRM and
+    memory drivers
   - Linux X11 using the gcc compiler; with x11(windowed) and memory drivers
+  - Linux Wayland using the gcc compiler; with wayland(windowed) and
+    memory drivers
   - Win32 using the TDM-GCC compiler (a Mingw32 distribution); with w32
     (windowed) and memory drivers
 
-  For the Linux console and the Linux X11 versions three architectures are
+  For the Linux console, X11 and Wayland versions three architectures are
   supported: i386 (32bit), x86_64 (64bit) and ARM (32bit, tested in a
   Raspberry Pi 4 using Raspbian).
 
   Note that with the memory driver a graphics card is not required, so it
   can be used for generation of graphics files.
+
+  The Wayland videodriver is new in version 1.5.0, it must be considered in
+  alpha stage, only the x86_64 architecture is tested at the moment.
 
 Why MGRX
 ========
@@ -48,15 +53,16 @@ MGRX installation instructions
 Requirements:
 -------------
 
-  The source files and fonts:  mgrx143.tar.gz or mgrx143s.zip
+  The source files and fonts:  mgrx150.tar.gz or mgrx150s.zip
   This document:               readme
   
 Dependencies:
 -------------
 
-  The only dependencies are libjpeg (for reading and writing JPEG files)
-  and libpng and zlib (for reading and writing PNG files). But you can
-  disable those capabilities to have no dependencies at all (see belloow).
+  Global dependencies, for all platforms,  are libjpeg (for reading and
+  writing JPEG files) and libpng with zlib (for reading and writing PNG
+  files). But you can disable those capabilities to have no dependencies
+  (see belloow).
 
   Anyway it's easy to install the binary libraries in Linux and DJGPP. And
   for the TDM-GCC (Win32) compiler you can download a precompiled package
@@ -66,7 +72,13 @@ Dependencies:
   will be needed, normally it is included in most linux distributions by
   default, but you will need to install the developper files.
 
-A. Unpacking the MGRX archive
+  For linux X11 you need libX11, normally installed by default, but you will
+  need to install the developper files.
+
+  For linux Wayland you need libwayland-client and libxkbcommon, also normally
+  installed by default, but you will need to install the developper files.
+
+  A. Unpacking the MGRX archive
 -----------------------------
 
   1) 'cd' to a directory where you want the MGRX file tree to be created
@@ -82,12 +94,12 @@ A. Unpacking the MGRX archive
 
   3) Unpack the MGRX archive:
 
-         tar xzvf mgrx143.tar.gz   (1)
+         tar xzvf mgrx150.tar.gz   (1)
      or
-         unzip mgrx143s.zip        (2)
+         unzip mgrx150s.zip        (2)
 
-     (1) This will create the subdirectory 'mgrx143'.
-     (2) This will create the subdirectory 'contrib/mgrx143'.
+     (1) This will create the subdirectory 'mgrx150'.
+     (2) This will create the subdirectory 'contrib/mgrx150'.
 
 B. Edit "makedefs.grx"
 ----------------------
@@ -115,10 +127,10 @@ B. Edit "makedefs.grx"
     To build the shared libraries set INCLUDE_SHARED_SUPPORT=y
 
   - For linux console and X11 if your glibc version is < 2.17 you need to
-    set NEED_LIBRT=y
+    set NEED_LIBRT=y. For linux Wayland librt will always be included.
 
-  - To enable the experimental KMS/DRM driver in linux console you need
-    to set USE_LNDRM_DRIVER=y
+  - To disable the KMS/DRM driver in linux console you need to set
+    USE_LNDRM_DRIVER=n
 
 C. Compiling MGRX
 -----------------
@@ -131,12 +143,14 @@ C. Compiling MGRX
      'mingw32-make -f makefile.w32' for Win32
      'make -f makefile.lnx' for Linux console
      'make -f makefile.x11' for Linux X11
+     'make -f makefile.wyl' for Linux Wayland
 
      This process generates the MGRX lib in the "lib/---" (where --- is dj2,
      win32 or unix) subdir and some utility programs in the "bin" subdir.
      The name of the static library is "libmgrx.a" for DOS, Win32 and linux
-     console versions and "libmgrxX.a" for the linux X11 version, so you can
-     have installed both console and X11 versions in the linux platform.
+     console versions, "libmgrxX.a" for the linux X11 version and "libmgrxW.a"
+     for the linux Wayland version, so you can have installed console, X11
+     and Wayland versions in the linux platform.
 
      Note for DJGPP/TDM-GCC users: Do _not_ use an environment variable
      `SHELL' leading to `bash', e.g. `SHELL=/djgpp/bin/bash.exe'.
@@ -154,8 +168,9 @@ D. Testing MGRX
 
      Note for TDM-GCC users: remember to use "mingw32-make" instead of "make".
 
-  3) run the 'demomgrx' program ('xdemomgrx' for the X11 version)
-     (see bellow on running mgrx programs in Linux console framebuffer)
+  3) run the 'demomgrx' program ('xdemomgrx' for the X11 version, 'wdemomgrx'
+     for the Wayland version)
+     (see bellow on running mgrx programs in Linux console)
 
 E. Testing GrGUI (if compiled in)
 ---------------------------------
@@ -166,8 +181,9 @@ E. Testing GrGUI (if compiled in)
 
      Note for TDM-GCC users: remember to use "mingw32-make" instead of "make".
 
-  3) run the 'demmgrx2' program ('xdemmgrx2' for the X11 version)
-     (see bellow on running mgrx programs in Linux console framebuffer)
+  3) run the 'demmgrx2' program ('xdemmgrx2' for the X11 version, 'wdemmgrx2'
+     for the Wayland version)
+     (see bellow on running mgrx programs in Linux console)
 
 F. Installing MGRX lib for your compiler (optional)
 ---------------------------------------------------
@@ -183,7 +199,7 @@ F. Installing MGRX lib for your compiler (optional)
   'make -f <your makefile> uninstall'.
 
   Note 1 for Linux users: probably you must be root to do that.
-  
+
   Note 2 for Linux users: if you have build the shared libraries don't forget
   to run 'ldconfig' to register them.
 
@@ -224,14 +240,15 @@ Environment variables for using MGRX programs
 
      Available drivers are for:
 
-       DOS      : stdega, stdvga, VESA, memory
-       Linux fb : linuxfb, memory
-       Linux X11: xwin, memory
-       Win32    : win32, memory
+       DOS          : stdega, stdvga, VESA, memory
+       Linux console: linuxfb, linuxdrm, memory
+       Linux X11    : xwin, memory
+       Linux Wayland: wayland, memory
+       Win32        : win32, memory
 
      Values for gw and gh can be by example 640,480 or 800,600
      Values for nc can be 2, 16, 256, 64K or 16M.
-     
+
   2) Set the keyboard system encoding. MGRX try to guess it, but if unsure
      it will use this variable.
 
@@ -292,14 +309,32 @@ Running mgrx programs for Linux framebuffer and KMS/DRM drivers
     the "/etc/group" file. I think this is the best solution (it seems
     to be the default in Raspbian, so nothing to do in that case).
 
-Using the experimental KMS/DRM driver
-=====================================
+Using the KMS/DRM videodriver
+=============================
 
-  If you have enabled the experimental KMS/DRM driver you need to set the
-  $MGRXDRV environment variable to use it, because by default the framebuffer
-  driver will be used:
+  If you have enabled the KMS/DRM videodriver you need to set the
+  $MGRXDRV environment variable to use it, because by default the
+  framebuffer videodriver will be used:
 
      export MGRXDRV=linuxdrm
+
+Using the Wayland videodriver
+=============================
+
+  The Wayland videodriver is new in MGRX version 1.5.0 and must be considered
+  in alpha stage. Only the x86_64 platform is tested.
+
+  It runs nicely most of the time, but have some caveats to be fixed in
+  future releases:
+
+  - There are no window decoration, Wayland expect the client to do it, so if
+    you want to move, resize or close the window you have to use the menu in
+    the task bar (at least in KDE).
+  - There are no autorepeat keys, again Wayland expect the client to do it.
+  - The compose keys don't work.
+  - No interaction with the Wayland clipboard.
+  - Because, by now, graphic commits only happen when reading events, non
+    interactive programs don't work as expected.
 
 Help
 ====

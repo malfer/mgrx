@@ -95,7 +95,7 @@ int main()
         // 2- if we were waiting for a dialog when a GREV_WSZCHG come,
         // relaunch it again
         if (restart_command) {
-            GrEventParEnqueue(GREV_COMMAND, restart_command, 0, 0, 0);
+            GrEventParEnqueueFirst(GREV_COMMAND, restart_command, 0, 0, 0);
             restart_command = 0;
         }
 

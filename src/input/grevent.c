@@ -33,8 +33,11 @@ static int num_evqueue = 0;
 
 static int kbsysencoding = GRENC_CP437;
 
-static int genexposeevents = GR_GEN_EXPOSE_NO;
-static int genwmendevents = GR_GEN_WMEND_NO;
+static int genexposeevents = GR_GEN_NO;
+static int genwmendevents = GR_GEN_NO;
+static int genframeevents = GR_GEN_NO;
+static int genclockevents = GR_GEN_NO;
+static int msecclockevent = 30;
 
 static int compose_key = 0; // default no composition
 
@@ -46,8 +49,8 @@ static int preproccess_event(GrEvent *ev);
 /**
  ** GrEventInit - Initializes the input event queue
  **
- ** Returns  0 on success
- **         -1 on error
+ ** Returns 1 on success
+ **         0 on error
  **/
 
 int GrEventInit(void)
@@ -341,36 +344,76 @@ int GrEventDeleteHook(int (*fn) (GrEvent *))
 }
 
 /**
- ** GrEventGenExpose - Generate or not Expose eventes
+ ** GrEventGenExpose - Generate or not GREV_EXPOSE eventes
  **
  ** Arguments:
- **   when: GR_GEN_EXPOSE_NO or GR_GEN_EXPOSE_YES
+ **   gen: GR_GEN_NO or GR_GEN_YES
+ **
+ ** Returns true only if gen==GR_GEN_YES and videodriver can do it
  **/
 
-void GrEventGenExpose(int when)
+int GrEventGenExpose(int gen)
 {
-    genexposeevents = when;
-#ifdef __XWIN__
-    _GrXwinEventGenExpose(when);
-#endif
+    if(DRVINFO->vdriver->genexpose) {
+        genexposeevents = (*DRVINFO->vdriver->genexpose)(gen);
+    } else {
+        genexposeevents = GR_GEN_NO;
+    }
+    return genexposeevents;
 }
 
 /**
- ** GrEventGenWMEnd - Generate or not WMEnd eventes
+ ** GrEventGenWMEnd - Generate or not GREV_WMEND eventes
  **
  ** Arguments:
- **   when: GR_GEN_WMEND_NO or GR_GEN_WMEND_YES
+ **   gen: GR_GEN_NO or GR_GEN_YES
+ **
+ ** Returns true only if gen==GR_GEN_YES and videodriver can do it
  **/
 
-void GrEventGenWMEnd(int when)
+int GrEventGenWMEnd(int gen)
 {
-    genwmendevents = when;
-#ifdef __XWIN__
-    _GrXwinEventGenWMEnd(when);
-#endif
-#ifdef __WIN32__
-    _GrW32EventGenWMEnd(when);
-#endif
+    if(DRVINFO->vdriver->genwmend) {
+        genwmendevents = (*DRVINFO->vdriver->genwmend)(gen);
+    } else {
+        genwmendevents = GR_GEN_NO;
+    }
+    return genwmendevents;
+}
+
+/**
+ ** GrEventGenFrame - Generate or not GREV_FRAME eventes
+ **
+ ** Arguments:
+ **   gen: GR_GEN_NO or GR_GEN_YES
+ **
+ ** Returns true only if gen==GR_GEN_YES and videodriver can do it
+ **/
+
+int GrEventGenFrame(int gen)
+{
+    if(DRVINFO->vdriver->genframe) {
+        genframeevents = (*DRVINFO->vdriver->genframe)(gen);
+    } else {
+        genframeevents = GR_GEN_NO;
+    }
+    return genframeevents;
+}
+/**
+ ** GrEventGenClock - Generate or not GREV_CLOCK eventes
+ **
+ ** Arguments:
+ **   gen: GR_GEN_NO or GR_GEN_YES
+ **   msec: miliseconds
+ **
+ ** Returns gen
+ **/
+
+int GrEventGenClock(int gen, int msec)
+{
+    genclockevents = gen;
+    msecclockevent = msec;
+    return genclockevents;
 }
 
 /* Internal functions */

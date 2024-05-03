@@ -5,7 +5,7 @@
 
 # Specify version of MGRX
 # Currently only used to generate name of shared libraries for linux
-MGRX_VERSION=1.4.3
+MGRX_VERSION=1.5.0
 
 # Specify if you want to include GrGUI in the MGRX lib
 INCLUDE_GRGUI=y
@@ -20,25 +20,27 @@ HAVE_LIBPNG=y
 # zlib compression library
 NEED_ZLIB=y
 
-# Specify if you want shared library support (Linux console and X11)
+# Specify if you want shared library support
+# (Linux console, x11 and Wayland versions)
 INCLUDE_SHARED_SUPPORT=n
 
 # Specify if you want to build the library for arm, i386 or x86_64
-# (Linux console and x11 versions) Set only one to 'y'.
+# (Linux console, x11 and Wayland versions) Set only one to 'y'.
 BUILD_I386=n
 BUILD_X86_64=y
 BUILD_ARM=n
 
-# Specify if you need to add librt (Linux console and x11 versions)
-# necesary for glibc version < 2.17 to use clock_getres function
+# Specify if you need to add librt (for Linux console and x11)
+# necesary when glibc version < 2.17 to link the clock_getres function
 NEED_LIBRT=n
 
 ### SYSTEM SETTINGS ##################################################
 
-CC     = gcc
-AR     = ar
-RANLIB = ranlib
-STRIP  = strip
+CC         = gcc
+AR         = ar
+RANLIB     = ranlib
+STRIP      = strip
+PKG_CONFIG = pkg-config
 
 # Different systems / setups may generate .o files
 # this tag files will show what version is present
@@ -47,6 +49,7 @@ LINUX_CONSOLE         = $(SYSTEM_TAG_PREFIX).000
 LINUX_X11             = $(SYSTEM_TAG_PREFIX).002
 DOS_DJGPP_V2          = $(SYSTEM_TAG_PREFIX).004
 WIN32_GCC_i386_STATIC = $(SYSTEM_TAG_PREFIX).006
+LINUX_WAYLAND         = $(SYSTEM_TAG_PREFIX).008
 
 ifdef DEBUG
 CCOPT = -std=gnu11 -O1 -Wall -g -DDEBUG=$(DEBUG)
@@ -94,8 +97,8 @@ INSTALLDIR=/usr/local
 # Set to 'n'
 SET_SUIDROOT=n
 
-# Set to 'y' if you want to enable the KMS/DRM driver (experimental)
-USE_LNDRM_DRIVER=n
+# Set to 'n' if you don't want to enable the KMS/DRM driver
+USE_LNDRM_DRIVER=y
 
 endif
 
@@ -124,20 +127,9 @@ INSTALLDIR=/usr/local
 # Set the default GRX font path
 #MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
 
-# These seems no longer necesary
-# The X11 base dir on your system
-#X11BASE=/usr/X11R6
-# Add directories with X11 include files here
-#X11INCS=-I$(X11BASE)/include
-# put X11 required libraries and directories here
-# note: some systems need -lsocket added
-#ifeq ($(BUILD_X86_64),y)
-#X11LIBS=-L$(X11BASE)/lib64 -lX11
-#else
-#X11LIBS=-L$(X11BASE)/lib -lX11
-#endif
-
-X11LIBS=-lX11
+# Set X11 includes and libs
+X11INCS = $(shell $(PKG_CONFIG) x11 --cflags)
+X11LIBS = $(shell $(PKG_CONFIG) x11 --libs)
 
 # Set to try to use the XFree86 Direct Graphics Access driver (DGA2)
 # (if DGA2 is not available, fall back to the windowed X11 driver)
@@ -152,6 +144,44 @@ USE_XF86DGA_FRAMEBUFFER=n
 # framebuffer access, it can be set to 'n' if you use the standard
 # X11 driver only or DGA2 without framebuffer access.
 SET_XSUIDROOT=n
+
+endif
+
+### LINUX WAYLAND SPECIFIC ###############################################
+
+ifdef GRXVWAYLAND
+
+# check for arm, i386 or x86_64 build
+ifeq ($(BUILD_X86_64),y)
+CCOPT += -m64
+LDOPT += -m64
+else ifeq ($(BUILD_I386),y)
+CCOPT += -m32
+LDOPT += -m32
+else
+CCOPT +=
+LDOPT +=
+endif
+
+# place libmgrxW.a and libmgrxW.so in lib/unix
+GRX_LIB_SUBDIR=unix
+
+# Set here the destination dir for install and uninstall targets
+INSTALLDIR=/usr/local
+
+# Set the default GRX font path
+#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+
+# Set Wayland includes and libs
+WYLINCS = $(shell $(PKG_CONFIG) wayland-client --cflags)
+WYLLIBS = $(shell $(PKG_CONFIG) wayland-client --libs)
+WYLINCS += $(shell $(PKG_CONFIG) xkbcommon --cflags)
+WYLLIBS += $(shell $(PKG_CONFIG) xkbcommon --libs)
+
+WAYLAND_SCANNER = $(shell $(PKG_CONFIG) wayland-scanner --variable=wayland_scanner)
+
+WAYLAND_PROTOCOLS_DIR = $(shell $(PKG_CONFIG) wayland-protocols --variable=pkgdatadir)
+XDG_SHELL_PROTOCOL = $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml
 
 endif
 

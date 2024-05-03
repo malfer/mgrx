@@ -1,0 +1,210 @@
+#
+# MGRX Library Makefile for LINUX/WAYLAND. Uses GNU Make.
+#
+.PHONY : libst libsh clean cleanall install uninstall \
+	 install-bin uninstall-bin install-fonts uninstall-fonts
+
+GRXVWAYLAND=y
+
+include ../makedefs.grx
+
+INCDIR= -I. -I./include -I../include $(WYLINCS)
+
+ifdef MGRX_DEFAULT_FONT_PATH
+CCOPT += -DMGRX_DEFAULT_FONT_PATH=\"$(MGRX_DEFAULT_FONT_PATH)\"
+endif
+
+EXECBITS = 0755
+
+ifeq ($(BUILD_X86_64),y)
+INSLIBSUBDIR = lib64
+else
+INSLIBSUBDIR = lib
+endif
+
+ADDON_LIBS = -lrt
+
+MGRXST   = ../lib/$(GRX_LIB_SUBDIR)/libmgrxW.a
+MGRXSH   = ../lib/$(GRX_LIB_SUBDIR)/libmgrxW.so
+MGRXSHli = $(MGRXSH).$(word 1,$(subst ., ,$(MGRX_VERSION)))
+MGRXSHna = $(MGRXSH).$(MGRX_VERSION)
+SHCCOPT  = -fPIC -D__SHARED__
+
+OX=.o
+OP=
+
+include ./stdobjs.mak
+
+STD_O= $(STD_1) $(STD_2)  $(STD_3)  $(STD_4) \
+       $(STD_5) $(STD_6)  $(STD_7)  $(STD_8) \
+       $(STD_9) $(STD_10) $(STD_11) $(STD_12)\
+
+ADDON_O=
+
+ifdef DEBUG
+  ADDON_O += utils/dbgprint.o
+endif
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_O += $(JPG_1)
+else
+  ADDON_O += $(NOJPG_1)
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_O += $(PNG_1)
+else
+  ADDON_O += $(NOPNG_1)
+endif
+
+#O=      $(STD_O)            \
+	$(ADDON_O)          \
+	fdrivers/fd_xwin.o  \
+	fonts/fdv_xwin.o    \
+	input/grev_x11.o    \
+	input/clb_x11.o     \
+	misc/x11misc.o      \
+	vdrivers/vd_xwin.o
+
+O=      $(STD_O)            \
+	$(ADDON_O)          \
+	input/grev_wyl.o    \
+	input/clb_gen.o     \
+	misc/wylmisc.o      \
+	vdrivers/vd_wylnd.o \
+	xdg-shell-protocol.o
+
+ifeq ($(INCLUDE_GRGUI),y)
+O+=	$(GRGUI_1)
+endif
+
+LO = $(subst $(OX),.lo,$(O))
+
+UTILP = ../bin/bin2c \
+	../bin/fnt2c
+
+UTILPW= ../bin/wmodetest
+
+all: libst libsh $(UTILP) $(UTILPW)
+
+libst: $(MGRXST)
+
+$(MGRXST): $(LINUX_WAYLAND) $(O)
+	-rm -f $(MGRXST)
+	$(AR) -r $(MGRXST) $(O)
+	$(RANLIB) $(MGRXST)
+
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+libsh: $(MGRXSHna)
+else
+libsh:
+endif
+
+$(MGRXSHna): $(LINUX_WAYLAND) $(LO)
+	-rm -f $(MGRXSHna)
+	$(CC) $(LDOPT) -shared -Wl,-soname,$(notdir $(MGRXSHli)) -o $(MGRXSHna) $(LO)
+	ln -sf $(notdir $(MGRXSHna)) $(MGRXSHli)
+
+$(UTILP): ../bin/% : utilprog/%.o $(MGRXST)
+	$(CC) $(LDOPT) -o $@ utilprog/$*.o $(MGRXST) $(WYLLIBS)
+	$(STRIP) $@
+
+$(UTILPW): ../bin/w% : utilprog/%.o $(MGRXST)
+	$(CC) $(LDOPT) -o $@ utilprog/$*.o $(MGRXST) $(ADDON_LIBS) $(WYLLIBS)
+	$(STRIP) $@
+	chmod $(EXECBITS) $@
+
+$(O): $(LINUX_WAYLAND) xdg-shell-client-protocol.h
+
+$(LO): $(LINUX_WAYLAND) xdg-shell-client-protocol.h
+
+$(LINUX_WAYLAND):
+	-if [ ! -r $(LINUX_WAYLAND) ]; then \
+	rm -f $(SYSTEM_TAG_PREFIX).* $(O) $(LO) utilprog/*.o; fi
+	touch $(LINUX_WAYLAND)
+
+xdg-shell-client-protocol.h:
+	$(WAYLAND_SCANNER) client-header $(XDG_SHELL_PROTOCOL) xdg-shell-client-protocol.h
+
+xdg-shell-protocol.c:
+	$(WAYLAND_SCANNER) private-code $(XDG_SHELL_PROTOCOL) xdg-shell-protocol.c
+
+clean:
+	rm -f $(O) $(LO) $(LINUX_WAYLAND)
+	rm -f utilprog/*.o
+	rm -f xdg-shell-client-protocol.h
+	rm -f xdg-shell-protocol.c
+
+cleanall: clean
+#ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	rm -f $(MGRXSHna) $(MGRXSHli)
+#endif
+	rm -f $(MGRXST)
+	rm -f $(UTILP) $(UTILPW)
+
+install: libst libsh
+	install -m 0755 -d $(INSTALLDIR)/$(INSLIBSUBDIR)
+	install -m 0755 -d $(INSTALLDIR)/include
+	install -m 0644 $(MGRXST) $(INSTALLDIR)/$(INSLIBSUBDIR)
+ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	install -m 0755 $(MGRXSHna) $(INSTALLDIR)/$(INSLIBSUBDIR)
+	ln -sf $(notdir $(MGRXSHna)) $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHli))
+	ln -sf $(notdir $(MGRXSHli)) $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSH))
+endif
+	install -m 0644 ../include/mgrx.h $(INSTALLDIR)/include
+	install -m 0644 ../include/mgrxkeys.h $(INSTALLDIR)/include
+	install -m 0644 ../include/mgrxcolr.h $(INSTALLDIR)/include
+ifeq ($(INCLUDE_GRGUI),y)
+	install -m 0644 ../include/grgui.h $(INSTALLDIR)/include
+endif
+
+uninstall:
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXST))
+#ifeq ($(INCLUDE_SHARED_SUPPORT),y)
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSH))
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHli))
+	rm -f $(INSTALLDIR)/$(INSLIBSUBDIR)/$(notdir $(MGRXSHna))
+#endif
+	rm -f $(INSTALLDIR)/include/mgrx.h
+	rm -f $(INSTALLDIR)/include/mgrxkeys.h
+	rm -f $(INSTALLDIR)/include/mgrxcolr.h
+#ifeq ($(INCLUDE_GRGUI),y)
+	rm -f $(INSTALLDIR)/include/grgui.h
+#endif
+
+install-bin: $(UTILP) $(UTILPW)
+	install -m 0755 -d $(INSTALLDIR)/bin
+	install -m 0755 ../bin/bin2c $(INSTALLDIR)/bin
+	install -m 0755 ../bin/fnt2c $(INSTALLDIR)/bin
+	install -m $(EXECBITS) ../bin/xmodetest $(INSTALLDIR)/bin
+
+uninstall-bin:
+	rm -f $(INSTALLDIR)/bin/bin2c
+	rm -f $(INSTALLDIR)/bin/fnt2c
+	rm -f $(INSTALLDIR)/bin/xmodetest
+
+ifdef MGRX_DEFAULT_FONT_PATH
+install-fonts:
+	install -m 0755 -d $(MGRX_DEFAULT_FONT_PATH)
+	install -m 0644 ../fonts/* $(MGRX_DEFAULT_FONT_PATH)
+uninstall-fonts:
+	rm -f $(MGRX_DEFAULT_FONT_PATH)/*
+endif
+
+dep:
+	gcc -MM $(CCOPT) -D__WAYLAND__ $(INCDIR) $(O:.o=.c) \
+	| sed 's#^.*: \(.*\)\.c#\1.o: \1.c#g' >depend.wyl
+
+$(O): %.o : %.c
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.o
+
+$(LO): %.lo : %.c
+	$(CC) -c $(CCOPT) $(SHCCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.lo
+
+.c.s:
+	$(CC) -S $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.s
+
+.c.o:
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.o
+
+include depend.wyl

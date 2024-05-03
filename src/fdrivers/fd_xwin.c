@@ -21,17 +21,21 @@
  ** 070505 M.Alvarez, Using a Pixmap for BackingStore
  ** 080801 M.Alvarez, Sanitized pixel cache code
  ** 080801 M.Alvarez, New faster and specific for X11 putscanline function
- ** 170714 Use BStore only if not generated GREV_EXPOSE events
+ ** 170714 M.Alvarez, Use BStore only if not generated GREV_EXPOSE events
+ ** 230514 M.Alvarez, specific getscanline function
+ ** 230514 M.Alvarez, use the GR_frameNRAM32L as compatible RAM frame mode for
+ **                   the GR_frameXWIN32L framebuffer
  **/
 
 #include "libgrx.h"
-#include "libxwin.h"
-#include "arith.h"
 #include "grdriver.h"
+#include "arith.h"
+#include "allocate.h"
+#include "libxwin.h"
 
 void _XGrCopyBStore(int x, int y, int width, int lenght)
 {
-  if (_XGrGenExposeEvents == GR_GEN_EXPOSE_NO) 
+  if (_XGrGenExposeEvents == GR_GEN_NO)
     XCopyArea(_XGrDisplay, _XGrBStore, _XGrWindow,
               _XGrDefaultGC, x, y, width, lenght, x, y);
 }
@@ -124,11 +128,9 @@ void _XGrCheckPixelCache(int y1, int y2)
     PIXEL_CACHE_INVALIDATE();
 }
 
-static
-GrColor readpixel(GrFrame *c, int x, int y)
+static INLINE
+void _XGrSetPixelCache(GrFrame *c, int y)
 {
-  GrColor col;
-  GRX_ENTER();
   if (_XGrPixelCacheDrawable != *((Drawable *) c->gf_baseaddr[0])
       || _XGrPixelCacheImage == NULL
       || !AREA_OVERLAP_PIXEL_CACHE(y,y)) {
@@ -149,10 +151,18 @@ GrColor readpixel(GrFrame *c, int x, int y)
     _XGrPixelCacheImage = XGetImage(_XGrDisplay, _XGrPixelCacheDrawable, 0,
                                     _XGrPixelCacheY1, _XGrPixelCacheWidth,
                                     _XGrPixelCacheHeight, AllPlanes, ZPixmap);
-    if (! _XGrPixelCacheImage) {
-      col = GrNOCOLOR;
-      goto done;
-    }
+  }
+}
+
+static
+GrColor readpixel(GrFrame *c, int x, int y)
+{
+  GrColor col;
+  GRX_ENTER();
+  _XGrSetPixelCache(c, y);
+  if (! _XGrPixelCacheImage) {
+    col = GrNOCOLOR;
+    goto done;
   }
   col = XGetPixel(_XGrPixelCacheImage, x, y - _XGrPixelCacheY1);
 done:
@@ -168,7 +178,7 @@ void drawpixel(int x, int y, GrColor c)
   XDrawPoint(_XGrDisplay, *((Drawable *) CURC->gc_baseaddr[0]), _XGrGC, x, y);
   /*  _XGrCopyBStore(x, y, 1, 1);
    * it is a bit faster doing two XDrawPoint instead _XGrCopyBStore */
-  if (_XGrGenExposeEvents == GR_GEN_EXPOSE_NO) 
+  if (_XGrGenExposeEvents == GR_GEN_NO)
     XDrawPoint(_XGrDisplay, (Drawable) _XGrWindow, _XGrGC, x, y);
   _XGrCheckPixelCache(y, y);
 
@@ -472,6 +482,29 @@ static void bltr2v(GrFrame *dst, int dx, int dy, GrFrame *src, int sx, int sy, i
 }
 
 static
+GrColor *getscanline(GrFrame *c, int x, int y, int w)
+{
+  GrColor *pixels;
+  int i;
+
+  GRX_ENTER();
+  pixels = _GrTempBufferAlloc(sizeof(GrColor) * (w+1));
+  if (pixels == NULL) goto done;
+
+  _XGrSetPixelCache(c, y);
+  if (! _XGrPixelCacheImage) {
+    for (i=0; i<w; i++) pixels[i] = GrNOCOLOR;
+    goto done;
+  }
+
+  for (i=0; i<w; i++) {
+    pixels[i] = XGetPixel(_XGrPixelCacheImage, x+i, y - _XGrPixelCacheY1);
+  }
+done:
+  GRX_RETURN(pixels);
+}
+
+static
 void putscanline(int x, int y, int w, const GrColor *scl, GrColor op)
 {
   GrColor skipc;
@@ -558,7 +591,7 @@ GrFrameDriver _GrFrameDriverXWIN8 = {
   bitblt,
   bltv2r,
   bltr2v,
-  _GrFrDrvGenericGetIndexedScanline,
+  getscanline,
   putscanline
 };
 
@@ -582,7 +615,7 @@ GrFrameDriver _GrFrameDriverXWIN16 = {
   bitblt,
   bltv2r,
   bltr2v,
-  _GrFrDrvGenericGetIndexedScanline,
+  getscanline,
   putscanline
 };
 
@@ -606,13 +639,13 @@ GrFrameDriver _GrFrameDriverXWIN24 = {
   bitblt,
   bltv2r,
   bltr2v,
-  _GrFrDrvGenericGetIndexedScanline,
+  getscanline,
   putscanline
 };
 
 GrFrameDriver _GrFrameDriverXWIN32L = {
   GR_frameXWIN32L,              /* frame mode */
-  GR_frameRAM32L,               /* compatible RAM frame mode */
+  GR_frameNRAM32L,              /* compatible RAM frame mode */
   TRUE,                         /* onscreen */
   4,                            /* line width alignment */
   1,                            /* number of planes */
@@ -630,13 +663,13 @@ GrFrameDriver _GrFrameDriverXWIN32L = {
   bitblt,
   bltv2r,
   bltr2v,
-  _GrFrDrvGenericGetIndexedScanline,
+  getscanline,
   putscanline
 };
 
 GrFrameDriver _GrFrameDriverXWIN32H = {
   GR_frameXWIN32H,              /* frame mode */
-  GR_frameRAM32H,                /* compatible RAM frame mode */
+  GR_frameNRAM32H,              /* compatible RAM frame mode */
   TRUE,                         /* onscreen */
   4,                            /* line width alignment */
   1,                            /* number of planes */
@@ -654,6 +687,6 @@ GrFrameDriver _GrFrameDriverXWIN32H = {
   bitblt,
   bltv2r,
   bltr2v,
-  _GrFrDrvGenericGetIndexedScanline,
+  getscanline,
   putscanline
 };

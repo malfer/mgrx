@@ -391,6 +391,6 @@ GrFrameDriver _GrFrameDriverSVGA8 = {
     _GrFrDrvPackedBitBltV2V,
     _GrFrDrvPackedBitBltV2R,
     _GrFrDrvPackedBitBltR2V,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };

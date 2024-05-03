@@ -51,8 +51,8 @@ static int _XGrOpenXIMandXIC(Display *dpy, Window win, XIM *im, XIC *ic);
 /**
  ** _GrEventInit - Initializes inputs
  **
- ** Returns  0 on success
- **         -1 on error
+ ** Returns 1 on success
+ **         0 on error
  **
  ** For internal use only
  **/
@@ -247,6 +247,14 @@ int _GrReadInputs(void)
                               break;
                 case Button5: evaux.p1 = GRMOUSE_B5_PRESSED;
                               break;
+                case 6      : evaux.p1 = GRMOUSE_B6_PRESSED;
+                              break;
+                case 7      : evaux.p1 = GRMOUSE_B7_PRESSED;
+                              break;
+                case 8      : evaux.p1 = GRMOUSE_B8_PRESSED;
+                              break;
+                case 9      : evaux.p1 = GRMOUSE_B9_PRESSED;
+                              break;
                 }
                 break;
             case ButtonRelease:
@@ -263,6 +271,14 @@ int _GrReadInputs(void)
                 case Button4: evaux.p1 = GRMOUSE_B4_RELEASED;
                               break;
                 case Button5: evaux.p1 = GRMOUSE_B5_RELEASED;
+                              break;
+                case 6      : evaux.p1 = GRMOUSE_B6_RELEASED;
+                              break;
+                case 7      : evaux.p1 = GRMOUSE_B7_RELEASED;
+                              break;
+                case 8      : evaux.p1 = GRMOUSE_B8_RELEASED;
+                              break;
+                case 9      : evaux.p1 = GRMOUSE_B9_RELEASED;
                               break;
                 }
                 break;

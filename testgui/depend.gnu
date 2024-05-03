@@ -21,7 +21,7 @@ grgui10.o: grgui10.c ../include/grgui.h ../include/mgrx.h \
 grgui11.o: grgui11.c ../include/grgui.h ../include/mgrx.h \
  ../include/mgrxkeys.h ../include/mgrxcolr.h
 grgui12.o: grgui12.c ../include/grgui.h ../include/mgrx.h \
- ../include/mgrxkeys.h ../include/mgrxcolr.h
+ ../include/mgrxkeys.h ../include/mgrxcolr.h gr12i18n.h
 showfnt2.o: showfnt2.c ../include/grgui.h ../include/mgrx.h \
  ../include/mgrxkeys.h ../include/mgrxcolr.h
 demmgrx2.o: demmgrx2.c ../include/grgui.h ../include/mgrx.h \

@@ -92,8 +92,8 @@ static int _ReadPS2MouseData(int *mb, int *mx, int *my, int *wh);
 /**
  ** _GrEventInit - Initializes inputs
  **
- ** Returns  0 on success
- **         -1 on error
+ ** Returns 1 on success
+ **         0 on error
  **
  ** For internal use only
  **/
@@ -251,7 +251,7 @@ int _GrReadInputs(void)
                 evaux.cp1[1] = _ReadCharFromKeyboard();
                 evaux.cp1[2] = _ReadCharFromKeyboard();
                 evaux.cp1[3] = _ReadCharFromKeyboard();
-                evaux.p2 = 3;
+                evaux.p2 = 4;
             }
         }
         else {

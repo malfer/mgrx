@@ -48,7 +48,7 @@ GrFrameDriver _GrFrameDriverSVGA24_LFB = {
     bitblt,
     bltv2r,
     bltr2v,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };
 

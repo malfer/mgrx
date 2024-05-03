@@ -69,38 +69,45 @@ TESTFUNC(mousetest)
                 if (evt.p1 == GRMOUSE_LB_PRESSED) {
                     strcpy(mend,"[left down] ");
                     lmr[0] = 'L';
-                }
-                if (evt.p1 == GRMOUSE_MB_PRESSED) {
+                } else if (evt.p1 == GRMOUSE_MB_PRESSED) {
                     strcpy(mend,"[middle down] ");
                     lmr[1] = 'M';
-                }
-                if (evt.p1 == GRMOUSE_RB_PRESSED) {
+                } else if (evt.p1 == GRMOUSE_RB_PRESSED) {
                     strcpy(mend,"[right down] ");
                     lmr[2] = 'R';
-                }
-                if (evt.p1 == GRMOUSE_B4_PRESSED) {
+                } else if (evt.p1 == GRMOUSE_B4_PRESSED) {
                     strcpy(mend,"[b4 down] ");
-                }
-                if (evt.p1 == GRMOUSE_B5_PRESSED) {
+                } else if (evt.p1 == GRMOUSE_B5_PRESSED) {
                     strcpy(mend,"[b5 down] ");
-                }
-                if (evt.p1 == GRMOUSE_LB_RELEASED) {
+                } else if (evt.p1 == GRMOUSE_B6_PRESSED) {
+                    strcpy(mend,"[b6 down] ");
+                } else if (evt.p1 == GRMOUSE_B7_PRESSED) {
+                    strcpy(mend,"[b7 down] ");
+                } else if (evt.p1 == GRMOUSE_B8_PRESSED) {
+                    strcpy(mend,"[b8 down] ");
+                } else if (evt.p1 == GRMOUSE_B9_PRESSED) {
+                    strcpy(mend,"[b9 down] ");
+                } else if (evt.p1 == GRMOUSE_LB_RELEASED) {
                     strcpy(mend,"[left up] ");
                     lmr[0] = 'l';
-                }
-                if (evt.p1 == GRMOUSE_MB_RELEASED) {
+                } else if (evt.p1 == GRMOUSE_MB_RELEASED) {
                     strcpy(mend,"[middle up] ");
                     lmr[1] = 'm';
-                }
-                if (evt.p1 == GRMOUSE_RB_RELEASED) {
+                } else if (evt.p1 == GRMOUSE_RB_RELEASED) {
                     strcpy( mend,"[right up] ");
                     lmr[2] = 'r';
-                }
-                if (evt.p1 == GRMOUSE_B4_RELEASED) {
+                } else if (evt.p1 == GRMOUSE_B4_RELEASED) {
                     strcpy( mend,"[b4 up] ");
-                }
-                if (evt.p1 == GRMOUSE_B5_RELEASED) {
+                } else if (evt.p1 == GRMOUSE_B5_RELEASED) {
                     strcpy( mend,"[b5 up] ");
+                } else if (evt.p1 == GRMOUSE_B6_RELEASED) {
+                    strcpy( mend,"[b6 up] ");
+                } else if (evt.p1 == GRMOUSE_B7_RELEASED) {
+                    strcpy( mend,"[b7 up] ");
+                } else if (evt.p1 == GRMOUSE_B8_RELEASED) {
+                    strcpy( mend,"[b8 up] ");
+                } else if (evt.p1 == GRMOUSE_B9_RELEASED) {
+                    strcpy( mend,"[b9 up] ");
                 }
                 sprintf(mend,"at X=%ld, Y=%ld, ", evt.p2, evt.p3);
             }

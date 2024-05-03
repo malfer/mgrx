@@ -16,6 +16,7 @@
  **
  ** 20190919 Solved a bug, missing color component positions for 24 bpp
  ** 20190919 Added 16 bpp mode (M.Alvarez)
+ ** 20230527 Added 32 bpp mode (M.Alvarez)
  **/
 
 #include "libgrx.h"
@@ -99,6 +100,7 @@ static GrVideoModeExt gr8ext = {
 };
 
 static GrVideoModeExt gr16ext = {
+    //GR_frameNRAM16,                     /* frame driver */
     GR_frameRAM16,                      /* frame driver */
     NULL,                               /* frame driver override */
     NULL,                               /* frame buffer address */
@@ -114,7 +116,22 @@ static GrVideoModeExt gr16ext = {
 };
 
 static GrVideoModeExt gr24ext = {
-    GR_frameRAM24,                      /* frame driver */
+    GR_frameNRAM24,                     /* frame driver */
+    NULL,                               /* frame driver override */
+    NULL,                               /* frame buffer address */
+    { 8, 8, 8 },                        /* color precisions */
+    {16, 8, 0 },                        /* color component bit positions */
+    GR_VMODEF_MEMORY,                   /* mode flag bits */
+    mem_setmode,                        /* mode set */
+    NULL,                               /* virtual size set */
+    NULL,                               /* virtual scroll */
+    NULL,                               /* bank set function */
+    NULL,                               /* double bank set function */
+    NULL                                /* color loader */
+};
+
+static GrVideoModeExt gr32ext = {
+    GR_frameNRAM32L,                    /* frame driver */
     NULL,                               /* frame driver override */
     NULL,                               /* frame buffer address */
     { 8, 8, 8 },                        /* color precisions */
@@ -156,6 +173,7 @@ static GrVideoMode modes[] = {
     {  TRUE,  8,  640,  480,  0x00,  640,    0,  &gr8ext    },
     {  TRUE, 16,  640,  480,  0x00, 1280,    0,  &gr16ext   },
     {  TRUE, 24,  640,  480,  0x00, 1920,    0,  &gr24ext   },
+    {  TRUE, 32,  640,  480,  0x00, 2560,    0,  &gr32ext   },
     {  TRUE,  1,   80,   25,  0x00,  160,    0,  &dummyExt  }
 };
 
@@ -199,6 +217,11 @@ static GrVideoMode * mem_selectmode ( GrVideoDriver * drv, int w, int h,
         case 24:
             index = 4;
             LineOffset = 3*w;
+            size = h;
+            break;
+        case 32:
+            index = 5;
+            LineOffset = 4*w;
             size = h;
             break;
         default:
@@ -246,5 +269,9 @@ GrVideoDriver _GrDriverMEM = {
     NULL,                               /* initialization routine */
     mem_reset,                          /* reset routine */
     mem_selectmode,                     /* special mode select routine */
-    GR_DRIVERF_USER_RESOLUTION          /* arbitrary resolution possible */
+    GR_DRIVERF_USER_RESOLUTION,         /* arbitrary resolution possible */
+    0,                                  /* inputdriver, not used by now */
+    NULL,                               /* generate GREV_EXPOSE events */
+    NULL,                               /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };

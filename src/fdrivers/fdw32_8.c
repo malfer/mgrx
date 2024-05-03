@@ -19,7 +19,7 @@
 #include "libwin32.h"
 #include "fdrivers/driver8.h"
 
-static void w32_drawpixel(int x, int y, GrColor color)
+/*static void w32_drawpixel(int x, int y, GrColor color)
 {
     HDC hDC;
     COLORREF c;
@@ -32,6 +32,20 @@ static void w32_drawpixel(int x, int y, GrColor color)
     SetPixelV ( hDC, x, y, c );
     ReleaseDC ( hGRXWnd, hDC );
 
+    GRX_LEAVE();
+}*/
+
+static void w32_drawpixel(int x, int y, GrColor color)
+{
+    RECT Rect;
+
+    GRX_ENTER();
+    drawpixel(x, y, color);
+    Rect.left = x;
+    Rect.top = y;
+    Rect.right = x + 1;
+    Rect.bottom = y + 1;
+    InvalidateRect(hGRXWnd, &Rect, FALSE);
     GRX_LEAVE();
 }
 
@@ -183,7 +197,7 @@ GrFrameDriver _GrFrameDriverWIN32_8 = {
     w32_bitblit,
     bitblit,
     w32_bitblit,
-    getindexedscanline,
+    getscanline,
     w32_putscanline
 };
 

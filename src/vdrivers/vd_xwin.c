@@ -64,8 +64,8 @@ unsigned int    _XGrCurHeight;
 int             _XGrBStoreInited = 0;
 int             _XGrFullScreen = 0;
 int             _XGrWMaped = 0;
-int             _XGrGenExposeEvents = GR_GEN_EXPOSE_NO;
-int             _XGrGenWMEndEvents = GR_GEN_WMEND_NO;
+int             _XGrGenExposeEvents = GR_GEN_NO;
+int             _XGrGenWMEndEvents = GR_GEN_NO;
 int             _XGrGenWSzChgEvents = FALSE;
 Atom            _wmDeleteWindow;
 int             _XGrUserHadSetWName = 0;
@@ -228,7 +228,7 @@ static int setmode(GrVideoMode *mp, int noclear)
         char name[100];
         
         if (!_XGrBStoreInited) {
-            _XGrGenExposeEvents = GR_GEN_EXPOSE_NO;
+            _XGrGenExposeEvents = GR_GEN_NO;
             if (!_XGrGenWSzChgEvents) {
                 _XGrBStore = XCreatePixmap(_XGrDisplay, _XGrWindow, mp->width,
                                            mp->height, _XGrDepth);
@@ -394,6 +394,8 @@ static int init(char *options)
 
     if (_XGrGenWSzChgEvents) {
         _GrVideoDriverXWIN.drvflags |= GR_DRIVERF_WINDOW_RESIZE;
+    } else {
+        _GrVideoDriverXWIN.drvflags &= ~GR_DRIVERF_WINDOW_RESIZE;
     }
 
     previous_error_handler = XSetErrorHandler(error_handler);
@@ -600,32 +602,42 @@ static void reset(void)
     GRX_LEAVE();
 }
 
-void _GrXwinEventGenExpose(int when)
+int genexpose(int gen)
 {
-    if (when == _XGrGenExposeEvents || _XGrWindow == None || !_XGrBStoreInited)
-        return;
-    
-    _XGrGenExposeEvents = when;
-    if (_XGrGenExposeEvents == GR_GEN_EXPOSE_NO)
+    if (gen == _XGrGenExposeEvents) return _XGrGenExposeEvents;
+
+    if (_XGrWindow == None || !_XGrBStoreInited) {
+        _XGrGenExposeEvents = GR_GEN_NO;
+        return _XGrGenExposeEvents;
+    }
+
+    _XGrGenExposeEvents = gen;
+    if (_XGrGenExposeEvents == GR_GEN_NO)
         _XGRActDrawable = (Drawable) _XGrBStore;
     else
         _XGRActDrawable = (Drawable) _XGrWindow;
+    return _XGrGenExposeEvents;
 }
 
-void _GrXwinEventGenWMEnd(int when)
+int genwmend(int gen)
 {
-    _XGrGenWMEndEvents = when;
+    _XGrGenWMEndEvents = gen;
+    return _XGrGenWMEndEvents;
 }
 
 GrVideoDriver _GrVideoDriverXWIN = {
-    "xwin",                               /* name */
-    GR_XWIN,                              /* adapter type */
-    NULL,                                 /* inherit modes from this driver */
-    modes,                                /* mode table */
-    itemsof(modes),                       /* # of modes */
-    detect,                               /* detection routine */
-    init,                                 /* initialization routine */
-    reset,                                /* reset routine */
-    _xw_selectmode,                       /* special mode select routine */
-    GR_DRIVERF_USER_RESOLUTION            /* arbitrary resolution possible */
+    "xwin",                             /* name */
+    GR_XWIN,                            /* adapter type */
+    NULL,                               /* inherit modes from this driver */
+    modes,                              /* mode table */
+    itemsof(modes),                     /* # of modes */
+    detect,                             /* detection routine */
+    init,                               /* initialization routine */
+    reset,                              /* reset routine */
+    _xw_selectmode,                     /* special mode select routine */
+    GR_DRIVERF_USER_RESOLUTION,         /* arbitrary resolution possible */
+    0,                                  /* inputdriver, not used by now */
+    genexpose,                          /* generate GREV_EXPOSE events */
+    genwmend,                           /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };

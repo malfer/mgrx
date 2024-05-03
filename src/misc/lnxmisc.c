@@ -2,7 +2,7 @@
  ** lnxmisc.c - miscellaneous functions for Linux console
  **
  ** Copyright (C) 2001 Mariano Alvarez Fernandez
- ** [e-mail: malfer@teleline.es]
+ ** [e-mail: malfer@telefonica.net.es]
  **
  ** This file is part of the GRX graphics library.
  **

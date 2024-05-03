@@ -68,7 +68,6 @@ static void stretch(GrFrame *dst,int dx,int dy,int dw, int dh,
         GrFrame csave;
         GrColor *pixels = NULL;
         _GR_lineData lne;
-        _GR_getIndexedScanline getscl = src->gf_driver->getindexedscanline;
         _GR_putScanline        putscl = dst->gf_driver->putscanline;
         int rd_y = -1;
         /* set up xsrc[0..dw-1] = (line 0,sx to dw-1,sx+sw-1).y */
@@ -90,7 +89,7 @@ static void stretch(GrFrame *dst,int dx,int dy,int dw, int dh,
         do {
             int y = min(lne.y,maxi);
             if (!pixels || y != rd_y)
-                pixels = getscl(src,sx,(rd_y=y),dw,xsrc);
+                pixels = _GrFrDrvGenericGetIndexedScanline(src,sx,(rd_y=y),dw,xsrc);
             if (pixels)
                 putscl(dx,lne.x,dw,pixels,op);
             XLineStep(&lne);

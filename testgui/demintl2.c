@@ -64,6 +64,11 @@
 #define COMMAND_TP_SAVE           233
 #define COMMAND_TP_NOLIMIT        234
 
+#define COMMAND_TP_CUT            235
+#define COMMAND_TP_COPY           236
+#define COMMAND_TP_PASTE          237
+#define COMMAND_TP_SELALL         238
+
 #define COMMAND_DLG_ABOUT         240
 #define COMMAND_DLG_YN            241
 #define COMMAND_DLG_YNC           242
@@ -134,6 +139,10 @@ char *abouttext[3] = {
     "Demintl2 tests the MGRX international text encoding",
     "capabilities and the GrGUI mini GUI, MGRX is a small C",
     "2D graphics library, mgrx.fgrim.com for more info"};
+
+char *errorcbtext[2] = {
+    "Error copying to clipboard",
+    "Probably the clipboard limit has been excedeed"};
 
 char *listopt[5] = {
     "Primera opción", 
@@ -265,7 +274,7 @@ int main()
 
 static void setup(int restartonlygui)
 {
-    static char *wintitle = "MGRX+GrGUI 1.4.3, the graphics library";
+    static char *wintitle = "MGRX+GrGUI 1.5.0, the graphics library";
 
     if (!restartonlygui) {
         GrSetMode(GR_width_height_bpp_graphics, globalw, globalh, globalbpp);
@@ -370,24 +379,33 @@ static void setup_menus(void)
 
     static GUIMenu menu1 = {1, 13, 0, itemsm1};
 
-    static GUIMenuItem itemsm2[15] = {
-        {GUI_MI_MENU, 1, "&1 Select CP437 font", '1', NULL, 0, 21, 0}, 
-        {GUI_MI_MENU, 1, "&2 Select CP850 font", '2', NULL, 0, 22, 0}, 
-        {GUI_MI_MENU, 0, "&3 Select CP1252 font", '3', NULL, 0, 23, 0}, 
-        {GUI_MI_MENU, 1, "&4 Select ISO8859-1 font", '4', NULL, 0, 24, 0}, 
-        {GUI_MI_MENU, 1, "&5 Select MGRX font", '5', NULL, 0, 25, 0}, 
-        {GUI_MI_MENU, 1, "&6 Select CP437Ext font", '6', NULL, 0, 26, 0}, 
-        {GUI_MI_MENU, 1, "&7 Select Unicode font", '7', NULL, 0, 27, 0}, 
-        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
-        {GUI_MI_OPER, 1, "&Save content to demintl2.out", 'S', NULL, 0, COMMAND_TP_SAVE, 0},
-        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
+    static GUIMenuItem itemsm2[13] = {
+        {GUI_MI_OPER, 1, "Cu&t", 'T', "Ctrl+X", GrKey_Control_X, COMMAND_TP_CUT, 0},
+        {GUI_MI_OPER, 1, "&Copy", 'C', "Ctrl+C", GrKey_Control_C, COMMAND_TP_COPY, 0},
+        {GUI_MI_OPER, 1, "&Paste", 'P', "Ctrl+V", GrKey_Control_V, COMMAND_TP_PASTE, 0},
+        {GUI_MI_OPER, 1, "Select &All", 'A', "Ctrl+A", GrKey_Control_A, COMMAND_TP_SELALL, 0},
+        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0},
+        {GUI_MI_MENU, 1, "Select F&ont", 'O', NULL, 0, 20, 0},
+        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0},
         {GUI_MI_OPER, 1, "&Bg color...", 'B', "Alt+B", GrKey_Alt_B, COMMAND_TP_BGCOLOR, 0},
         {GUI_MI_OPER, 1, "&Fg char color...", 'F', "Alt+F", GrKey_Alt_F, COMMAND_TP_FGCHARCOLOR, 0},
         {GUI_MI_OPER, 1, "C&lear...", 'L', "Alt+L", GrKey_Alt_L, COMMAND_TP_CLEAR, 0},
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
+        {GUI_MI_OPER, 1, "&Save content to demintl2.out", 'S', NULL, 0, COMMAND_TP_SAVE, 0},
         {GUI_MI_OPER, 1, "&No clipboard limit", 'N', NULL, 0, COMMAND_TP_NOLIMIT, 0}};
 
-    static GUIMenu menu2 = {2, 15, 0, itemsm2};
+    static GUIMenu menu2 = {2, 13, 0, itemsm2};
+
+    static GUIMenuItem itemsm20[7] = {
+        {GUI_MI_MENU, 1, "&1 Select CP437 font", '1', NULL, 0, 21, 0},
+        {GUI_MI_MENU, 1, "&2 Select CP850 font", '2', NULL, 0, 22, 0},
+        {GUI_MI_MENU, 0, "&3 Select CP1252 font", '3', NULL, 0, 23, 0},
+        {GUI_MI_MENU, 1, "&4 Select ISO8859-1 font", '4', NULL, 0, 24, 0},
+        {GUI_MI_MENU, 1, "&5 Select MGRX font", '5', NULL, 0, 25, 0},
+        {GUI_MI_MENU, 1, "&6 Select CP437Ext font", '6', NULL, 0, 26, 0},
+        {GUI_MI_MENU, 1, "&7 Select Unicode font", '7', NULL, 0, 27, 0}};
+
+    static GUIMenu menu20 = {20, 7, 0, itemsm20};
 
     static GUIMenuItem itemsm21[7] = {
         {GUI_MI_OPER, 1, "&A pc6x8.fnt", 'A', NULL, 0, COMMAND_LOADFONT_CP437+1, 0}, 
@@ -498,6 +516,7 @@ static void setup_menus(void)
 
     GUIMenuRegister(&menu1);
     GUIMenuRegister(&menu2);
+    GUIMenuRegister(&menu20);
     GUIMenuRegister(&menu21);
     GUIMenuRegister(&menu22);
     GUIMenuRegister(&menu24);
@@ -793,6 +812,23 @@ static int process_command(GrEvent *ev)
                 GUITPBgColorIndex(textpanel1, textpanel1bgcolorindex);
                 GUITilePaint(IDT_EDIT);
             }
+            return 1;
+        case COMMAND_TP_CUT :
+            result = GUITPCopyMA(textpanel1, 1);
+            GUITilePaint(IDT_STATUS);
+            if (result != 1) GUICDialogInfo("Error", (void **)errorcbtext, 2, "Ok");
+            return 1;
+        case COMMAND_TP_COPY :
+            result = GUITPCopyMA(textpanel1, 0);
+            if (result != 1) GUICDialogInfo("Error", (void **)errorcbtext, 2, "Ok");
+            return 1;
+        case COMMAND_TP_PASTE :
+            GUITPPasteMA(textpanel1);
+            GUITilePaint(IDT_STATUS);
+            return 1;
+        case COMMAND_TP_SELALL :
+            GUITPSetMA(textpanel1, -1, 0, 0, 0);
+            GUITilePaint(IDT_STATUS);
             return 1;
 
         case COMMAND_DLG_ABOUT :
@@ -1429,16 +1465,22 @@ void paint_panel1(void *udata)
         strcpy(sys, "L32");
     else if (nsys == MGRX_VERSION_GCC_386_X11)
         strcpy(sys, "X32");
+    else if (nsys == MGRX_VERSION_GCC_386_WYL)
+        strcpy(sys, "Y32");
     else if (nsys == MGRX_VERSION_GCC_X86_64_LINUX)
         strcpy(sys, "L64");
     else if (nsys == MGRX_VERSION_GCC_X86_64_X11)
         strcpy(sys, "X64");
+    else if (nsys == MGRX_VERSION_GCC_X86_64_WYL)
+        strcpy(sys, "Y64");
     else if (nsys == MGRX_VERSION_GCC_386_WIN32)
         strcpy(sys, "W32");
     else if (nsys == MGRX_VERSION_GCC_ARM_LINUX)
         strcpy(sys, "LAR");
     else if (nsys == MGRX_VERSION_GCC_ARM_X11)
         strcpy(sys, "XAR");
+    else if (nsys == MGRX_VERSION_GCC_ARM_WYL)
+        strcpy(sys, "YAR");
 
     nsysenc = GrGetKbSysEncoding();
     nusrenc = GrGetUserEncoding();

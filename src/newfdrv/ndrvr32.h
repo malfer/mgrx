@@ -2,7 +2,7 @@
  ** ndrvr32.h ---- the new 32bpp (24bpp padded) linear in-memory and
  **                video frame buffer drivers
  **
- ** Copyright (c) 2019 Mariano Alvarez Fernandez
+ ** Copyright (c) 2019, 2023 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This file is part of the GRX graphics library.
@@ -15,8 +15,10 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
- ** This driver doesn't use all the memfill, mempeek infraestructure, only
+ ** This driver doesn't use the memfill, mempeek infraestructure, only
  ** C standard bit operations and C standard functions.
+ **
+ ** 230517 M.Alvarez, use specific 64 bit drawhline and drawblock funtions
  **/
 
 /* frame offset address calculation */
@@ -71,6 +73,74 @@ static void drawvline(int x, int y, int h, GrColor color)
     GRX_LEAVE();
 }
 
+#ifdef GR_int64
+static void drawhline(int x, int y, int w, GrColor color)
+{
+    GR_int32u *ptr32, xcolor;
+    GR_int64u *ptr64, repcolor;
+    int op, i, w2, wr;
+
+    GRX_ENTER();
+    ptr64 = (GR_int64u *)&CURC->gc_baseaddr[0][FOFS(x,y,CURC->gc_lineoffset)];
+    op = C_OPER(color);
+    xcolor = COL2PIX(color);
+    repcolor = ((GR_int64u)xcolor << 32) | xcolor;
+    w2 = w >> 1;
+    wr = w & 1;
+    switch(op) {
+        case C_XOR: for (i=0; i<w2; i++) {*ptr64 ^= repcolor; ptr64++;} break;
+        case C_OR:  for (i=0; i<w2; i++) {*ptr64 |= repcolor; ptr64++;} break;
+        case C_AND: for (i=0; i<w2; i++) {*ptr64 &= repcolor; ptr64++;} break;
+        default:    for (i=0; i<w2; i++) {*ptr64 = repcolor; ptr64++;} break;
+    }
+    if (wr) {
+        ptr32 = (GR_int32u *)ptr64;
+        switch(op) {
+            case C_XOR: *ptr32 ^= xcolor; break;
+            case C_OR:  *ptr32 |= xcolor; break;
+            case C_AND: *ptr32 &= xcolor; break;
+            default:    *ptr32 = xcolor; break;
+        }
+    }
+    GRX_LEAVE();
+}
+
+static void drawblock(int x, int y, int w, int h, GrColor color)
+{
+    GR_int32u *ptr32, xcolor;
+    GR_int64u *ptr64, repcolor;
+    char *ptr8;
+    int op, i, j, w2, wr;
+
+    GRX_ENTER();
+    ptr8 = &CURC->gc_baseaddr[0][FOFS(x,y,CURC->gc_lineoffset)];
+    op = C_OPER(color);
+    xcolor = COL2PIX(color);
+    repcolor = ((GR_int64u)xcolor << 32) | xcolor;
+    w2 = w >> 1;
+    wr = w & 1;
+    for (j=0; j<h; j++) {
+        ptr64 = (GR_int64u *)ptr8;
+        switch(op) {
+            case C_XOR: for (i=0; i<w2; i++) {*ptr64 ^= repcolor; ptr64++;} break;
+            case C_OR:  for (i=0; i<w2; i++) {*ptr64 |= repcolor; ptr64++;} break;
+            case C_AND: for (i=0; i<w2; i++) {*ptr64 &= repcolor; ptr64++;} break;
+            default:    for (i=0; i<w2; i++) {*ptr64 = repcolor; ptr64++;} break;
+        }
+        if (wr) {
+            ptr32 = (GR_int32u *)ptr64;
+            switch(op) {
+                case C_XOR: *ptr32 ^= xcolor; break;
+                case C_OR:  *ptr32 |= xcolor; break;
+                case C_AND: *ptr32 &= xcolor; break;
+                default:    *ptr32 = xcolor; break;
+            }
+        }
+        ptr8 += CURC->gc_lineoffset;
+    }
+    GRX_LEAVE();
+}
+#else
 static void drawhline(int x, int y, int w, GrColor color)
 {
     GR_int32u *ptr, xcolor;
@@ -78,8 +148,8 @@ static void drawhline(int x, int y, int w, GrColor color)
 
     GRX_ENTER();
     ptr = (GR_int32u *)&CURC->gc_baseaddr[0][FOFS(x,y,CURC->gc_lineoffset)];
-    op   = C_OPER(color);
-    xcolor= COL2PIX(color);
+    op = C_OPER(color);
+    xcolor = COL2PIX(color);
     switch(op) {
         case C_XOR: for (i=0; i<w; i++) {*ptr ^= xcolor; ptr++;} break;
         case C_OR:  for (i=0; i<w; i++) {*ptr |= xcolor; ptr++;} break;
@@ -91,15 +161,27 @@ static void drawhline(int x, int y, int w, GrColor color)
 
 static void drawblock(int x, int y, int w, int h, GrColor color)
 {
-    int j;
-    
+    GR_int32u *ptr32, xcolor;
+    char *ptr8;
+    int op, i, j;
+
     GRX_ENTER();
+    ptr8 = &CURC->gc_baseaddr[0][FOFS(x,y,CURC->gc_lineoffset)];
+    op = C_OPER(color);
+    xcolor = COL2PIX(color);
     for (j=0; j<h; j++) {
-        drawhline(x,y,w,color);
-        y++;
+        ptr32 = (GR_int32u *)ptr8;
+        switch(op) {
+            case C_XOR: for (i=0; i<w; i++) {*ptr32 ^= xcolor; ptr32++;} break;
+            case C_OR:  for (i=0; i<w; i++) {*ptr32 |= xcolor; ptr32++;} break;
+            case C_AND: for (i=0; i<w; i++) {*ptr32 &= xcolor; ptr32++;} break;
+            default:    for (i=0; i<w; i++) {*ptr32 = xcolor; ptr32++;} break;
+        }
+        ptr8 += CURC->gc_lineoffset;
     }
     GRX_LEAVE();
 }
+#endif
 
 static void drawline(int x, int y, int dx, int dy, GrColor color)
 {
@@ -315,14 +397,12 @@ static void bitbltnoo(GrFrame *dst, int dx, int dy,
 }
 
 static
-GrColor *getindexedscanline(GrFrame *c, int x, int y, int w, int *indx)
+GrColor *getscanline(GrFrame *c, int x, int y, int w)
 {
     GR_int32u *ptr;
     GrColor *pixels;
     int i;
 
-    if (indx) return _GrFrDrvGenericGetIndexedScanline(c,x,y,w,indx);
-    
     GRX_ENTER();
     pixels = _GrTempBufferAlloc(sizeof(GrColor) * (w+1));
     ptr = (GR_int32u *)&c->gf_baseaddr[0][FOFS(x,y,c->gf_lineoffset)];

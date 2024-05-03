@@ -14,6 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** Contributions by:
+ ** 240324 M.Alvarez, Reorganization and added videodrivers for Wayland
  **/
 
 #include "libgrx.h"
@@ -25,35 +27,35 @@ GrVideoDriver *_GrVideoDriverTable[] = {
     &_GrVideoDriverSTDVGA,
     &_GrVideoDriverSTDEGA,
     &_GrDriverMEM,
-    NULL
-#endif
+    NULL};
 
-#if defined(__XWIN__)
-GrVideoDriver *_GrVideoDriverTable[] = {
-#if defined(XF86DGA_DRIVER)
-    &_GrVideoDriverXF86DGA,
-#endif
-    &_GrVideoDriverXWIN,
-    &_GrDriverMEM,
-    NULL
-#endif
-
-#if defined(__linux__) && !defined(__XWIN__)
-GrVideoDriver *_GrVideoDriverTable[] = {
-    &_GrVideoDriverLINUXFB,
-#if defined(LNDRM_DRIVER)
-    &_GrVideoDriverLINUXDRM,
-#endif
-    &_GrDriverMEM,
-    NULL
-#endif
-
-#ifdef __WIN32__
+#elif defined(__WIN32__)
 GrVideoDriver *_GrVideoDriverTable[] = {
     &_GrVideoDriverWIN32,
     &_GrDriverMEM,
-    NULL
+    NULL};
+
+#elif defined(__XWIN__)
+GrVideoDriver *_GrVideoDriverTable[] = {
+    #if defined(XF86DGA_DRIVER)
+    &_GrVideoDriverXF86DGA,
+    #endif
+    &_GrVideoDriverXWIN,
+    &_GrDriverMEM,
+    NULL};
+
+#elif defined(__WAYLAND__)
+GrVideoDriver *_GrVideoDriverTable[] = {
+    &_GrVideoDriverWAYLAND,
+    &_GrDriverMEM,
+    NULL};
+
+#elif defined(__linux__)
+GrVideoDriver *_GrVideoDriverTable[] = {
+    &_GrVideoDriverLINUXFB,
+    #if defined(LNDRM_DRIVER)
+    &_GrVideoDriverLINUXDRM,
+    #endif
+    &_GrDriverMEM,
+    NULL};
 #endif
-
-};
-

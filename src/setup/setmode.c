@@ -81,7 +81,7 @@ static int buildframedriver(GrVideoMode *mp,GrFrameDriver *drv)
         MERGE(bitblt);
         MERGE(bltv2r);
         MERGE(bltr2v);
-        MERGE(getindexedscanline);
+        MERGE(getscanline);
         MERGE(putscanline);
         if (compl) {
             memcpy(drv, d2, offsetof(GrFrameDriver, readpixel));
@@ -115,7 +115,7 @@ static int buildcontext(GrVideoMode *mp,GrFrameDriver *fdp,GrContext *cxt)
     DBGPRINTF(DBG_SETMD,("buildcontext - Mode Frame buffer = 0x%x\n",mp->extinfo->frame));
     DBGPRINTF(DBG_SETMD,("buildcontext - Mode Frame selector = 0x%x\n",mp->extinfo->LFB_Selector));
     sttzero(cxt);
-    #if !(defined(__XWIN__) && !defined(XF86DGA_FRAMEBUFFER))
+    #if !(defined(__XWIN__) && !defined(XF86DGA_FRAMEBUFFER)) && !defined(__WAYLAND__)
     if (mp->extinfo->flags&GR_VMODEF_LINEAR) {
         DBGPRINTF(DBG_SETMD,("buildcontext - Linear Mode\n"));
         cxt->gc_baseaddr[0] =

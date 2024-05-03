@@ -4,6 +4,9 @@
  ** Copyright (c) 1995 Csaba Biegl, 820 Stirrup Dr, Nashville, TN 37221
  ** [e-mail: csaba@vuse.vanderbilt.edu]
  **
+ ** Copyright (C) 2023 Mariano Alvarez Fernandez
+ ** [e-mail: malfer@telefonica.net]
+ **
  ** This file is part of the GRX graphics library.
  **
  ** The GRX graphics library is free software; you can redistribute it
@@ -14,6 +17,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
+ ** 230517 M.Alvarez, added the new 32bpp linear and memory framebuffers
+ ** 240328 M.Alvarez, added the new Wayland videodriver
  **/
 
 #ifndef __GRDRIVER_H_INCLUDED__
@@ -60,17 +65,23 @@ _GrFrameDriverSVGA24_LFB,               /* Super VGA 16M color */
 _GrFrameDriverSVGA32L_LFB,              /* Super VGA 16M color padded #1 */
 _GrFrameDriverSVGA32H_LFB,              /* Super VGA 16M color padded #2 */
 
+// New Linear Framebuffer
+_GrFrameDriverNLFB16,                   /* 16bpp */
+_GrFrameDriverNLFB24,                   /* 24bpp */
+_GrFrameDriverNLFB32L,                  /* 32bpp (24bpp padded low) */
+_GrFrameDriverNLFB32H,                  /* 32bpp (24bpp padded high) */
+
 // Linux Framebuffer
 _GrFrameDriverLNXFB_16,                 /* Linux fb 16bpp */
-_GrFrameDriverLNXFB_32L,                /* Linux fb 32bpp padded #1 */
-_GrFrameDriverLNXFB_32H,                /* Linux fb 32bpp padded #2 */
+_GrFrameDriverLNXFB_32L,                /* Linux fb 32bpp (24bpp padded low) */
+_GrFrameDriverLNXFB_32H,                /* Linux fb 32bpp (24bpp padded high) */
 
 // X11
 _GrFrameDriverXWIN8,                    /* X 8 bpp */
 _GrFrameDriverXWIN16,                   /* X 16 bpp */
 _GrFrameDriverXWIN24,                   /* X 24 bpp */
-_GrFrameDriverXWIN32L,                  /* X 32 bpp padded #1 */
-_GrFrameDriverXWIN32H,                  /* X 32 bpp padded #2 */
+_GrFrameDriverXWIN32L,                  /* X 32 bpp (24bpp padded low) */
+_GrFrameDriverXWIN32H,                  /* X 32 bpp (24bpp padded high) */
 
 // Win32
 _GrFrameDriverWIN32_4,                  /* WIN32 4 bpp */
@@ -81,10 +92,16 @@ _GrFrameDriverWIN32_24,                 /* WIN32 24 bpp */
 _GrFrameDriverRAM1,                     /* mono */
 _GrFrameDriverRAM4,                     /* 16 color planar */
 _GrFrameDriverRAM8,                     /* 256 color */
-_GrFrameDriverRAM16,                    /* 32768/65536 color */
-_GrFrameDriverRAM24,                    /* 16M color */
-_GrFrameDriverRAM32L,                   /* 16M color padded #1 */
-_GrFrameDriverRAM32H,                   /* 16M color padded #2 */
+_GrFrameDriverRAM16,                    /* 15/16 bpp */
+_GrFrameDriverRAM24,                    /* 24 bpp */
+_GrFrameDriverRAM32L,                   /* 32 bpp (24bpp padded low) */
+_GrFrameDriverRAM32H,                   /* 32 bpp (24bpp padded high) */
+
+// New RAM
+_GrFrameDriverNRAM16,                   /* 16bpp */
+_GrFrameDriverNRAM24,                   /* 24bpp */
+_GrFrameDriverNRAM32L,                  /* 32bpp (24bpp padded low) */
+_GrFrameDriverNRAM32H,                  /* 32bpp (24bpp padded high) */
 /*
  * This is a NULL-terminated table of frame driver descriptor pointers. Users
  * can provide their own table with only the desired (or additional) drivers.
@@ -102,15 +119,17 @@ _GrVideoDriverSTDEGA,                   /* standard EGA driver */
 _GrVideoDriverSTDVGA,                   /* standard VGA driver */
 _GrVideoDriverVESA,                     /* generic VESA Super VGA driver */
 
-_GrVideoDriverXWIN,                     /* X11 interface */
-_GrVideoDriverXF86DGA,                  /* XFree86 DGA interface */
+_GrVideoDriverXWIN,                     /* X11 driver */
+_GrVideoDriverXF86DGA,                  /* XFree86 DGA driver */
 
 _GrVideoDriverLINUXFB,                  /* Linux framebuffer driver */
 _GrVideoDriverLINUXDRM,                 /* Linux KMS/DRM driver */
 
-_GrVideoDriverWIN32,                    /* WIN32 interface */
+_GrVideoDriverWIN32,                    /* WIN32 driver */
 
-_GrDriverMEM,                           /* memory screen driver */
+_GrVideoDriverWAYLAND,                  /* Wayland driver */
+
+_GrDriverMEM,                           /* memory driver */
 
 /*
  * This is a NULL-terminated table of video driver descriptor pointers. Users
@@ -126,12 +145,10 @@ _GrDriverMEM,                           /* memory screen driver */
 typedef GrColor  (*_GR_readPix)(GrFrame *,int,int);
 typedef void     (*_GR_drawPix)(int,int,GrColor);
 typedef void     (*_GR_blitFunc)(GrFrame *dst,int dx,int dy,
-				 GrFrame *src,int  x,int  y,
-				 int w,int h,GrColor op);
-typedef GrColor *(*_GR_getIndexedScanline)(GrFrame *c,int x,int y,
-					       int w, int *indx);
-typedef void     (*_GR_putScanline)(int x,int y,int w,
-				    const GrColor *scl,GrColor op);
+                 GrFrame *src,int  x,int  y,
+                 int w,int h,GrColor op);
+typedef GrColor *(*_GR_getScanline)(GrFrame *c,int x,int y,int w);
+typedef void     (*_GR_putScanline)(int x,int y,int w,const GrColor *scl,GrColor op);
 
 /*
  * Frame driver utility functions
@@ -146,13 +163,11 @@ void _GrFrDrvPackedBitBltV2R_LFB(GrFrame *dst,int dx,int dy,GrFrame *src,int x,i
 void _GrFrDrvPackedBitBltV2V_LFB(GrFrame *dst,int dx,int dy,GrFrame *src,int x,int y,int w,int h,GrColor op);
 
 void _GrFrDrvGenericPutScanline(int x,int y,int w,const GrColor *scl, GrColor op );
-GrColor *_GrFrDrvGenericGetIndexedScanline(GrFrame *c,
-					   int x,int y,int w,
-					   int *indx         );
+GrColor *_GrFrDrvGenericGetScanline(GrFrame *c,int x,int y,int w);
+GrColor *_GrFrDrvGenericGetIndexedScanline(GrFrame *c,int x,int y,int w,int *indx);
 
 void _GrFrDrvGenericStretchBlt(GrFrame *dst,int dx,int dy,int dw,int dh,
-			       GrFrame *src,int sx,int sy,int sw,int sh,
-			       GrColor op);
+                               GrFrame *src,int sx,int sy,int sw,int sh,GrColor op);
 
 /*
  * Video driver utility functions
@@ -187,8 +202,7 @@ void _GrViDrvSetDACshift(int shift);
 extern GrVideoModeExt _GrViDrvEGAVGAtextModeExt;
 extern GrVideoModeExt _GrViDrvEGAVGAcustomTextModeExt;
 
-GrVideoMode * _gr_selectmode(GrVideoDriver *drv,int w,int h,int bpp,
-			     int txt,unsigned int *ep);
+GrVideoMode * _gr_selectmode(GrVideoDriver *drv,int w,int h,int bpp,int txt,unsigned int *ep);
 
 #endif /* USE_GRX_INTERNAL_DEFINITIONS */
 

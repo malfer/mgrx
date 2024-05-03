@@ -619,6 +619,6 @@ GrFrameDriver _GrFrameDriverSVGA4 = {
     bltv2v,
     bltv2r,
     bltr2v,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };

@@ -16,23 +16,6 @@
  **
  **/
 
-/*#if defined(__MINGW32__) && !defined(alloca)
-#  define alloca __builtin_alloca
-#else
-#  include <stdlib.h>
-#endif
-
-#ifndef setup_alloca
-#define setup_alloca()
-#define reset_alloca()
-#endif*/
-
-/* ALLOC / FREE : use alloca if possible */
-/*#define ALLOC(sze) alloca(sze)
-#define FREE(p)
-#define setup_ALLOC  setup_alloca
-#define reset_ALLOC  reset_alloca*/
-
 /* temp buffer for blits etc. */
 extern void *_GrTempBuffer;
 extern unsigned  _GrTempBufferBytes;

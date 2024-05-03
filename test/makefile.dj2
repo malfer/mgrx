@@ -55,6 +55,7 @@ PROGS=  arctest.exe     \
 	sbctest.exe     \
 	scroltst.exe    \
 	speedtst.exe    \
+	speedts2.exe    \
 	textpatt.exe    \
 	winclip.exe     \
 	wintest.exe     \
@@ -63,7 +64,8 @@ PROGS=  arctest.exe     \
 	clrtable.exe    \
 	i18ntest.exe    \
 	wrsztest.exe    \
-	mpoltest.exe
+	mpoltest.exe    \
+	scltest.exe
 
 all: $(PROGS) demomgrx.exe demointl.exe
 

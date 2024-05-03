@@ -23,8 +23,7 @@
 /*    if indx == NULL: pv[i=0..w-1] = readpixel(x+i,y)         */
 /*    else             pv[i=0..w-1] = readpixel(x+indx[i],y)   */
 
-GrColor *_GrFrDrvGenericGetIndexedScanline(GrFrame *c, int x, int y,
-                                           int w, int *indx)
+GrColor *_GrFrDrvGenericGetIndexedScanline(GrFrame *c, int x, int y, int w, int *indx)
 {
   GrColor *pixels;
   GrColor *p;
@@ -48,6 +47,21 @@ GrColor *_GrFrDrvGenericGetIndexedScanline(GrFrame *c, int x, int y,
       for ( ; w > 0; --w)
         *(p++) = (*readpix)(c,x++,y);
     }
+  }
+  GRX_RETURN(pixels);
+}
+
+GrColor *_GrFrDrvGenericGetScanline(GrFrame *c, int x, int y, int w)
+{
+  GrColor *pixels;
+  GrColor *p;
+  GRX_ENTER();
+  DBGPRINTF(DBG_DRIVER,("x=%d, y=%d, w=%d\n",x,y,w));
+  p = pixels = _GrTempBufferAlloc(sizeof(GrColor) * (w+1));
+  if (pixels) {
+    _GR_readPix readpix = c->gf_driver->readpixel;
+    for ( ; w > 0; --w)
+      *(p++) = (*readpix)(c,x++,y);
   }
   GRX_RETURN(pixels);
 }

@@ -131,6 +131,6 @@ GrFrameDriver _GrFrameDriverEGA4 = {
     bitblt,
     _GrFrDrvGenericBitBlt,
     _GrFrDrvGenericBitBlt,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };

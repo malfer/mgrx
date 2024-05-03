@@ -1,0 +1,110 @@
+#
+# MGRX test programs makefile for LINUX/WAYLAND. Uses GNU make.
+#
+.PHONY : clean
+
+GRXVWAYLAND=y
+
+include ../makedefs.grx
+
+INCDIR=  -I../include
+
+# Enable this two lines for static linked test progs (default)
+MGRXW = ../lib/$(GRX_LIB_SUBDIR)/libmgrxW.a
+DMGRXW = $(MGRXW)
+# or these if you've already installed the shared libs
+#MGRXW = -lmgrxW
+#DMGRXW =
+
+EXECBITS = 0755
+
+ADDON_LIBS = -lrt
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_LIBS += -ljpeg
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_LIBS += -lpng
+endif
+
+ifeq ($(NEED_ZLIB),y)
+  ADDON_LIBS += -lz
+endif
+
+LIBS= $(MGRXW) $(ADDON_LIBS) $(WYLLIBS) -lm
+
+ifndef   DEBUG
+LDOPT += -s
+endif
+
+PROGS=  warctest     \
+	wbb1test     \
+	wblittest    \
+	wcirctest    \
+	wcliptest    \
+	wcolorops    \
+	wcurstest    \
+	wfontdemo    \
+	wfonttest    \
+	wgradtest    \
+	wjpgtest     \
+	wkeys        \
+	wlife        \
+	wlife_db     \
+	wlinetest    \
+	wmemtest     \
+	wmousetst    \
+	wpatrtest    \
+	wpcirctst    \
+	wpixmtest    \
+	wpnmtest     \
+	wpngtest     \
+	wpolytest    \
+	wpolytedb    \
+	wrgbtest     \
+	wsbctest     \
+	wscroltst    \
+	wspeedtst    \
+	wspeedts2    \
+	wtextpatt    \
+	wwinclip     \
+	wwintest     \
+	wbiggtest    \
+	wcusptest    \
+	wclrtable    \
+	wi18ntest    \
+	wwrsztest    \
+	wmpoltest    \
+	wscltest
+
+all: $(PROGS) wdemomgrx wdemointl
+
+wdemomgrx: demomgrx.o gfaz.o $(DMGRXW)
+	$(CC) $(LDOPT) -o wdemomgrx demomgrx.o gfaz.o $(LIBS)
+	chmod $(EXECBITS) wdemomgrx
+
+wdemointl: demointl.o gfaz.o $(DMGRXW)
+	$(CC) $(LDOPT) -o wdemointl demointl.o gfaz.o $(LIBS)
+	chmod $(EXECBITS) wdemointl
+
+$(PROGS): w%: %.o $(DMGRXW)
+	$(CC) $(LDOPT) -o $@ $*.o $(LIBS)
+	chmod $(EXECBITS) $@
+
+$(PROGS:w%=%.o): %.o : %.c
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.o
+
+.c.o:
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c
+
+.c.s:
+	$(CC) -S $(CCOPT) $(INCDIR) $*.c
+
+clean:
+	rm -f *.o $(PROGS) wdemomgrx wdemointl
+
+depend.new:
+	$(CC) -MM $(CCOPT) $(INCDIR) $(PROGS:x%=%.c) > depend.new
+
+include depend.gnu

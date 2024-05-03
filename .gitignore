@@ -8,9 +8,13 @@ bin/fnt2c
 bin/lfbinfo
 bin/modetest
 bin/xmodetest
+bin/wmodetest
 bin/test
 # Ignore tag files
 src/systag.*
+# Ignore Wayland autofiles
+src/xdg-shell-client-protocol.h
+src/xdg-shell-protocol.c
 # Ignore test programs
 test/arctest
 test/bb1test
@@ -45,12 +49,14 @@ test/rgbtest
 test/sbctest
 test/scroltst
 test/speedtst
+test/speedts2
 test/textpatt
 test/winclip
 test/wintest
 test/wrsztest
 test/i18ntest
 test/mpoltest
+test/scltest
 fonts/showfont
 # Ignore x11 test programs
 test/xarctest
@@ -86,12 +92,56 @@ test/xrgbtest
 test/xsbctest
 test/xscroltst
 test/xspeedtst
+test/xspeedts2
 test/xtextpatt
 test/xwinclip
 test/xwintest
 test/xwrsztest
 test/xi18ntest
 test/xmpoltest
+test/xscltest
+# Ignore Wayland test programs
+test/warctest
+test/wbb1test
+test/wbiggtest
+test/wblittest
+test/wcirctest
+test/wcliptest
+test/wclrtable
+test/wcolorops
+test/wcurstest
+test/wcusptest
+test/wdemointl
+test/wdemomgrx
+test/wfontdemo
+test/wfonttest
+test/wgradtest
+test/wjpgtest
+test/wkeys
+test/wlife
+test/wlife_db
+test/wlinetest
+test/wmemtest
+test/wmousetst
+test/wpatrtest
+test/wpcirctst
+test/wpixmtest
+test/wpngtest
+test/wpnmtest
+test/wpolytest
+test/wpolytedb
+test/wrgbtest
+test/wsbctest
+test/wscroltst
+test/wspeedtst
+test/wspeedts2
+test/wtextpatt
+test/wwinclip
+test/wwintest
+test/wwrsztest
+test/wi18ntest
+test/wmpoltest
+test/wscltest
 # Ignore testgui programs
 testgui/grgui01
 testgui/grgui02
@@ -124,8 +174,25 @@ testgui/xgrgui12
 testgui/xshowfnt2
 testgui/xdemmgrx2
 testgui/xdemintl2
+# Ignore Wayland testgui programs
+testgui/wgrgui01
+testgui/wgrgui02
+testgui/wgrgui03
+testgui/wgrgui04
+testgui/wgrgui05
+testgui/wgrgui06
+testgui/wgrgui07
+testgui/wgrgui08
+testgui/wgrgui09
+testgui/wgrgui10
+testgui/wgrgui11
+testgui/wgrgui12
+testgui/wshowfnt2
+testgui/wdemmgrx2
+testgui/wdemintl2
 # Ignore output files from test programs
 test/speedtst.log
+test/speedts2.log
 testimg/output.png
 testimg/output.jpg
 testimg/outputg.jpg

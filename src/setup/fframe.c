@@ -14,7 +14,8 @@
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  **
- ** 190913 Added GrFrameDriverName (M.Alvarez)
+ ** 190913 M.Alvarez, Added GrFrameDriverName
+ ** 230517 M.Alvarez, added the new 32bpp linear and memory framebuffers
  **/
 
 #include "libgrx.h"
@@ -41,7 +42,6 @@ char *GrFrameDriverName(GrFrameMode m) {
   switch(m) {
     case GR_frameUndef: return "Undef";
     case GR_frameText : return "Text";
-    case GR_frameHERC1: return "HERC1";
     case GR_frameEGAVGA1: return "EGAVGA1";
     case GR_frameEGA4: return "EGA4";
     case GR_frameSVGA4: return "SVGA4";
@@ -56,6 +56,13 @@ char *GrFrameDriverName(GrFrameMode m) {
     case GR_frameSVGA24_LFB: return "LFB24";
     case GR_frameSVGA32L_LFB: return "LFB32L";
     case GR_frameSVGA32H_LFB: return "LFB32H";
+    case GR_frameNLFB1: return "NLFB1";
+    case GR_frameNLFB4: return "NLFB4";
+    case GR_frameNLFB8: return "NLFB8";
+    case GR_frameNLFB16: return "NLFB16";
+    case GR_frameNLFB24: return "NLFB24";
+    case GR_frameNLFB32L: return "NLFB32L";
+    case GR_frameNLFB32H: return "NLFB32H";
     case GR_frameXWIN1: return "XWIN1";
     case GR_frameXWIN4: return "XWIN4";
     case GR_frameXWIN8: return "XWIN8";
@@ -84,6 +91,13 @@ char *GrFrameDriverName(GrFrameMode m) {
     case GR_frameRAM24: return "RAM24";
     case GR_frameRAM32L: return "RAM32L";
     case GR_frameRAM32H: return "RAM32H";
+    case GR_frameNRAM1: return "NRAM1";
+    case GR_frameNRAM4: return "NRAM4";
+    case GR_frameNRAM8: return "NRAM8";
+    case GR_frameNRAM16: return "NRAM16";
+    case GR_frameNRAM24: return "NRAM24";
+    case GR_frameNRAM32L: return "NRAM32L";
+    case GR_frameNRAM32H: return "NRAM32H";
   }
 
   return "UNKNOWN";

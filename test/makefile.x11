@@ -78,6 +78,7 @@ PROGS=  xarctest     \
 	xsbctest     \
 	xscroltst    \
 	xspeedtst    \
+	xspeedts2    \
 	xtextpatt    \
 	xwinclip     \
 	xwintest     \
@@ -86,7 +87,8 @@ PROGS=  xarctest     \
 	xclrtable    \
 	xi18ntest    \
 	xwrsztest    \
-	xmpoltest
+	xmpoltest    \
+	xscltest
 
 all: $(PROGS) xdemomgrx xdemointl
 

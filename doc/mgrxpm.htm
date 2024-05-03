@@ -8,12 +8,12 @@
 
 <center>
 <h1><font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
-<small>1.4.3</small></h1>
-<h1>a C graphics library for DOS, Linux console &amp; X11 and Win32</h1>
+<small>1.5.0</small></h1>
+<h1>a C graphics library for DOS, Linux console, X11, Wayland and Win32</h1>
 <h2>Programmer's Manual</h2>
 <p>Based on the original GRX manual written by: Csaba Biegl on August 10, 1992
 <p>Adapted for MGRX by: Mariano Alvarez Fern&aacute;ndez on August 1, 2005
-<p>Last update: April 13, 2023
+<p>Last update: April 24, 2024
 </center>
 
 <!--- ===================================================================== --->
@@ -22,16 +22,17 @@
 
 <p>&nbsp;&nbsp;<b>MGRX</b> is a 2D graphics library derived from the GRX library.
 GRX was originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC compiler.
-<p>&nbsp;&nbsp;<b>MGRX</b> supports four platforms:
+<p>&nbsp;&nbsp;<b>MGRX</b> supports five platforms:
 <ul>
 <li>DOS (using the DJGPPv2 32bit compiler) with VGA and VESA compliant cards.
-<li>Linux console (using the gcc compiler) on top of the framebuffer or KMS/DRM (experimental).
+<li>Linux console (using the gcc compiler) on top of the framebuffer or KMS/DRM.
 <li>Linux X11 (using the gcc compiler) running in a window.
+<li>Linux Wayland (using the gcc compiler) running in a window.
 <li>Win32 (tested with the TDM-GCC compiler, a Mingw32 distribution) running in a window.
 </ul>
-<p>&nbsp;&nbsp;For the Linux console and the Linux X11 versions three architectures
-are supported: i386 (32bit), x86_64 (64bit) and ARM (32bit, tested in a Raspberry Pi 4
-using Raspbian).
+<p>&nbsp;&nbsp;For the Linux console, Linux X11 and Linux Wayland versions three
+architectures are supported: i386 (32bit), x86_64 (64bit) and ARM (32bit, tested in a
+Raspberry Pi 4 using Raspbian).
 <p>&nbsp;&nbsp;Additionally <b>MGRX</b> can work without graphic output using the
 memory driver.
 
@@ -40,8 +41,8 @@ memory driver.
 <li><a href="#why">MGRX versus GRX</a>
 <li><a href="#hello">Hello world</a>
 <li><a href="#dtfd">Data types, function declarations</a>
-<li><a href="#sgd">Setting the graphics driver</a>
-<li><a href="#svm">Setting video modes</a>
+<li><a href="#sgd">Setting the video driver</a>
+<li><a href="#svm">Setting the video mode</a>
 <li><a href="#gc">Graphics contexts</a>
 <li><a href="#cu">How to use graphics contexts</a>
 <li><a href="#dbuf">Example: double buffer</a>
@@ -67,9 +68,9 @@ memory driver.
 <li><a href="#misc">Miscellaneous functions</a>
 <li><a href="#input">Input API</a>
 <li><a href="#mouse">Mouse cursor handling</a>
-<li><a href="#wresize">Handling window resizing</a>
+<li><a href="#wresize">Handling user window resizing</a>
 <li><a href="#clipb">Clipboard</a>
-<li><a href="#mdrv">The memory driver</a>
+<li><a href="#mdrv">The memory videodriver</a>
 <li><a href="#ref">References</a>
 </dir>
 
@@ -84,9 +85,11 @@ The main MGRX differences are:</p>
 BGI API)
 <li>Has a new (and better I think) input API
 <li>Includes (limited) internationalization support
-<li>Supports (officially) only the 4 platforms mentioned above
+<li>Supports (officially) only the 5 platforms mentioned above
 <li>Can generate gradients, as a new type of pattern
-<li>The X11 and W32 graphics drivers support window resize
+<li>Has a Linux console KMS/DRM videodriver
+<li>Has a Linux Wayland videodriver
+<li>The X11, Wayland and W32 videodrivers support user window resizing
 </ul>
 
 <p>&nbsp;&nbsp;The MGRX goal is to be a small, easy to use and maintain, C
@@ -145,14 +148,20 @@ previously installed)
 <li>DJGPP: gcc -o helomgrx.exe helomgrx.c -lmgrx
 <li>TDM-GCC: gcc -o helomgrx.exe helomgrx.c -lmgrx -mwindows
 <li>Linux X11 (i386): gcc -m32 -o helomgrx helomgrx.c -D__XWIN__ -lmgrxX -lX11
-<li>Linux console (i386): gcc -m32 -o helomgrx helomgrx.c -lmgrx
+<li>Linux Wayland (i386): gcc -m32 -o helomgrx helomgrx.c -D__WAYLAND__ -lmgrxW -lrt
+-lwayland-client -lxkbcommon
+<li>Linux console (i386): gcc -m32 -o helomgrx helomgrx.c -lmgrx -ldrm
 <li>Linux X11 (x86_64): gcc -m64 -o helomgrx helomgrx.c -D__XWIN__ -lmgrxX -lX11
-<li>Linux console (x86_64): gcc -m64 -o helomgrx helomgrx.c -lmgrx
+<li>Linux Wayland (x86_64): gcc -m64 -o helomgrx helomgrx.c -D__WAYLAND__ -lmgrxW -lrt
+-lwayland-client -lxkbcommon
+<li>Linux console (x86_64): gcc -m64 -o helomgrx helomgrx.c -lmgrx -ldrm
 <li>Linux X11 (ARM): gcc -o helomgrx helomgrx.c -D__XWIN__ -lmgrxX -lX11
-<li>Linux console (ARM): gcc -o helomgrx helomgrx.c -lmgrx
+<li>Linux Wayland (ARM): gcc -o helomgrx helomgrx.c -D__WAYLAND__ -lmgrxW -lrt
+-lwayland-client -lxkbcommon
+<li>Linux console (ARM): gcc -o helomgrx helomgrx.c -lmgrx -ldrm
 </ul>
-<p>If you have enabled the experimental Linux console KMS/DRM driver add "-ldrm" to the
-command.
+<p>If you have disabled the Linux console KMS/DRM videodriver erase "-ldrm" from
+the command.
 
 <!--- ===================================================================== --->
 <hr>
@@ -175,35 +184,38 @@ files (in the 'include' sub-directory):
 
 <!--- ===================================================================== --->
 <hr>
-<h2><a name="sgd">Setting the graphics driver</a></h2>
+<h2><a name="sgd">Setting the video driver</a></h2>
 
-<p>&nbsp;&nbsp;The graphics driver is normally autodetected or set by the
-final user using the environment variable <code>MGRXDRV</code>, but a program
-can set it by function:
+<p>&nbsp;&nbsp;The video driver is normally autodetected or set by the
+final user with the environment variable <code>MGRXDRV</code>, but a program
+can explicitly set it using the function:
 <pre>
 int GrSetDriver(char *drvspec);
 </pre>
-<p>on succes it returns non-zero (TRUE). The drvspec string has
-the same format as the environment variable:
+<p>on succes it returns non-zero (TRUE). The <code>drvspec</code> parameter can be
+NULL or a string with the same format as the environment variable <code>MGRXDRV</code>.
+If NULL is passed as the parameter it uses the environment variable if it is set or try
+to detect the correct video driver if not set. Note that if not explicitly called it
+will be internally called (with NULL as the parameter) when first calling
+<code>GrSetMode</code> (see next chapter).
+
+<p>The <code>drvspec</code> format:
 <pre>
-&lt;driver> gw &lt;width> gh &lt;height> nc &lt;colors>
+"&lt;driver> gw &lt;width> gh &lt;height> nc &lt;colors>"
 </pre>
-<p>available drivers are for:
+<p>available videodrivers are for:
 <ul>
 <li>DOS => VESA, stdvga, stdega, memory
 <li>Linux console => linuxfb, linuxdrm, memory
 <li>Linux X11 => xwin, memory
+<li>Linux Wayland => wayland, memory
 <li>Win32 => win32, memory
 </ul>
 
 <p>the optionals gw, gh and nc parameters set the desired
 default graphics mode. Normal values for 'nc' are 2, 16, 256, 64K and 16M.
 
-<p>&nbsp;&nbsp;If neither the <code>MGRXDRV</code> variable exist, nor the
-driver is set by program, MGRX will try to detect the correct driver when
-first calling <code>GrSetMode</code> (see bellow)
-
-<p>&nbsp;&nbsp;After initiated the current driver name can be obtained from:
+<p>&nbsp;&nbsp;After initiated the current videodriver name can be obtained from:
 <pre>
 GrCurrentVideoDriver()->name
 </pre>
@@ -223,6 +235,7 @@ typedef enum _GR_videoAdapters {
   GR_XWIN,               /* X11 driver */
   GR_WIN32,              /* W32 driver */
   GR_LNXFB,              /* Linux console driver */
+  GR_WAYLAND             /* Wayland driver */
   GR_MEM                 /* memory only driver */
 } GrVideoAdapter;
 </pre>
@@ -231,10 +244,10 @@ typedef enum _GR_videoAdapters {
 
 <!--- ===================================================================== --->
 <hr>
-<h2><a name="svm">Setting video modes</a></h2>
+<h2><a name="svm">Setting the video mode</a></h2>
 
 <p>&nbsp;&nbsp;Before a program can do any graphics drawing it has to
-configure the graphics driver for the desired graphics mode. It is done with
+configure the videodriver for the desired video mode. It is done with
 the <code>GrSetMode</code> function as follows:
 <pre>
 int GrSetMode(int which,...); 
@@ -263,13 +276,13 @@ parameter can be one of the following constants, declared in <b>mgrx.h</b>:
 
 <p>&nbsp;&nbsp;The <code>GR_default_graphics</code> inits the graphic screen
 with the resolution and color depth defined in the MGRXDRV environment
-variable (or by te GrSetDriver function or by the the driver defaults).
+variable or by the GrSetDriver function or by the the videodriver defaults.
 
-<p>&nbsp;&nbsp;The <code>GR_default_text</code> can be used, at the end of the
-program, to return the graphics screen to his original state.
+<p>&nbsp;&nbsp;The <code>GR_default_text</code> can be used to return the
+graphics screen to his original state.
 
 <p>&nbsp;&nbsp;The <code>GR_biggest_graphics</code> inits the graphic screen
-with the maximum resolution and color depth supported by the graphic driver.
+with the maximum resolution and color depth supported by the videodriver.
 For Win32 and X11 this goes to full screen. If you want to limit the maximum
 resolution to use, you can set the environment variable MGRXBIGG with
 "maxw maxh".
@@ -279,24 +292,24 @@ two size arguments: <code>int width</code> and <code>int height</code>.
 
 <p>&nbsp;&nbsp;The <code>GR_width_height_color_graphics</code>
 mode requires three arguments: <code>int width</code>,
-<code>int height</code> and <code>GrColor colors</code>.
+<code>int height</code> and <code>GrColor colors</code> (number of colors).
 
 <p>&nbsp;&nbsp;The <code>GR_width_height_bpp_graphics</code>
 mode requires three arguments: <code>int width</code>, <code>int height</code>
-and <code>int bpp</code> (bits per plane instead number of colors).
+and <code>int bpp</code> (bits per pixel instead number of colors).
 
 <p>&nbsp;&nbsp;The <code>GR_custom_graphics</code> and <code>
 GR_custom_bpp_graphics</code> modes require five arguments:
 <code>int width</code>, <code>int height</code>, <code>GrColor colors</code>
 or <code>int bpp</code>, <code>int vx</code> and <code>int vy</code>. Using
 this modes you can set a virtual screen of <code>vx</code> by <code>vy</code>
-size, but it only works on some videomodes with the DOS drivers.
+size, but it only works on some modes with the DOS videodrivers.
 
 <p>&nbsp;&nbsp;The <code>GR_NC_...</code> modes are equivalent to the
 <code>GR_..</code> ones, but they don't clear the video memory.
 
-<p>&nbsp;&nbsp;Graphics drivers can provide info of the supported graphics modes, use the
-next code skeleton to colect the data:
+<p>&nbsp;&nbsp;Videodrivers can provide info of the supported fixed graphics modes,
+use the next code skeleton to colect the data:
 <pre>
 {
     GrFrameMode fm;
@@ -331,7 +344,17 @@ struct _GR_videoMode {
 </code> members are the useful information if you are interested in set
 modes other than the <code>GR_default_graphics</code>.
 
-<p>The current graphics mode (one of the valid <code>mode</code>
+<p>&nbsp;&nbsp;In addition to the fixed graphics modes, the X11, Wayland, Win32
+and memory videodrivers support arbitrary resolution, so you can ask for 589
+pixels width by 928 pixels height, for example. You can know if the current
+videodriver support arbitrary resolution:
+<pre>
+if (GrCurrentVideoDriver()->drvflags &amp; GR_DRIVERF_USER_RESOLUTION) {
+    //arbitrary resolution possible
+}
+</pre>
+
+<p>&nbsp;&nbsp;The current graphics mode (one of the valid <code>which</code>
 argument values for <code>GrSetMode</code>) can be obtained with:
 <pre>
 GrGraphicsMode GrCurrentMode(void);
@@ -1556,7 +1579,7 @@ void GrPatternedMultiPolygon(GrMultiPointArray *mpa,GrLinePattern *lp);
 void GrPatndAlignMultiPolygon(int xo,int yo,GrMultiPointArray *mpa,GrLinePattern *lp);
 </pre>
 <p>&nbsp;&nbsp;Note that you can not achieve the fill effect on multipolygons
-using normal fill polygon functions, but the draw functions are convenient
+using normal fill polygon functions, but the border draw functions are convenient
 functions only, the same effect can be reached using the normal polygon
 (for closed ones) or polyline (for opened ones) functions iterating over
 each member of the GrMultiPointArray struct.</p>
@@ -2646,17 +2669,19 @@ is ready. The possible events are:
 #define GREV_MOUSE   2           /* mouse event, p1=subevent, p2=x, p3=y */
 #define GREV_MMOVE   3           /* mouse move event, p1=buttons status, p2=x, p3=y */
 #define GREV_PREKEY  4           /* key event before be recoded, internal event, users don't see it */
-#define GREV_EXPOSE  5           /* a window area must be redraw (generated only if user requested it) */
-#define GREV_WMEND   6           /* window manager wants ending (generated only if user requested it) */
-#define GREV_WSZCHG  7           /* window size changed (generated only if window resize supported) */
-#define GREV_CBREPLY 8           /* clipboard reply p1=1 if ready to paste, p1=0 no data in clipboard */
+#define GREV_EXPOSE  5           /* a window area must be redraw (gen only if requested, X11) */
+#define GREV_WMEND   6           /* window manager wants ending (gen only if requested, X11, W32, Wyl) */
+#define GREV_WSZCHG  7           /* window size changed (gen only if activated, X11, W32, Wyl) */
+#define GREV_CBREPLY 8           /* clipboard reply, p1=1 if ready to paste, p1=0 no data in clipboard */
+#define GREV_FRAME   9           /* ready for a new frame to be drawn (gen only if requested, Wyl) */
 #define GREV_USER    100         /* user event */
 </pre>
 
-<p>a programmer can define user type events with values >= GREV_USER. When the
-event is GREV_KEY, <code>p1</code> has the character or key and <code>p2</code>
-the number of bytes used by the character or <code>GRKEY_KEYCODE</code> if it
-is a special keys. When the event is GREV_MOUSE, <code>p1</code> has the subevent:
+<p>a programmer can define user type events with values >= GREV_USER.
+<p>&nbsp;&nbsp;When the event is GREV_KEY, <code>p1</code> has the character or key
+and <code>p2</code> the number of bytes used by the character or <code>GRKEY_KEYCODE</code>
+if it is a special key.
+<p>&nbsp;&nbsp;When the event is GREV_MOUSE, <code>p1</code> has the subevent:
 
 <pre>
 #define GRMOUSE_LB_PRESSED  1    /* Left button depressed */
@@ -2665,10 +2690,18 @@ is a special keys. When the event is GREV_MOUSE, <code>p1</code> has the subeven
 #define GRMOUSE_LB_RELEASED 4    /* Left button released */
 #define GRMOUSE_MB_RELEASED 5    /* Middle button released */
 #define GRMOUSE_RB_RELEASED 6    /* Rigth button released */
-#define GRMOUSE_B4_PRESSED  7    /* Button 4 depressed (scroll wheel) */
-#define GRMOUSE_B4_RELEASED 8    /* Button 4 released (scroll wheel) */
-#define GRMOUSE_B5_PRESSED  9    /* Button 5 depressed (scroll wheel) */
-#define GRMOUSE_B5_RELEASED 10   /* Button 5 released (scroll wheel) */
+#define GRMOUSE_B4_PRESSED  7    /* Button 4 pressed (scroll wheel up) */
+#define GRMOUSE_B4_RELEASED 8    /* Button 4 released (scroll wheel up) */
+#define GRMOUSE_B5_PRESSED  9    /* Button 5 pressed (scroll wheel down) */
+#define GRMOUSE_B5_RELEASED 10   /* Button 5 released (scroll wheel down) */
+#define GRMOUSE_B6_PRESSED  11   /* Button 6 pressed (scroll wheel left) */
+#define GRMOUSE_B6_RELEASED 12   /* Button 6 released (scroll wheel left) */
+#define GRMOUSE_B7_PRESSED  13   /* Button 7 pressed (scroll wheel right) */
+#define GRMOUSE_B7_RELEASED 14   /* Button 7 released (scroll wheel right) */
+#define GRMOUSE_B8_PRESSED  15   /* Button 8 pressed (aka backward button) */
+#define GRMOUSE_B8_RELEASED 16   /* Button 8 released (aka backward button) */
+#define GRMOUSE_B9_PRESSED  17   /* Button 9 pressed (aka forward button) */
+#define GRMOUSE_B9_RELEASED 18   /* Button 9 released (aka forward button) */
 </pre>
 
 <p>&nbsp;&nbsp;By default <b>MGRX</b> doesn't generate GREV_MMOVE events except if
@@ -2739,46 +2772,64 @@ will recode key events to user encoding.
 only if the user requests it using this function:
 
 <pre>
-void GrEventGenExpose(int when);
+int GrEventGenExpose(int gen);
 </pre>
 
-<p><code>when</code> can be:
+<p>the parameter <code>gen</code> can be:
 
 <pre>
-#define GR_GEN_EXPOSE_NO    0    /* Doesn't gen GREV_EXPOSE (default) */
-#define GR_GEN_EXPOSE_YES   1    /* Gen GREV_EXPOSE */
+#define GR_GEN_NO           0    /* Doesn't generate the event */
+#define GR_GEN_YES          1    /* Gennerates the event */
 </pre>
 
+<p> the function returns true only if the videodriver support it and the
+parameter is <code>GR_GEN_YES</code>.
 <p>When GREV_EXPOSE events are generated, the X11 video driver doesn't use
 backing store, so drawings can be faster, but the program must redraw the area
-exposed by itsel. Check the test program "life" for an example. For systems
+exposed by itself. Check the test program "life" for an example. For systems
 other than X11 the function does nothing. GREV_EXPOSE populates "count" in
 the "kbstat" field. If count is zero, no more Expose events follow. Simple
 applications that do not want to optimize redisplay can just ignore all
 Expose events with nonzero counts and perform full redisplays on events with
 zero counts. 
 
-<p>&nbsp;&nbsp;The GREV_WMEND event is only generated in X11 and W32 systems
-and only if the user requests it using this function:
+<p>&nbsp;&nbsp;The GREV_WMEND event is only generated in X11, Wayland and W32
+systems and only if the user requests it using this function:
 
 <pre>
-void GrEventGenWMEnd(int when);
+int GrEventGenWMEnd(int gen);
 </pre>
 
-<p><code>when</code> can be:
-
-<pre>
-#define GR_GEN_WMEND_NO    0    /* Doesn't gen GREV_WMEND (default) */
-#define GR_GEN_WMEND_YES   1    /* Gen GREV_WMEND */
-</pre>
+<p>the parameter <code>gen</code> can be <code>GR_GEN_YES</code> or
+<code>GR_GEN_NO</code>
+<p> the function returns true only if the videodriver support it and the
+parameter is <code>GR_GEN_YES</code>.
 
 <p>If GREV_WMEND generation is active it will be generated when the user
 click the close window button, then the program must handle it, normally
 asking the user if he wants to exit. If generation is not active the
 program will be aborted.
 
-<p>&nbsp;&nbsp;The GREV_WSZCHG is only generated by the X11 and W32 drivers when
-they are initialized with window resize support. See the specific chapter bellow.
+<p>&nbsp;&nbsp;The GREV_FRAME event is only generated in Wayland
+systems and only if the user requests it using this function:
+
+<pre>
+int GrEventGenFrame(int gen);
+</pre>
+
+<p>the parameter <code>gen</code> can be <code>GR_GEN_YES</code> or
+<code>GR_GEN_NO</code>
+<p> the function returns true only if the videodriver support it and the
+parameter is <code>GR_GEN_YES</code>.
+
+<p>If GREV_FRAME generation is active it will indicate that a new frame
+can be drawn, a program can use it to draw only after a GREV_FRAME arrives,
+but can be prepared to use an alternate method for videodrivers that do not
+generate the event.
+
+<p>&nbsp;&nbsp;The GREV_WSZCHG is only generated n X11, Wayland and W32 drivers
+when they are initialized with window resize support (see
+<a href="#wresize">Handling user window resizing</a>).
 
 <p>&nbsp;&nbsp;These are the other functions of the input API:
 
@@ -2816,10 +2867,10 @@ call the function:
 void GrSetComposeKey(int compkey);
 </pre>
 
-<p>after the input driver is initiated, e.g.
-<code>GrSetComposeKey(GrKey_Alt_U);</code> After that use the compose-key and
-up to four hexadecimal digits for <code>GRENC_UTF_8</code> and <code>GRENC_UCS_2</code>
-User encodings, only two for the rest User encodings.
+<p>after the input driver is initiated, e.g. <code>GrSetComposeKey(GrKey_Alt_U);</code>
+<p>This let the user to generate any character with the compose-key and up to four
+hexadecimal digits for <code>GRENC_UTF_8</code> and <code>GRENC_UCS_2</code>
+user encodings, only two for the rest user encodings.
 
 <!--- ===================================================================== --->
 <hr>
@@ -2949,9 +3000,9 @@ background then it has to pass the XOR of these two colors to
 
 <!--- ===================================================================== --->
 <hr>
-<h2><a name="wresize">Handling window resizing</a></h2>
-<p>&nbsp;&nbsp;Starting wiht the 1.3.5 <b>MGRX</b> version the X11 and W32 drivers support
-window resize. To achieve that a program must:
+<h2><a name="wresize">Handling user window resizing</a></h2>
+<p>&nbsp;&nbsp;Starting wiht the 1.3.5 <b>MGRX</b> version the X11, Wayland and W32
+videodrivers support user window resizing. To achieve that a program must:
 <ul>
 <li>Call <code>GrSetDriverExt(NULL, "rszwin")</code> before <code>GrSetMode</code> to request
 window resize support to the default video driver.
@@ -2967,7 +3018,7 @@ window resize support to the default video driver.
 <p>&nbsp;&nbsp;Note that if the graphics driver don't support window resize no events
 will be generated, but the program will run without problems. So you can code your
 program to support window resizes and they work with video drivers that don't support it,
-like the DJGPP an Linux framebuffer ones. But if you want to know if there are window
+like the DOS an Linux console ones. But if you want to know if there are window
 resize support to run differently you can test for a flag after calling
 <code>GrSetDriverExt</code> using this:
 <pre>
@@ -3050,7 +3101,7 @@ is not related with a window resize.
 <h2><a name="clipb">Clibpoard</a></h2>
 <p>&nbsp;&nbsp;Starting wiht the 1.3.6 version <b>MGRX</b> provides a clipboard
 to copy and paste text. The clipboard is internal to the program for the DOS and 
-linuxfb versions, but the X11 and W32 drivers interact with the system clipboard.
+linux console versions, but the X11 and Win32 drivers interact with the system clipboard.
 Because the X11 clipboard is asynchronous a special procedure is nedeed, but you
 can use it with any platform.
 
@@ -3079,10 +3130,10 @@ int GrIsClipBoardReadyToGet(void);
 </pre>
 
 <p>it returns 1 if the text is ready to get, 0 if the clipboard is empty or -1
-if a request to the system clipboard is issued. DOS, linuxfb and W32 platforms will
-never return -1. Anyway if -1 is returned you need to wait after a GREV_CBREPLY
-event with p1=1 is read. if 1 is returned or after the event is received yoy can
-call:
+if a request to the system clipboard is issued. DOS, linux console and Win32
+platforms will never return -1. Anyway if -1 is returned you need to wait after
+a GREV_CBREPLY event with p1=1 is read. If 1 is returned or after the event is
+received you can call:
 
 <pre>
 int GrGetClipBoardLen(int *partloaded);
@@ -3111,8 +3162,8 @@ text from your program.
 
 <!--- ===================================================================== --->
 <hr>
-<h2><a name="mdrv">The memory driver</a></h2>
-<p>&nbsp;&nbsp;<b>MGRX</b> can be used to draw in memory using the memory driver,
+<h2><a name="mdrv">The memory videodriver</a></h2>
+<p>&nbsp;&nbsp;<b>MGRX</b> can be used to draw in memory using the memory videodriver,
 so a graphic screen is not nedeed. After the drawing, the result can be stored in
 a graphics file. This is the Hello MGRX example for the memory driver:
 

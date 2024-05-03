@@ -45,6 +45,6 @@ GrFrameDriver _GrFrameDriverSVGA32L = {
     bitblt,
     bltv2r,
     bltr2v,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };

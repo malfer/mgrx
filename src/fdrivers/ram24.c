@@ -43,7 +43,7 @@ GrFrameDriver _GrFrameDriverRAM24 = {
     bitblt,
     NULL,
     NULL,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };
 
@@ -74,7 +74,7 @@ GrFrameDriver _GrFrameDriverSVGA24_LFB = {
     bitblt,
     bitblt,
     bitblt,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };
 #endif /* defined(LFB_BY_NEAR_POINTER) */

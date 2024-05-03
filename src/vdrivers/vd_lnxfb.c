@@ -419,14 +419,18 @@ static int settext(GrVideoMode * mp, int noclear)
 }
 
 GrVideoDriver _GrVideoDriverLINUXFB = {
-    "linuxfb",                        /* name */
-    GR_LNXFB,                        /* adapter type */
-    NULL,                        /* inherit modes from this driver */
-    modes,                        /* mode table */
-    itemsof(modes),                /* # of modes */
-    detect,                        /* detection routine */
-    init,                        /* initialization routine */
-    reset,                        /* reset routine */
-    _gr_selectmode,                /* standard mode select routine */
-    0                                /* no additional capabilities */
+    "linuxfb",                          /* name */
+    GR_LNXFB,                           /* adapter type */
+    NULL,                               /* inherit modes from this driver */
+    modes,                              /* mode table */
+    itemsof(modes),                     /* # of modes */
+    detect,                             /* detection routine */
+    init,                               /* initialization routine */
+    reset,                              /* reset routine */
+    _gr_selectmode,                     /* standard mode select routine */
+    0,                                  /* no additional capabilities */
+    0,                                  /* inputdriver, not used by now */
+    NULL,                               /* generate GREV_EXPOSE events */
+    NULL,                               /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };

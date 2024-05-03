@@ -38,9 +38,16 @@ STD_2 = $(OP)fdrivers/dotab8$(OX)   \
 	$(OP)fdrivers/pblitv2r$(OX) \
 	$(OP)fdrivers/pblitv2v$(OX) \
 	$(OP)fdrivers/ram1$(OX)     \
-	$(OP)fdrivers/ram16$(OX)    \
 	$(OP)fdrivers/ram4$(OX)     \
 	$(OP)fdrivers/ram8$(OX)     \
+	$(OP)fdrivers/ram16$(OX)    \
+	$(OP)fdrivers/ram24$(OX)    \
+	$(OP)fdrivers/ram32l$(OX)   \
+	$(OP)fdrivers/ram32h$(OX)   \
+	$(OP)newfdrv/nram16$(OX)    \
+	$(OP)newfdrv/nram24$(OX)    \
+	$(OP)newfdrv/nram32l$(OX)   \
+	$(OP)newfdrv/nram32h$(OX)   \
 	$(OP)fdrivers/rblit_14$(OX)
 
 STD_3 = $(OP)fonts/fdv_bgi$(OX)     \

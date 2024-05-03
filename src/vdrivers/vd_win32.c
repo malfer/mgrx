@@ -125,7 +125,7 @@ int _W32EventQueueLength = 0;
 
 int _W32ClientWidth, _W32ClientHeight;
 
-int _W32GenWMEndEvents = GR_GEN_WMEND_NO;
+int _W32GenWMEndEvents = GR_GEN_NO;
 int _W32GenWSzChgEvents = FALSE;
 
 int _W32UserHadSetWName = 0;
@@ -559,17 +559,27 @@ done:
     return res;
 }
 
+static int genwmend(int gen)
+{
+    _W32GenWMEndEvents = gen;
+    return _W32GenWMEndEvents;
+}
+
 GrVideoDriver _GrVideoDriverWIN32 = {
-    "win32",                    /* name */
-    GR_WIN32,                   /* adapter type */
-    NULL,                       /* inherit modes from this driver */
-    modes,                      /* mode table */
-    itemsof(modes),             /* # of modes */
-    detect,                     /* detection routine */
-    init,                       /* initialization routine */
-    reset,                      /* reset routine */
-    _w32_selectmode,            /* special mode select routine */
-    GR_DRIVERF_USER_RESOLUTION  /* arbitrary resolution possible */
+    "win32",                            /* name */
+    GR_WIN32,                           /* adapter type */
+    NULL,                               /* inherit modes from this driver */
+    modes,                              /* mode table */
+    itemsof(modes),                     /* # of modes */
+    detect,                             /* detection routine */
+    init,                               /* initialization routine */
+    reset,                              /* reset routine */
+    _w32_selectmode,                    /* special mode select routine */
+    GR_DRIVERF_USER_RESOLUTION,         /* arbitrary resolution possible */
+    0,                                  /* inputdriver, not used by now */
+    NULL,                               /* generate GREV_EXPOSE events */
+    genwmend,                           /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };
 
 static DWORD WINAPI WndThread(void *param)
@@ -690,7 +700,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
     case WM_CLOSE:
         if (!isMainWaitingTermination) {
-            if (_W32GenWMEndEvents != GR_GEN_WMEND_NO) {
+            if (_W32GenWMEndEvents != GR_GEN_NO) {
                 EnqueueW32Event(uMsg, wParam, lParam, 0);
                 return 0;
             }
@@ -846,9 +856,3 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
-
-void _GrW32EventGenWMEnd(int when)
-{
-  _W32GenWMEndEvents = when;
-}
-

@@ -1,7 +1,7 @@
 /**
  ** grgui.h ---- Mini GUI for MGRX, public header 
  **
- ** Copyright (C) 2002,2006,2019-2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2002,2006,2019-2023 Mariano Alvarez Fernandez
  ** [e-mail: malfer at telefonica dot net]
  **
  ** This file is part of the GRX graphics library.
@@ -431,6 +431,8 @@ void GUITPSetSimpleColors(GUITextPanel *ta, GrColor bg, GrColor cfg, GrColor tc)
 void GUITPSetTableColors(GUITextPanel *ta, GrColor *ctbl, int numcolors,
                          int bgi, int cfgi, int tci);
 void GUITPTextColorIndex(GUITextPanel *ta, int cfgi);
+void GUITPTextColorIndexMA(GUITextPanel *ta, int cfgi);
+void GUITPBgColorIndex(GUITextPanel *ta, int bgi);
 void GUITPCursorColorIndex(GUITextPanel *ta, int tci);
 void GUITPDestroy(GUITextPanel *ta);
 void GUITPClear(GUITextPanel *ta);
@@ -441,9 +443,12 @@ void GUITPNewLine(GUITextPanel *ta);
 void GUITPPutChar(GUITextPanel *ta, long ch, int chrtype);
 void GUITPPutString(GUITextPanel *ta, void *s, int len, int chrtype);
 void GUITPPutMultiString(GUITextPanel *ta, void *s, int len, int chrtype);
+void GUITPResetMA(GUITextPanel *ta);
+void GUITPSetMA(GUITextPanel *ta, int fl, int fc, int ll, int lc);
+int GUITPCopyMA(GUITextPanel *ta, int clear);
+void GUITPPasteMA(GUITextPanel *ta);
+
 void GUITPReDraw(GUITextPanel *ta);
-void GUITPTextColorIndexMA(GUITextPanel *ta, int cfgi);
-void GUITPBgColorIndex(GUITextPanel *ta, int bgi);
 void GUITPGetStatus(GUITextPanel *ta, GUITEditStatus *tast);
 void *GUITPGetString(GUITextPanel *ta, int nline, int chrtype);
 void *GUITPGetMultiString(GUITextPanel *ta, int fline, int lline, int chrtype);
@@ -509,6 +514,8 @@ void GUIRTESetTableColors(GUIRawTEdit *ta, GrColor *ctbl, int numcolors,
                           int bgi, int cfgi, int tci);
 void GUIRTETextColorIndex(GUIRawTEdit *ta, int cfgi);
 void GUIRTECursorColorIndex(GUIRawTEdit *ta, int tci);
+void GUIRTETextColorIndexMA(GUIRawTEdit *ta, int cfgi, int draw);
+void GUIRTEBgColorIndex(GUIRawTEdit *ta, int bgi, int draw);
 void GUIRTEDestroy(GUIRawTEdit *ta);
 void GUIRTEClear(GUIRawTEdit *ta);
 void GUIRTEShowTcursor(GUIRawTEdit *ta);
@@ -518,9 +525,11 @@ void GUIRTENewLine(GUIRawTEdit *ta, int draw);
 void GUIRTEPutChar(GUIRawTEdit *ta, long ch, int chrtype, int draw);
 void GUIRTEPutString(GUIRawTEdit *ta, void *s, int len, int chrtype, int draw);
 void GUIRTEPutMultiString(GUIRawTEdit *ta, void *s, int len, int chrtype, int draw);
+void GUIRTEResetMA(GUIRawTEdit *ta, int draw);
+void GUIRTESetMA(GUIRawTEdit *ta, int fl, int fc, int ll, int lc, int draw);
+int GUIRTECopyMA(GUIRawTEdit *ta, int clear, int draw);
+void GUIRTEPasteMA(GUIRawTEdit *ta, int draw);
 void GUIRTEReDraw(GUIRawTEdit *ta);
-void GUIRTETextColorIndexMA(GUIRawTEdit *ta, int cfgi, int draw);
-void GUIRTEBgColorIndex(GUIRawTEdit *ta, int bgi, int draw);
 void GUIRTEGetStatus(GUIRawTEdit *ta, GUITEditStatus *tast);
 void *GUIRTEGetString(GUIRawTEdit *ta, int nline, int chrtype);
 void *GUIRTEGetMultiString(GUIRawTEdit *ta, int fline, int lline, int chrtype);

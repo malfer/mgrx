@@ -3,7 +3,7 @@
  **                 grgui, only objects and dialogs, drawing and double
  **                 buffering managed directly, like the old demomgrx.c
  **
- ** Copyright (C) 2000,2001,2005,2008,2019,2021,2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2000,2001,2005,2008,2019,2021-2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This is a test/demo file of the GRX graphics library.
@@ -33,14 +33,13 @@ static int gwidth = 640;
 static int gheight = 480;
 static int gbpp = 16;
 
-char *wintitle =
-    "MGRX+GrGUI 1.4.3, the graphics library";
-
+char *mgrxversion = "MGRX 1.5.0";
+char *wintitle    = "MGRX 1.5.0, the graphics library";
 char *animatedtext[2] = {
-    "MGRX 1.4.3, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.5.0, the graphics library for DJGPPv2, Linux, X11, Wayland and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
-#if defined(__XWIN__) || defined(__WIN32__)
+#if defined(__XWIN__) || defined(__WIN32__) || defined(__WAYLAND__)
 static int need_restart = 0;
 #else
 static int need_restart = 1;
@@ -60,7 +59,7 @@ static int need_restart = 1;
 #define PPMIMGOUT "../testimg/demmgrx2.ppm"
 #endif
 
-#define NDEMOS 58
+#define NDEMOS 60
 
 #define ID_ARCTEST   1
 #define ID_BB1TEST   2
@@ -95,26 +94,28 @@ static int need_restart = 1;
 #define ID_POLYTEDB 31
 #define ID_RGBTEST  32
 #define ID_SBCTEST  33
-#define ID_SCROLTST 34
-#define ID_SPEEDTST 35
-#define ID_TEXTPATT 36
-#define ID_WINCLIP  37
-#define ID_WINTEST  38
-#define ID_WRSZTEST 39
-#define ID_DEMINTL2 40
-#define ID_GUIEX01  41
-#define ID_GUIEX02  42
-#define ID_GUIEX03  43
-#define ID_GUIEX04  44
-#define ID_GUIEX05  45
-#define ID_GUIEX06  46
-#define ID_GUIEX07  47
-#define ID_GUIEX08  48
-#define ID_GUIEX09  49
-#define ID_GUIEX10  50
-#define ID_GUIEX11  51
-#define ID_GUIEX12  52
-#define ID_SHOWFNT2 53
+#define ID_SCLTEST  34
+#define ID_SCROLTST 35
+#define ID_SPEEDTST 36
+#define ID_SPEEDTS2 37
+#define ID_TEXTPATT 38
+#define ID_WINCLIP  39
+#define ID_WINTEST  40
+#define ID_WRSZTEST 41
+#define ID_DEMINTL2 42
+#define ID_GUIEX01  43
+#define ID_GUIEX02  44
+#define ID_GUIEX03  45
+#define ID_GUIEX04  46
+#define ID_GUIEX05  47
+#define ID_GUIEX06  48
+#define ID_GUIEX07  49
+#define ID_GUIEX08  50
+#define ID_GUIEX09  51
+#define ID_GUIEX10  52
+#define ID_GUIEX11  53
+#define ID_GUIEX12  54
+#define ID_SHOWFNT2 55
 #define ID_MODETEST 70
 #define ID_PAGE1    81
 #define ID_PAGE2    82
@@ -161,8 +162,10 @@ static ProgTable ptable[NDEMOS] = {
     {ID_POLYTEDB, "polytedb", "polytedb.c -> double buffer version of polytest"},
     {ID_RGBTEST, "rgbtest", "rgbtest.c -> show 256 color RGB palette"},
     {ID_SBCTEST, "sbctest", "sbctest.c -> test subcontext operations"},
+    {ID_SCLTEST, "scltest", "scltest.c -> test scanline operations"},
     {ID_SCROLTST, "scroltst", "scroltst.c -> test virtual screen set/scroll"},
     {ID_SPEEDTST, "speedtst", "speedtst.c -> check all available frame drivers speed"},
+    {ID_SPEEDTS2, "speedts2", "speedts2.c -> check all available frame drivers speed (v2)"},
     {ID_TEXTPATT, "textpatt", "textpatt.c -> test patterned text"},
     {ID_WINCLIP, "winclip", "winclip.c -> clip a drawing to various windows (contexts)"},
     {ID_WINTEST, "wintest", "wintest.c -> test window (context) mapping"},
@@ -215,7 +218,7 @@ static void the_info(int x, int y);
 static int pev_command(GrEvent * ev);
 static int pev_select(GrEvent * ev);
 static void paint_foot(char *s);
-static void paint_animation(void);
+static void paint_animation(int despl);
 static void disaster(char *s);
 
 /************************************************************************/
@@ -224,6 +227,7 @@ int main(int argc, char **argv)
 {
     char *infoexit[1] = {"Do you want to exit?"};
     GrEvent ev;
+    int grevframes = 0;
     long oldtime = 0;
     int ret;
 
@@ -239,6 +243,8 @@ int main(int argc, char **argv)
     ini_grgui();
     ini_groups();
     paint_screen();
+    // if the videodriver can generate GREV_FRAME events we use it
+    grevframes = GrEventGenFrame(GR_GEN_YES);
 
     while (1) {
         GrEventRead(&ev);
@@ -252,6 +258,16 @@ int main(int argc, char **argv)
              (ev.type == GREV_WMEND)) {
             ret = GUICDialogYesNo("Exit", (void **)infoexit, 1, "Yes", "No");
             if (ret == 1) break;
+        }
+        if (grevframes) {
+            if (ev.type == GREV_FRAME) {
+                paint_animation(2);
+                continue;
+            }
+        } else if (ev.time > oldtime + 9) {
+            //fprintf(stderr, "etime %ld\n", ev.time-oldtime);
+            paint_animation(1);
+            oldtime = ev.time;
         }
         if ((ev.type == GREV_KEY) && (ev.p1 == 's')) {
             GrSaveContextToPpm(NULL, PPMIMGOUT, "DemMGRX2");
@@ -279,12 +295,6 @@ int main(int argc, char **argv)
                 paint_screen();
             }
             continue;
-        }
-        if (ev.type == GREV_NULL) {
-            if (ev.time > (oldtime + 9)) {
-                paint_animation();
-                oldtime = ev.time;
-            }
         }
     }
 
@@ -405,7 +415,7 @@ static void ini_groups(void)
 #define PY8 362
 
 #define NBUTTONSP1 26
-#define NBUTTONSP2 19
+#define NBUTTONSP2 21
 #define NBUTTONSP3 17
 
     bgrp1 = GUIGroupCreate(NBUTTONSP1, 16, 30);
@@ -448,15 +458,17 @@ static void ini_groups(void)
     GUIObjectSetButton(&(bgrp2->o[7]),   7, PX0, PY7, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "PolyTeDb", ID_POLYTEDB, 0, 0);
     GUIObjectSetButton(&(bgrp2->o[8]),   8, PX0, PY8, 100, 40, EGAC_BLUE, EGAC_YELLOW, "RgbTest", ID_RGBTEST, 0, 0);
     GUIObjectSetButton(&(bgrp2->o[9]),   9, PX1, PY0, 100, 40, EGAC_BLUE, EGAC_YELLOW, "SbcTest", ID_SBCTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[10]),  10, PX1, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "ScrolTst", ID_SCROLTST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[11]),  11, PX1, PY2, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "SpeedTst", ID_SPEEDTST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[12]), 12, PX1, PY3, 100, 40, EGAC_BLUE, EGAC_YELLOW, "TextPatt", ID_TEXTPATT, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[13]), 13, PX1, PY4, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinClip", ID_WINCLIP, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[14]), 14, PX1, PY5, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinTest", ID_WINTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[15]), 15, PX1, PY6, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WRszTest", ID_WRSZTEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[16]), 16, PX2, PY6, 100, 40, EGAC_GREEN, EGAC_WHITE, "Page 3", ID_PAGE3, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[17]), 17, PX2, PY7, 100, 40, EGAC_BROWN, EGAC_WHITE, "ModeTest", ID_MODETEST, 0, 0);
-    GUIObjectSetButton(&(bgrp2->o[18]), 18, PX2, PY8, 100, 40, EGAC_RED, EGAC_WHITE, "Exit", ID_EXIT, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[10]), 10, PX1, PY1, 100, 40, EGAC_BLUE, EGAC_YELLOW, "SclTest", ID_SCLTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[11]), 11, PX1, PY2, 100, 40, EGAC_BLUE, EGAC_YELLOW, "ScrolTst", ID_SCROLTST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[12]), 12, PX1, PY3, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "SpeedTst", ID_SPEEDTST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[13]), 13, PX1, PY4, 100, 40, EGAC_DARKGRAY, EGAC_LIGHTGRAY, "SpeedTs2", ID_SPEEDTS2, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[14]), 14, PX1, PY5, 100, 40, EGAC_BLUE, EGAC_YELLOW, "TextPatt", ID_TEXTPATT, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[15]), 15, PX1, PY6, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinClip", ID_WINCLIP, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[16]), 16, PX1, PY7, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WinTest", ID_WINTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[17]), 17, PX1, PY8, 100, 40, EGAC_BLUE, EGAC_YELLOW, "WRszTest", ID_WRSZTEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[18]), 18, PX2, PY6, 100, 40, EGAC_GREEN, EGAC_WHITE, "Page 3", ID_PAGE3, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[19]), 19, PX2, PY7, 100, 40, EGAC_BROWN, EGAC_WHITE, "ModeTest", ID_MODETEST, 0, 0);
+    GUIObjectSetButton(&(bgrp2->o[20]), 20, PX2, PY8, 100, 40, EGAC_RED, EGAC_WHITE, "Exit", ID_EXIT, 0, 0);
     GUIGroupSetSelected(bgrp2, 0, 0);
 
     bgrp3= GUIGroupCreate(NBUTTONSP3, 16, 30);
@@ -520,21 +532,22 @@ static void paint_screen(void)
     the_info(495, 225);
     the_title(495, 370);
     paint_foot("Hold down left mouse buttom to see a comment");
-    GrSetContext(grcglob);
-    GrBitBlt(NULL, 0, 0, grcglobdb, 0, 0, 639, 479, GrWRITE);
+    if (grcglobdb != NULL) {
+        GrSetContext(grcglob);
+        GrBitBlt(NULL, 0, 0, grcglobdb, 0, 0, 639, 479, GrWRITE);
+    }
 }
 
 /************************************************************************/
 
 static void the_title(int x, int y)
 {
-    char *t1 = "MGRX 1.4.3";
     char *t2 = "test programs launcher";
 
     grt_centered.txo_fgcolor = EGAC_LIGHTGREEN;
 
     grt_centered.txo_font = grf_big;
-    GrDrawString(t1, 0, 0 + x, 0 + y, &grt_centered);
+    GrDrawString(mgrxversion, 0, 0 + x, 0 + y, &grt_centered);
 
     grt_centered.txo_font = grf_std;
     GrDrawString(t2, 0, 0 + x, 30 + y, &grt_centered);
@@ -560,16 +573,22 @@ static void the_info(int x, int y)
         strcpy(sys, "L32");
     else if (nsys == MGRX_VERSION_GCC_386_X11)
         strcpy(sys, "X32");
+    else if (nsys == MGRX_VERSION_GCC_386_WYL)
+        strcpy(sys, "Y32");
     else if (nsys == MGRX_VERSION_GCC_X86_64_LINUX)
         strcpy(sys, "L64");
     else if (nsys == MGRX_VERSION_GCC_X86_64_X11)
         strcpy(sys, "X64");
+    else if (nsys == MGRX_VERSION_GCC_X86_64_WYL)
+        strcpy(sys, "Y64");
     else if (nsys == MGRX_VERSION_GCC_386_WIN32)
         strcpy(sys, "W32");
     else if (nsys == MGRX_VERSION_GCC_ARM_LINUX)
         strcpy(sys, "LAR");
     else if (nsys == MGRX_VERSION_GCC_ARM_X11)
         strcpy(sys, "XAR");
+    else if (nsys == MGRX_VERSION_GCC_ARM_WYL)
+        strcpy(sys, "YAR");
 
     nenc = GrGetKbSysEncoding();
     kbsysencoding = GrStrEncoding(nenc);
@@ -630,7 +649,8 @@ static int pev_command(GrEvent * ev)
         for (i = 0; i < NDEMOS; i++) {
             if (ev->p1 == ptable[i].cid) {
                 if ((ev->p1 == ID_ARCTEST) || (ev->p1 == ID_POLYTEST) ||
-                    (ev->p1 == ID_POLYTEDB) ||(ev->p1 == ID_SPEEDTST)) {
+                    (ev->p1 == ID_POLYTEDB) || (ev->p1 == ID_SPEEDTST) ||
+                    (ev->p1 == ID_SPEEDTS2)) {
                     GUICDialogInfo("Warning", (void **)infonotest, 2, "Ok");
                     return 1;
                 }
@@ -646,10 +666,23 @@ static int pev_command(GrEvent * ev)
                     strcpy(nprog, "xterm -e ../bin/x");
                 else if (ev->p1 == ID_SPEEDTST)
                     strcpy(nprog, "xterm -e ../test/x");
+                else if (ev->p1 == ID_SPEEDTS2)
+                    strcpy(nprog, "xterm -e ../test/x");
                 else if (ev->p1 < ID_DEMINTL2)
                     strcpy(nprog, "../test/x");
                 else
                     strcpy(nprog, "./x");
+#elif defined(__WAYLAND__)
+                if (ev->p1 == ID_MODETEST)
+                    strcpy(nprog, "xterm -e ../bin/w");
+                else if (ev->p1 == ID_SPEEDTST)
+                    strcpy(nprog, "xterm -e ../test/w");
+                else if (ev->p1 == ID_SPEEDTS2)
+                    strcpy(nprog, "xterm -e ../test/w");
+                else if (ev->p1 < ID_DEMINTL2)
+                    strcpy(nprog, "../test/w");
+                else
+                    strcpy(nprog, "./w");
 #else
                 if (ev->p1 == ID_MODETEST)
                     strcpy(nprog, "../bin/");
@@ -671,7 +704,7 @@ static int pev_command(GrEvent * ev)
                     GrEventFlush();
                 }
                 paint_screen();
-                paint_animation();
+                paint_animation(0);
                 if (error != 0) {
                     failtext[1] = nprog;
                     GUICDialogInfo("Error", (void **)failtext, 2, "Ok");
@@ -715,7 +748,7 @@ static void paint_foot(char *s)
 
 /************************************************************************/
 
-static void paint_animation(void)
+static void paint_animation(int despl)
 {
     static int pos = 620;
     static int ini = 0;
@@ -748,7 +781,7 @@ static void paint_animation(void)
     GrSetContext(grcglob);
     GrBitBlt(NULL, 10, 8, grc, 0, 0, 619, 29, GrWRITE);
 
-    pos -= 1;
+    pos -= despl;
     if (pos <= -wtext) {
         pos = 620;
         ind++;

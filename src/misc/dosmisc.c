@@ -2,7 +2,7 @@
  ** dosmisc.c - miscellaneous functions for DOS
  **
  ** Copyright (C) 2001 Mariano Alvarez Fernandez
- ** [e-mail: malfer@teleline.es]
+ ** [e-mail: malfer@telefonica.net]
  **
  ** This file is part of the GRX graphics library.
  **

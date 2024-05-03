@@ -345,6 +345,10 @@ GrVideoDriver _GrVideoDriverSTDVGA = {
     init,                               /* initialization routine */
     _GrViDrvResetEGAVGA,                /* reset routine */
     _gr_selectmode,                     /* standard mode select routine */
-    0                                   /* no additional capabilities */
+    0,                                  /* no additional capabilities */
+    0,                                  /* inputdriver, not used by now */
+    NULL,                               /* generate GREV_EXPOSE events */
+    NULL,                               /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };
 

@@ -80,9 +80,6 @@ endif
 O=      $(STD_O)            \
 	$(ADDON_O)          \
 	fdrivers/fd_xwin.o  \
-	fdrivers/ram24.o    \
-	fdrivers/ram32l.o   \
-	fdrivers/ram32h.o   \
 	fonts/fdv_xwin.o    \
 	input/grev_x11.o    \
 	input/clb_x11.o     \

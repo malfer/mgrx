@@ -1,0 +1,50 @@
+#
+# MGRX makefile for LINUX/WAYLAND version (GNU-make)
+#
+.PHONY : libs test testgui clean cleanall install uninstall \
+	 install-bin uninstall-bin install-fonts uninstall-fonts
+
+GRXVWAYLAND=y
+
+include makedefs.grx
+
+all: libs test testgui
+
+libs:
+	$(MAKE) -C src -f makefile.wyl
+
+test: libs
+	$(MAKE) -C test -f makefile.wyl
+
+testgui: libs
+ifeq ($(INCLUDE_GRGUI),y)
+	$(MAKE) -C testgui -f makefile.wyl
+endif
+
+clean:
+ifeq ($(INCLUDE_GRGUI),y)
+	$(MAKE) -C testgui -f makefile.wyl clean
+endif
+	$(MAKE) -C test -f makefile.wyl clean
+	$(MAKE) -C src -f makefile.wyl clean
+
+cleanall: clean
+	$(MAKE) -C src -f makefile.wyl cleanall
+
+install:
+	$(MAKE) -C src -f makefile.wyl install
+
+uninstall:
+	$(MAKE) -C src -f makefile.wyl uninstall
+
+install-bin:
+	$(MAKE) -C src -f makefile.wyl install-bin
+
+uninstall-bin:
+	$(MAKE) -C src -f makefile.wyl uninstall-bin
+
+install-fonts:
+	$(MAKE) -C src -f makefile.wyl install-fonts
+
+uninstall-fonts:
+	$(MAKE) -C src -f makefile.wyl uninstall-fonts

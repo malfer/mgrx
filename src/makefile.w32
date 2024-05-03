@@ -55,14 +55,11 @@ else
 endif
 
 W32_O = $(ADDON_O)              \
-	fdrivers/fdw32_24.o     \
+	newfdrv/nw32_24.o       \
 	fdrivers/fdw32_8.o      \
 	fdrivers/lfbbltrv.o     \
 	fdrivers/lfbbltvr.o     \
 	fdrivers/lfbbltvv.o     \
-	fdrivers/ram24.o        \
-	fdrivers/ram32l.o       \
-	fdrivers/ram32h.o       \
 	input/grev_w32.o        \
 	input/clb_w32.o         \
 	misc/w32misc.o          \

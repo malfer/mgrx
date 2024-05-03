@@ -41,8 +41,8 @@ static unsigned short StdKeyTranslate(int winkey, int fkbState);
 /**
  ** _GrEventInit - Initializes inputs
  **
- ** Returns  0 on success
- **         -1 on error
+ ** Returns 1 on success
+ **         0 on error
  **
  ** For internal use only
  **/

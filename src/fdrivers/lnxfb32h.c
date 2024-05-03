@@ -35,7 +35,7 @@
 
 GrFrameDriver _GrFrameDriverLNXFB_32H = {
     GR_frameLNXFB_32H,          /* frame mode */
-    GR_frameRAM32H,             /* compatible RAM frame mode */
+    GR_frameNRAM32H,            /* compatible RAM frame mode */
     TRUE,                       /* onscreen */
     4,                          /* line width alignment */
     1,                          /* number of planes */
@@ -53,6 +53,6 @@ GrFrameDriver _GrFrameDriverLNXFB_32H = {
     bitbltv2v,
     bitbltv2r, //v2r
     bitbltr2v, //r2v
-    getindexedscanline,
+    getscanline,
     putscanline
 };

@@ -418,14 +418,12 @@ static void bitbltr2v(GrFrame *dst, int dx, int dy,
 }
 
 static
-GrColor *getindexedscanline(GrFrame *c, int x, int y, int w, int *indx)
+GrColor *getscanline(GrFrame *c, int x, int y, int w)
 {
     GR_int32u buf[w];
     GrColor *pixels;
     int i;
 
-    if (indx) return _GrFrDrvGenericGetIndexedScanline(c,x,y,w,indx);
-    
     GRX_ENTER();
     pixels = _GrTempBufferAlloc(sizeof(GrColor) * (w+1));
     if (pixels) {

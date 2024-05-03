@@ -270,13 +270,4 @@ int _GrRecode_UCS2_ISO88595(long src, unsigned char *des);
 int _GrRecode_UCS2_ISO88597(long src, unsigned char *des);
 int _GrRecode_UCS2_CP437Ext(long src, long *des);
 
-#ifdef __XWIN__
-void _GrXwinEventGenExpose(int when);
-void _GrXwinEventGenWMEnd(int when);
-#endif
-
-#ifdef __WIN32__
-void _GrW32EventGenWMEnd(int when);
-#endif
-
 #endif  /* whole file */

@@ -1,7 +1,7 @@
 /**
  ** txtpanel.c ---- Mini GUI for MGRX, text editor in a panel
  **
- ** Copyright (C) 2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2022-2023 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This file is part of the GRX graphics library.
@@ -104,6 +104,36 @@ void GUITPCursorColorIndex(GUITextPanel *ta, int tci)
     if (ta == NULL) return;
 
     GUIRTECursorColorIndex(ta->tedit, tci);
+}
+
+/**************************************************************************/
+
+void GUITPTextColorIndexMA(GUITextPanel *ta, int cfgi)
+{
+    GrContext ctxsave;
+
+    // this funcction set the fg color and apply to the marqued area
+    if (ta == NULL) return;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    GUIRTETextColorIndexMA(ta->tedit, cfgi, 1);
+    GrSetContext(&ctxsave);
+}
+
+/**************************************************************************/
+
+void GUITPBgColorIndex(GUITextPanel *ta, int bgi)
+{
+    GrContext ctxsave;
+
+    // this funcction set the bg color
+    if (ta == NULL) return;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    GUIRTEBgColorIndex(ta->tedit, bgi, 1);
+    GrSetContext(&ctxsave);
 }
 
 /**************************************************************************/
@@ -225,6 +255,64 @@ void GUITPPutMultiString(GUITextPanel *ta, void *s, int len, int chrtype)
 
 /**************************************************************************/
 
+void GUITPResetMA(GUITextPanel *ta)
+{
+    GrContext ctxsave;
+
+    if (ta == NULL) return;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    GUIRTEResetMA(ta->tedit, 1);
+    GrSetContext(&ctxsave);
+}
+
+/**************************************************************************/
+
+void GUITPSetMA(GUITextPanel *ta, int fl, int fc, int ll, int lc)
+{
+    GrContext ctxsave;
+
+    if (ta == NULL) return;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    GUIRTESetMA(ta->tedit, fl, fc, ll, lc, 1);
+    GrSetContext(&ctxsave);
+}
+
+/**************************************************************************/
+
+int GUITPCopyMA(GUITextPanel *ta, int clear)
+{
+    int ret;
+    GrContext ctxsave;
+
+    if (ta == NULL) return 0;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    ret = GUIRTECopyMA(ta->tedit, clear, 1);
+    GrSetContext(&ctxsave);
+    return ret;
+}
+
+/**************************************************************************/
+
+void GUITPPasteMA(GUITextPanel *ta)
+{
+    GrContext ctxsave;
+
+    if (ta == NULL) return;
+
+    GrSaveContext(&ctxsave);
+    GrSetContext(ta->p->cl);
+    GUIRTEPasteMA(ta->tedit, 1);
+    GrSetContext(&ctxsave);
+}
+
+/**************************************************************************/
+
 void GUITPReDraw(GUITextPanel *ta)
 {
     GrContext ctxsave;
@@ -234,36 +322,6 @@ void GUITPReDraw(GUITextPanel *ta)
     GrSaveContext(&ctxsave);
     GrSetContext(ta->p->cl);
     GUIRTEReDraw(ta->tedit);
-    GrSetContext(&ctxsave);
-}
-
-/**************************************************************************/
-
-void GUITPTextColorIndexMA(GUITextPanel *ta, int cfgi)
-{
-    GrContext ctxsave;
-
-    // this funcction set the fg color and apply to the marqued area
-    if (ta == NULL) return;
-
-    GrSaveContext(&ctxsave);
-    GrSetContext(ta->p->cl);
-    GUIRTETextColorIndexMA(ta->tedit, cfgi, 1);
-    GrSetContext(&ctxsave);
-}
-
-/**************************************************************************/
-
-void GUITPBgColorIndex(GUITextPanel *ta, int bgi)
-{
-    GrContext ctxsave;
-
-    // this funcction set the bg color
-    if (ta == NULL) return;
-
-    GrSaveContext(&ctxsave);
-    GrSetContext(ta->p->cl);
-    GUIRTEBgColorIndex(ta->tedit, bgi, 1);
     GrSetContext(&ctxsave);
 }
 

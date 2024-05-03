@@ -4,7 +4,7 @@
  ** Copyright (c) 1995 Csaba Biegl, 820 Stirrup Dr, Nashville, TN 37221
  ** [e-mail: csaba@vuse.vanderbilt.edu]
  **
- ** Copyright (C) 2006-2023 Mariano Alvarez Fernandez
+ ** Copyright (C) 2006-2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net] 
  ** Heavily modified for MGRX
  **
@@ -29,7 +29,7 @@
 
 /* Version of MGRX API */
 
-#define MGRX_VERSION_API 0x0143
+#define MGRX_VERSION_API 0x0150
 
 /* these are the supported configurations: */
 #define MGRX_VERSION_GCC_386_DJGPP       1       /* DJGPP v2 */
@@ -40,35 +40,46 @@
 #define MGRX_VERSION_GCC_X86_64_X11      6       /* X11 version x86_64 */
 #define MGRX_VERSION_GCC_ARM_LINUX       7       /* console framebuffer arm */
 #define MGRX_VERSION_GCC_ARM_X11         8       /* X11 version arm */
+#define MGRX_VERSION_GCC_386_WYL         9       /* Wayland version i386 */
+#define MGRX_VERSION_GCC_X86_64_WYL     10       /* Wayland version x86_64 */
+#define MGRX_VERSION_GCC_ARM_WYL        11       /* Wayland version arm */
 
-#ifdef  __GNUC__
-#ifdef  __DJGPP__
-#define MGRX_VERSION     MGRX_VERSION_GCC_386_DJGPP
-#endif
-#if defined(__XWIN__)
-#if defined(__linux__) && defined(__i386__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_386_X11
-#endif
-#if defined(__linux__) && defined(__x86_64__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_X86_64_X11
-#endif
-#if defined(__linux__) && defined(__arm__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_ARM_X11
-#endif
-#else
-#if defined(__linux__) && defined(__i386__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_386_LINUX
-#endif
-#if defined(__linux__) && defined(__x86_64__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_X86_64_LINUX
-#endif
-#if defined(__linux__) && defined(__arm__)
-#define MGRX_VERSION     MGRX_VERSION_GCC_ARM_LINUX
-#endif
-#endif
-#ifdef  __WIN32__
-#define MGRX_VERSION     MGRX_VERSION_GCC_386_WIN32
-#endif
+#if defined(__GNUC__)
+    #if defined(__DJGPP__) && defined(__MSDOS__)
+        #define MGRX_VERSION         MGRX_VERSION_GCC_386_DJGPP
+    #elif defined(__WIN32__)
+        #define MGRX_VERSION         MGRX_VERSION_GCC_386_WIN32
+    #elif defined(__XWIN__) && defined(__linux__)
+        #if defined(__i386__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_386_X11
+        #endif
+        #if defined(__x86_64__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_X86_64_X11
+        #endif
+        #if defined(__arm__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_ARM_X11
+        #endif
+    #elif defined(__WAYLAND__) && defined(__linux__)
+        #if defined(__i386__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_386_WYL
+        #endif
+        #if defined(__x86_64__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_X86_64_WYL
+        #endif
+        #if defined(__arm__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_ARM_WYL
+        #endif
+    #elif defined(__linux__)
+        #if defined(__i386__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_386_LINUX
+        #endif
+        #if defined(__x86_64__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_X86_64_LINUX
+        #endif
+        #if defined(__arm__)
+            #define MGRX_VERSION     MGRX_VERSION_GCC_ARM_LINUX
+        #endif
+    #endif
 #endif /* __GNUC__ */
 
 #ifndef MGRX_VERSION
@@ -136,7 +147,6 @@ typedef enum _GR_frameModes {
         /* ==== MSDOS video frame buffer modes ==== */
         GR_frameUndef,              /* undefined */
         GR_frameText,               /* text modes */
-        GR_frameHERC1,              /* Hercules mono (deleted) */
         GR_frameEGAVGA1,            /* EGA VGA mono */
         GR_frameEGA4,               /* EGA 16 color */
         GR_frameSVGA4,              /* (Super) VGA 16 color */
@@ -152,6 +162,14 @@ typedef enum _GR_frameModes {
         GR_frameSVGA24_LFB,         /* Super VGA 16M color */
         GR_frameSVGA32L_LFB,        /* Super VGA 16M color padded #1 */
         GR_frameSVGA32H_LFB,        /* Super VGA 16M color padded #2 */
+        /* ==== mew linear frame buffer modes  ==== */
+        GR_frameNLFB1,              /* 1bpp (to do) */
+        GR_frameNLFB4,              /* 4bpp (to do) */
+        GR_frameNLFB8,              /* 8bpp (to do) */
+        GR_frameNLFB16,             /* 16bpp (to do) */
+        GR_frameNLFB24,             /* 24bpp */
+        GR_frameNLFB32L,            /* 32bpp (24bpp padded low) */
+        GR_frameNLFB32H,            /* 32bpp (24bpp padded high) */
         /* ==== modes provided by the X11 driver ==== */
         GR_frameXWIN1,              /* 1bpp B&W */
         GR_frameXWIN4,              /* 4bpp paletted mode */
@@ -184,13 +202,21 @@ typedef enum _GR_frameModes {
         GR_frameRAM24,              /* 16M color */
         GR_frameRAM32L,             /* 16M color padded #1 */
         GR_frameRAM32H,             /* 16M color padded #2 */
+        /* ==== new RAM frame buffer modes ==== */
+        GR_frameNRAM1,              /* 1bpp (to do) */
+        GR_frameNRAM4,              /* 4bpp (to do) */
+        GR_frameNRAM8,              /* 8bpp (to do) */
+        GR_frameNRAM16,             /* 16bpp (to do) */
+        GR_frameNRAM24,             /* 24bpp */
+        GR_frameNRAM32L,            /* 32bpp (24bpp padded low) */
+        GR_frameNRAM32H,            /* 32bpp (24bpp padded high) */
         /* ==== markers for scanning modes ==== */
         GR_firstTextFrameMode     = GR_frameText,
         GR_lastTextFrameMode      = GR_frameText,
-        GR_firstGraphicsFrameMode = GR_frameHERC1,
+        GR_firstGraphicsFrameMode = GR_frameEGAVGA1,
         GR_lastGraphicsFrameMode  = GR_frameLNXFB_32H,
-        GR_firstRAMframeMode      = GR_frameRAM1,
-        GR_lastRAMframeMode       = GR_frameRAM32H
+        GR_firstRAMFrameMode      = GR_frameRAM1,
+        GR_lastRAMFrameMode       = GR_frameNRAM32H
 } GrFrameMode;
 
 /*
@@ -203,7 +229,8 @@ typedef enum _GR_videoAdapters {
         GR_XWIN,                            /* X11 driver */
         GR_WIN32,                           /* WIN32 driver */
         GR_LNXFB,                           /* Linux console driver */
-        GR_MEM                              /* memory only driver */
+        GR_MEM,                             /* memory only driver */
+        GR_WAYLAND                          /* Wayland driver */
 } GrVideoAdapter;
 
 /*
@@ -221,12 +248,18 @@ struct _GR_videoDriver {
         GrVideoMode * (*selectmode)(        /* special mode select routine */
             GrVideoDriver *drv, int w,int h,int bpp, int txt,unsigned int *ep);
         unsigned  drvflags;
+        int   inputdriver;                  /* not used by now */
+        int   (*genexpose)(int);            /* generate GREV_EXPOSE events */
+        int   (*genwmend)(int);             /* generate GREV_WMEND events */
+        int   (*genframe)(int);             /* generate GREV_FRAME events */
 };
 /* bits in the drvflags field: */
 #define GR_DRIVERF_USER_RESOLUTION 1
   /* set if driver supports user setable arbitrary resolution */
 #define GR_DRIVERF_WINDOW_RESIZE 2
   /* set if driver supports user window resize and it is active */
+#define GR_DRIVERF_GEN_GREV_FRAME 4
+  /* set if driver can generate GREV_FRAME events */
 
 
 /*
@@ -251,7 +284,7 @@ struct _GR_videoMode {
 struct _GR_videoModeExt {
         enum   _GR_frameModes   mode;       /* frame driver for this video mode */
         struct _GR_frameDriver *drv;        /* optional frame driver override */
-        char    *frame;                 /* frame buffer address */
+        char    *frame;                     /* frame buffer address */
         char    cprec[3];                   /* color component precisions */
         char    cpos[3];                    /* color component bit positions */
         int     flags;                      /* mode flag bits; see "grdriver.h" */
@@ -287,14 +320,8 @@ struct _GR_frameDriver {
     void     (*bitblt)(GrFrame *dst,int dx,int dy,GrFrame *src,int x,int y,int w,int h,GrColor op);
     void     (*bltv2r)(GrFrame *dst,int dx,int dy,GrFrame *src,int x,int y,int w,int h,GrColor op);
     void     (*bltr2v)(GrFrame *dst,int dx,int dy,GrFrame *src,int x,int y,int w,int h,GrColor op);
-    /* new functions in v2.3 */
-    GrColor *(*getindexedscanline)(GrFrame *c,int x, int y, int w, int *indx);
-      /* will return an array of pixel values pv[] read from frame   */
-      /*    if indx == NULL: pv[i=0..w-1] = readpixel(x+i,y)         */
-      /*    else             pv[i=0..w-1] = readpixel(x+indx[i],y)   */
+    GrColor *(*getscanline)(GrFrame *c,int x, int y, int w);
     void     (*putscanline)(int x, int y, int w,const GrColor *scl, GrColor op);
-      /** will draw scl[i=0..w-1] to frame:                          */
-      /*    if (scl[i] != skipcolor) drawpixel(x+i,y,(scl[i] | op))  */
 };
 
 /*
@@ -423,7 +450,7 @@ long GrContextSize(int w,int h);
 #define  MGRX_GF_MYFRAME    2  // Set if frame memory was created by the lib
 
 struct _GR_frame {
-        char    *gf_baseaddr[4];        /* base address of frame memory */
+        char    *gf_baseaddr[4];            /* base address of frame memory */
         short   gf_selector;                /* frame memory segment selector */
         char    gf_onscreen;                /* is it in video memory ? */
         char    gf_memflags;                /* memory allocation flags */
@@ -1436,10 +1463,12 @@ typedef struct {
 #define GREV_MOUSE   2           /* mouse event, p1=subevent, p2=x, p3=y */
 #define GREV_MMOVE   3           /* mouse move event, p1=buttons status, p2=x, p3=y */
 #define GREV_PREKEY  4           /* key event before be recoded, internal event, users don't see it */
-#define GREV_EXPOSE  5           /* a window area must be redraw (generated only if user requested it) */
-#define GREV_WMEND   6           /* window manager wants ending (generated only if user requested it) */
-#define GREV_WSZCHG  7           /* window size changed (generated only if window resize supported) */
-#define GREV_CBREPLY 8           /* clipboard reply p1=1 if ready to paste, p1=0 no data in clipboard */
+#define GREV_EXPOSE  5           /* a window area must be redraw (gen only if requested, X11) */
+#define GREV_WMEND   6           /* window manager wants ending (gen only if requested, X11, W32, Wyl) */
+#define GREV_WSZCHG  7           /* window size changed (gen only if activated, X11, W32, Wyl) */
+#define GREV_CBREPLY 8           /* clipboard reply, p1=1 if ready to paste, p1=0 no data in clipboard */
+#define GREV_FRAME   9           /* ready for a new frame to be drawn (gen only if requested, Wyl) */
+#define GREV_CLOCK   10          /* clock eventframe to be drawn (gen only if requested) */
 #define GREV_USER    100         /* user event */
 
 #define GRKEY_KEYCODE     100    /* p1 is a special key, not a char */
@@ -1450,10 +1479,18 @@ typedef struct {
 #define GRMOUSE_LB_RELEASED 4    /* Left button released */
 #define GRMOUSE_MB_RELEASED 5    /* Middle button released */
 #define GRMOUSE_RB_RELEASED 6    /* Rigth button released */
-#define GRMOUSE_B4_PRESSED  7    /* Button 4 pressed (scroll wheel) */
-#define GRMOUSE_B4_RELEASED 8    /* Button 4 released (scroll wheel) */
-#define GRMOUSE_B5_PRESSED  9    /* Button 5 pressed (scroll wheel) */
-#define GRMOUSE_B5_RELEASED 10   /* Button 5 released (scroll wheel) */
+#define GRMOUSE_B4_PRESSED  7    /* Button 4 pressed (scroll wheel up) */
+#define GRMOUSE_B4_RELEASED 8    /* Button 4 released (scroll wheel up) */
+#define GRMOUSE_B5_PRESSED  9    /* Button 5 pressed (scroll wheel down) */
+#define GRMOUSE_B5_RELEASED 10   /* Button 5 released (scroll wheel down) */
+#define GRMOUSE_B6_PRESSED  11   /* Button 6 pressed (scroll wheel left) */
+#define GRMOUSE_B6_RELEASED 12   /* Button 6 released (scroll wheel left) */
+#define GRMOUSE_B7_PRESSED  13   /* Button 7 pressed (scroll wheel right) */
+#define GRMOUSE_B7_RELEASED 14   /* Button 7 released (scroll wheel right) */
+#define GRMOUSE_B8_PRESSED  15   /* Button 8 pressed (aka backward button) */
+#define GRMOUSE_B8_RELEASED 16   /* Button 8 released (aka backward button) */
+#define GRMOUSE_B9_PRESSED  17   /* Button 9 pressed (aka forward button) */
+#define GRMOUSE_B9_RELEASED 18   /* Button 9 released (aka forward button) */
 
 #define GRMOUSE_LB_STATUS   1    /* Status bit for left button */
 #define GRMOUSE_MB_STATUS   4    /* Status bit for middle button */
@@ -1463,11 +1500,14 @@ typedef struct {
 #define GR_GEN_MMOVE_IFBUT  1    /* Gen GREV_MMOVE if a button is pressed */
 #define GR_GEN_MMOVE_ALWAYS 2    /* Gen GREV_MMOVE always */
 
-#define GR_GEN_EXPOSE_NO    0    /* Doesn't gen GREV_EXPOSE (default) */
-#define GR_GEN_EXPOSE_YES   1    /* Gen GREV_EXPOSE */
+#define GR_GEN_NO           0    /* Doesn't generate the event */
+#define GR_GEN_YES          1    /* Gennerates the event */
 
-#define GR_GEN_WMEND_NO     0    /* Doesn't gen GREV_WNEND (default) */
-#define GR_GEN_WMEND_YES    1    /* Gen GREV_WNEND */
+/* Deprecated defines */
+#define GR_GEN_EXPOSE_NO    GR_GEN_NO   /* Doesn't gen GREV_EXPOSE (default) */
+#define GR_GEN_EXPOSE_YES   GR_GEN_YES  /* Gen GREV_EXPOSE */
+#define GR_GEN_WMEND_NO     GR_GEN_NO   /* Doesn't gen GREV_WNEND (default) */
+#define GR_GEN_WMEND_YES    GR_GEN_YES  /* Gen GREV_WNEND */
 
 #define GRKBS_RIGHTSHIFT    0x01   /* Keybd states: right shift key pressed */
 #define GRKBS_LEFTSHIFT     0x02   /* left shift key pressed */
@@ -1491,8 +1531,10 @@ int GrEventParEnqueue(int type, long p1, long p2, long p3, long p4);
 int GrEventEnqueueFirst(GrEvent * ev);
 int GrEventParEnqueueFirst(int type, long p1, long p2, long p3, long p4);
 void GrEventGenMmove(int when);
-void GrEventGenExpose(int when);
-void GrEventGenWMEnd(int when);
+int GrEventGenExpose(int gen);
+int GrEventGenWMEnd(int gen);
+int GrEventGenFrame(int gen);
+int GrEventGenClock(int gen, int msec);
 int GrEventAddHook(int (*fn) (GrEvent *));
 int GrEventDeleteHook(int (*fn) (GrEvent *));
 

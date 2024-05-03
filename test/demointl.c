@@ -34,7 +34,7 @@ static int gbpp = 16;
 #define XGUI 800
 #define YGUI 600
 
-char *wintitle = "MGRX 1.4.3, the graphics library";
+char *wintitle = "MGRX 1.5.0, the graphics library";
 
 #define ID_FCP437      1
 #define ID_FCP850      2
@@ -386,19 +386,25 @@ static void the_info(int x, int y)
     if (nsys == MGRX_VERSION_GCC_386_DJGPP)
         strcpy(sys, "DJ2");
     else if (nsys == MGRX_VERSION_GCC_386_LINUX)
-        strcpy(sys, "LNX");
+        strcpy(sys, "L32");
     else if (nsys == MGRX_VERSION_GCC_386_X11)
-        strcpy(sys, "X11");
+        strcpy(sys, "X32");
+    else if (nsys == MGRX_VERSION_GCC_386_WYL)
+        strcpy(sys, "Y32");
     else if (nsys == MGRX_VERSION_GCC_X86_64_LINUX)
         strcpy(sys, "L64");
     else if (nsys == MGRX_VERSION_GCC_X86_64_X11)
         strcpy(sys, "X64");
+    else if (nsys == MGRX_VERSION_GCC_X86_64_WYL)
+        strcpy(sys, "Y64");
     else if (nsys == MGRX_VERSION_GCC_386_WIN32)
         strcpy(sys, "W32");
     else if (nsys == MGRX_VERSION_GCC_ARM_LINUX)
         strcpy(sys, "LAR");
     else if (nsys == MGRX_VERSION_GCC_ARM_X11)
         strcpy(sys, "XAR");
+    else if (nsys == MGRX_VERSION_GCC_ARM_WYL)
+        strcpy(sys, "YAR");
 
     nsysenc = GrGetKbSysEncoding();
     nusrenc = GrGetUserEncoding();

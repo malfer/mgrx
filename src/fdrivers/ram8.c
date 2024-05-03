@@ -45,7 +45,7 @@ GrFrameDriver _GrFrameDriverRAM8 = {
     bitblit,
     NULL,
     NULL,
-    getindexedscanline,
+    getscanline,
     putscanline
 };
 
@@ -78,7 +78,7 @@ GrFrameDriver _GrFrameDriverSVGA8_LFB = {
     bitblit,
     bitblit,
     bitblit,
-    getindexedscanline,
+    getscanline,
     putscanline
 };
 

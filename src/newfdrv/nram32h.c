@@ -1,5 +1,5 @@
 /**
- ** nram32l.c ---- tthe new 32bpp (24bpp padded high) linear
+ ** nram32l.c ---- the new 32bpp (24bpp padded high) linear
  **                in-memory and video frame buffer drivers
  **
  ** Copyright (c) 2019 Mariano Alvarez Fernandez
@@ -52,7 +52,7 @@ GrFrameDriver _GrFrameDriverNRAM32H = {
     bitbltovl,
     NULL,
     NULL,
-    getindexedscanline,
+    getscanline,
     putscanline
 };
 
@@ -78,6 +78,6 @@ GrFrameDriver _GrFrameDriverNLFB32H = {
     bitbltovl,
     bitbltnoo,
     bitbltnoo,
-    getindexedscanline,
+    getscanline,
     putscanline
 };

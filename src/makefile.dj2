@@ -64,9 +64,6 @@ DJ_O=   $(ADDON_O)              \
 	fdrivers/lfbbltrv.o     \
 	fdrivers/lfbbltvr.o     \
 	fdrivers/lfbbltvv.o     \
-	fdrivers/ram24.o        \
-	fdrivers/ram32l.o       \
-	fdrivers/ram32h.o       \
 	fdrivers/svga16.o       \
 	fdrivers/svga24.o       \
 	fdrivers/svga32h.o      \

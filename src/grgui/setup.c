@@ -136,10 +136,10 @@ void GUIDBManageExposeEvents(int manage)
 {
     if (manage && _GUIUseDB && !manageexposeevents) {
         manageexposeevents = 1;
-        GrEventGenExpose(GR_GEN_EXPOSE_YES);
+        GrEventGenExpose(GR_GEN_YES);
     } else if (manageexposeevents) {
         manageexposeevents = 0;
-        GrEventGenExpose(GR_GEN_EXPOSE_NO);
+        GrEventGenExpose(GR_GEN_NO);
     }
 }
 

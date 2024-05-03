@@ -19,6 +19,11 @@
  **
  **/
 
+// This define is necesary for mmap to work in 32bit compilations
+// with 64 bit offsets like the ones returned sometimes by
+// DRM_IOCTL_MODE_MAP_DUMB
+#define _FILE_OFFSET_BITS 64
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -171,9 +176,11 @@ static int modeset_create_fb(int fd, struct modeset_dev *dev)
     }
 
     /* perform actual memory mapping */
-    dev->map = mmap(0, dev->size, PROT_READ | PROT_WRITE, MAP_SHARED,
+    dev->map = mmap(NULL, dev->size, PROT_READ | PROT_WRITE, MAP_SHARED,
                     fd, mreq.offset);
     if (dev->map == MAP_FAILED) {
+        //perror("drm");
+        //fprintf(stderr, "size %u  offset %llu\n", dev->size, mreq.offset);
         ret = -1;
         goto err_fb;
     }
@@ -213,10 +220,12 @@ static int modeset_setup_dev(int fd, drmModeRes *res, drmModeConnector *conn,
     /* find a crtc for this connector */
     ret = modeset_find_crtc(fd, res, conn, dev);
     if (ret) return -1;
+    //fprintf(stderr, "find crtc ok\n");
 
     /* create a framebuffer for this CRTC */
     ret = modeset_create_fb(fd, dev);
     if (ret) return -1;
+    //fprintf(stderr, "create fb ok\n");
 
     return 0;
 }
@@ -242,6 +251,7 @@ static int modeset_prepare(int fd)
         dev = malloc(sizeof(*dev));
         memset(dev, 0, sizeof(*dev));
         dev->conn = conn->connector_id;
+        dev->saved_crtc = NULL;
         /* call helper function to prepare this connector */
         ret = modeset_setup_dev(fd, res, conn, dev);
         if (ret) {
@@ -250,7 +260,7 @@ static int modeset_prepare(int fd)
             continue;
         }
         /* free connector data and link device into global list */
-        /* and exit, by now we use only the first one */
+        /* by now we will use only the first one */
         drmModeFreeConnector(conn);
         auxdev = &modeset_list;
         while (*auxdev) auxdev = &((*auxdev)->next);
@@ -268,6 +278,8 @@ static int modeset_prepare(int fd)
 
 static void modeset_restore_crtc_conf(int fd)
 {
+    if (modeset_list->saved_crtc == NULL) return;
+
     drmModeSetCrtc(fd,
                     modeset_list->saved_crtc->crtc_id,
                     modeset_list->saved_crtc->buffer_id,
@@ -289,17 +301,9 @@ static void modeset_cleanup(int fd)
         iter = modeset_list;
         modeset_list = iter->next;
 
-        /* restore saved CRTC configuration */
-        /* moved to modeset_restore_crtc_conf
-        drmModeSetCrtc(fd,
-                       iter->saved_crtc->crtc_id,
-                       iter->saved_crtc->buffer_id,
-                       iter->saved_crtc->x,
-                       iter->saved_crtc->y,
-                       &iter->conn,
-                       1,
-                       &iter->saved_crtc->mode);
-        drmModeFreeCrtc(iter->saved_crtc);*/
+        /* restore saved CRTC configuration moved to modeset_restore_crtc_conf
+         * because it can be called in other situations too, so remember call it
+         * before calling cleanup */
 
         /* unmap buffer */
         munmap(iter->map, iter->size);
@@ -317,14 +321,13 @@ static void modeset_cleanup(int fd)
     }
 }
 
-/*
 void _LnxdrmSwitchConsoleAndWait(void)
 {
     struct vt_stat vtst;
     unsigned short myvt;
     GrContext *grc;
 
-    _lnxfb_waiting_to_switch_console = 0;
+    _lnx_waiting_to_switch_console = 0;
     if (!ingraphicsmode) return;
     if (ttyfd < 0) return;
     if (ioctl(ttyfd, VT_GETSTATE, &vtst) < 0) return;
@@ -337,11 +340,17 @@ void _LnxdrmSwitchConsoleAndWait(void)
     }
 
     ioctl(ttyfd, KDSETMODE, KD_TEXT);
+    //Stop being the "master" of the DRM device
+    ioctl(drmfd, DRM_IOCTL_DROP_MASTER, 0);
 
     ioctl(ttyfd, VT_RELDISP, 1);
     ioctl(ttyfd, VT_WAITACTIVE, myvt);
 
+    //Restart being the "master" of the DRM device
+    ioctl(drmfd, DRM_IOCTL_SET_MASTER, 0);
     ioctl(ttyfd, KDSETMODE, KD_GRAPHICS);
+    drmModeSetCrtc(drmfd, modeset_list->crtc, modeset_list->fb, 0, 0,
+                   &modeset_list->conn, 1, &modeset_list->mode);
 
     if (grc != NULL) {
         GrBitBlt(GrScreenContext(), 0, 0, grc, 0, 0,
@@ -352,10 +361,10 @@ void _LnxdrmSwitchConsoleAndWait(void)
 
 void _LnxdrmRelsigHandle(int sig)
 {
-    _lnxfb_waiting_to_switch_console = 1;
-    signal(SIGUSR1, _LnxfbRelsigHandle);
+    _lnx_waiting_to_switch_console = 1;
+    signal(SIGUSR1, _LnxdrmRelsigHandle);
 }
-*/
+
 
 static int setmode(GrVideoMode * mp, int noclear);
 static int settext(GrVideoMode * mp, int noclear);
@@ -490,7 +499,8 @@ static int init(char *options)
             add_video_mode(&mode, &ext, &modep, &extp);
         }
         ttyfd = open("/dev/tty", O_RDONLY);
-        initted = 1;
+        _LnxSwitchConsoleAndWait = &_LnxdrmSwitchConsoleAndWait;
+       initted = 1;
     }
     return ((initted > 0) ? TRUE : FALSE);
 }
@@ -526,6 +536,7 @@ static void reset(void)
         ttyfd = -1;
         ingraphicsmode = 0;
     }
+    _LnxSwitchConsoleAndWait = NULL;
     initted = -1;
 }
 
@@ -536,7 +547,9 @@ static int setmode(GrVideoMode * mp, int noclear)
 
     if (modeset_list == NULL) return FALSE;
 
-    modeset_list->saved_crtc = drmModeGetCrtc(drmfd, modeset_list->crtc);
+    if (modeset_list->saved_crtc == NULL)
+        modeset_list->saved_crtc = drmModeGetCrtc(drmfd, modeset_list->crtc);
+
     ret = drmModeSetCrtc(drmfd, modeset_list->crtc, modeset_list->fb, 0, 0,
                          &modeset_list->conn, 1, &modeset_list->mode);
     if (ret) return FALSE;
@@ -549,8 +562,7 @@ static int setmode(GrVideoMode * mp, int noclear)
         vtm.relsig = SIGUSR1;
         vtm.acqsig = 0;
         ioctl(ttyfd, VT_SETMODE, &vtm);
-        signal(SIGUSR1, SIG_IGN);
-        //signal(SIGUSR1, _LnxfbRelsigHandle);
+        signal(SIGUSR1, _LnxdrmRelsigHandle);
         ingraphicsmode = 1;
     }
     if (mp->extinfo->frame && !noclear)
@@ -565,6 +577,7 @@ static int settext(GrVideoMode * mp, int noclear)
 
     if (fbuffer) {
         modeset_restore_crtc_conf(drmfd);
+        modeset_list->saved_crtc = NULL;
         fbuffer = NULL;
     }
     if (ttyfd > -1) {
@@ -580,14 +593,18 @@ static int settext(GrVideoMode * mp, int noclear)
 }
 
 GrVideoDriver _GrVideoDriverLINUXDRM = {
-    "linuxdrm",             /* name */
-    GR_LNXFB,               /* adapter type */
-    NULL,                   /* inherit modes from this driver */
-    modes,                  /* mode table */
-    itemsof(modes),         /* # of modes */
-    detect,                 /* detection routine */
-    init,                   /* initialization routine */
-    reset,                  /* reset routine */
-    _gr_selectmode,         /* standard mode select routine */
-    0                       /* no additional capabilities */
+    "linuxdrm",                         /* name */
+    GR_LNXFB,                           /* adapter type */
+    NULL,                               /* inherit modes from this driver */
+    modes,                              /* mode table */
+    itemsof(modes),                     /* # of modes */
+    detect,                             /* detection routine */
+    init,                               /* initialization routine */
+    reset,                              /* reset routine */
+    _gr_selectmode,                     /* standard mode select routine */
+    0,                                  /* no additional capabilities */
+    0,                                  /* inputdriver, not used by now */
+    NULL,                               /* generate GREV_EXPOSE events */
+    NULL,                               /* generate GREV_WMEND events */
+    NULL                                /* generate GREV_FRAME events */
 };

@@ -80,9 +80,9 @@ int main(int argc,char **argv)
 
     if(strlen(exit_message) > 0) {
         puts(exit_message);
-#ifdef  __DJGPP__
+#if defined(__MSDOS__)
         //vga & vesa drivers clear the screen at exist,
-        //wait 3 seconds sor user can read the message
+        //wait 3 seconds so the user can read the message
         GrSleep(3000);
 #endif
     }

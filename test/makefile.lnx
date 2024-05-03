@@ -76,6 +76,7 @@ PROGS=	arctest     \
 	sbctest     \
 	scroltst    \
 	speedtst    \
+	speedts2    \
 	textpatt    \
 	winclip     \
 	wintest     \
@@ -84,7 +85,8 @@ PROGS=	arctest     \
 	clrtable    \
 	i18ntest    \
 	wrsztest    \
-	mpoltest
+	mpoltest    \
+	scltest
 
 all:    $(PROGS) demomgrx demointl
 

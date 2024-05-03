@@ -58,12 +58,14 @@ PROGS=  arctest.exe     \
 	cusptest.exe    \
 	clrtable.exe    \
 	wrsztest.exe    \
-	mpoltest.exe
+	mpoltest.exe    \
+	scltest.exe
 
 all: 	$(PROGS) \
 	demomgrx.exe \
 	demointl.exe \
 	speedtst.exe \
+	speedts2.exe \
 	memtest.exe  \
 	i18ntest.exe
 
@@ -75,6 +77,9 @@ demointl.exe: demointl.o gfaz.o $(MGRX)
 
 speedtst.exe: speedtst.o $(MGRX)
 	$(CC) $(LDOPT) -o speedtst.exe speedtst.o $(LIBS) -lm -mwindows -mconsole
+
+speedts2.exe: speedts2.o $(MGRX)
+	$(CC) $(LDOPT) -o speedts2.exe speedts2.o $(LIBS) -lm -mwindows -mconsole
 
 memtest.exe: memtest.o $(MGRX)
 	$(CC) $(LDOPT) -o memtest.exe memtest.o $(LIBS) -lm -mwindows -mconsole

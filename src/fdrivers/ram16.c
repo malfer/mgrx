@@ -41,7 +41,7 @@ GrFrameDriver _GrFrameDriverRAM16 = {
     bitblt,
     NULL,
     NULL,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };
 
@@ -72,7 +72,7 @@ GrFrameDriver _GrFrameDriverSVGA16_LFB = {
     bitblt,
     bitblt,
     bitblt,
-    _GrFrDrvGenericGetIndexedScanline,
+    _GrFrDrvGenericGetScanline,
     _GrFrDrvGenericPutScanline
 };
 

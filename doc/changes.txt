@@ -1,3 +1,90 @@
+2024-05-03 ----------- MGRX 1.5.0 released
+2024-04-27 Added new members to the _GR_videoDriver:
+             int inputdriver;        /* not used by now */
+             int (*genexpose)(int);  /* generate GREV_EXPOSE events */
+             int (*genwmend)(int);   /* generate GREV_WMEND events */
+             int (*genframe)(int);   /* generate GREV_FRAME events */
+           obviously they can be NULL, removed the old code based on ifdefs to
+           generate these events. Modified all videodrivers.
+           New GREV_FRAME event, generates only by the Wayland videodriver, when
+           requested and a new frame can be drawn.
+           New function:
+             int GrEventGenFrame(int gen);
+           to request de videodriver to generate GREV_FRAME, it returns 1 only if
+           the request is GR_GEN_YES and the videodriver can generate them.
+           Modified functions:
+             int GrEventGenExpose(int gen);
+             int GrEventGenWMEnd(int gen);
+           now return 1 only if the request is GR_GEN_YES and the videodriver can
+           generate the events.
+           Deprecated defines GR_GEN_EXPOSE_NO, GR_GEN_EXPOSE_YES,
+           GR_GEN_WMEND_NO and GR_GEN_WMEND_YES. Use GR_GEN_NO and GR_GEN_YES for
+           the all the GrEventGen... functions.
+           New GREV_CLOCK event, generates only when requested.
+           New function:
+             int GrEventGenClock(int gen, int msec);
+           to request generation of GREV_CLOCK events every "msec" miliseconds,
+           mot implemented yet.
+2024-04-24 Ready to release the new Wayland videodriver, it must be considered
+           in alpha stage. Only the x86_64 platform is tested.
+           It runs nicely most of the time, but have some caveats to be fixed in
+           future releases:
+             - There are no window decoration, Wayland expect the client to do it,
+             so if you want to move, resize or close the window you have to use the
+             menu in the task bar (at least in KDE).
+             - There are no autorepeat keys, again Wayland expect the client to do it.
+             - The compose keys don't work.
+             - No interaction with the Wayland clipboard.
+             - Because, by now, graphic commits only happen when reading events, non
+             interactive programs don't work as expected.
+2024-04-16 Completed first version of the Wayland videodriver and input driver
+2024-03-24 Added infrestructure for the new Wayland version of MGRX
+2023-07-30 The linux console KMS/DRM driver is compiled by default, but note that
+           the framedriver console driver take precedence, so set MGRXDRV to
+           "linuxdrm" if you want to test it.
+2023-07-29 New mouse events for the scroll whell left and right and the backward
+           and forward buttons. Make it works int the x11 input driver.
+2023-07-28 New 16bpp memory framedrivers in src/newfdrv that uses only C
+           standard bit operations and C standard functions. Not used by now.
+2023-07-17 Expose the cut/copy/paste interface of GUIRawTEdit and GUITextPanel so
+           that an user program can manage it. Modify testgui/demintl2.c to make
+           use of it.
+2023-07-11 Use the new GR_frameNRAM24 framedriver as the 24bpp framedriver in the
+           memory driver.
+           New version of the GR_frameWIN32_24 framedriver on top of the new 24bpp
+           framedriver, and use the GR_frameNRAM24 framedriver as compatible RAM
+           framedriver.
+2023-07-06 New 24bpp memory framedrivers in src/newfdrv that uses only C
+           standard bit operations and C standard functions. Not used by now.
+2023-06-24 New test/speedts2.c test program. This version of sppedtest run each test
+           for at least 10 sec instead of a fixed number of loops. It can test the
+           memory driver too. It gets input between tests to flush buffers on X11. It
+           makes two rounds of tests, one like the old program and another using only
+           GrWRITE operations.
+2023-06-23 Small change in the drawpixel functions of w32 framedrivers to speed
+           them a bit.
+2023-06-13 Workaround for an old bug in ram4 framedriver running in 64bit mode,
+           because repfill doesn't work properly in that case.
+           Use the GR_frameNRAM32L as compatible RAM frame mode for the
+           GR_frameLNXFB_32L framedriver.
+           Use the GR_frameNRAM32H as compatible RAM frame mode for GR_frameLNXFB_32H
+           and GR_frameXWIN32H framedrivers (but not use case at this time).
+2023-06-05 Make the linux drm driver work in 32 bit compilations using
+           #define _FILE_OFFSET_BITS 64
+           The linux drm driver can now switch to other virtual consoles (as the
+           linux fb one).
+2023-06-05 Substituted getindexedscanline for getscanline in all framedrivers, because
+           the former have been used only in the strech function.
+2023-06-03 Added 32bpp mode to the memory videodriver using the new GR_frameNRAM32L
+           framedriver. Modified test/memtest.c to be able to exercise it.
+2023-05-17 Compile by default the new 32bpp linear and memory framebuffers, use the
+           GR_frameNRAM32L as compatible RAM frame mode for the GR_frameXWIN32L
+           framedriver.
+           Use specific 64 bit drawhline and drawblock funtions in the new frame
+           drivers.
+2023-05-14 New specific getscanline function for the X11 framedrivers
+           Added test/scltest.c demo to exercise getscl and putscl functions.
+2023-04-28 ----------- MGRX 1.4.3 released
 2023-04-13 Removed the GrImage functions that were deprecated in 1.3.4
 2023-04-09 New GrMultiPointArray and multipolygon functions. They let fill and
            draw multipolygons as once, so figures with holes can be drawn and filled.

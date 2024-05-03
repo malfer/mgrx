@@ -73,9 +73,6 @@ endif
 
 O=      $(STD_O)                \
 	$(ADDON_O)              \
-	fdrivers/ram24.o        \
-	fdrivers/ram32l.o       \
-	fdrivers/ram32h.o       \
 	fdrivers/lnxfb16.o      \
 	fdrivers/lnxfb32l.o     \
 	fdrivers/lnxfb32h.o     \

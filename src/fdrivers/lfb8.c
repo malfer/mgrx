@@ -48,7 +48,7 @@ GrFrameDriver _GrFrameDriverSVGA8_LFB = {
     bitblit,
     bltv2r,
     bltr2v,
-    getindexedscanline,
+    getscanline,
     putscanline
 };
 

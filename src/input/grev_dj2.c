@@ -63,8 +63,8 @@ static void _ReadMouseData(int *mb, int *mx, int *my);
 /**
  ** _GrEventInit - Initializes inputs
  **
- ** Returns  0 on success
- **         -1 on error
+ ** Returns 1 on success
+ **         0 on error
  **
  ** For internal use only
  **/

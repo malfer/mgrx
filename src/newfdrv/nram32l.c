@@ -52,7 +52,7 @@ GrFrameDriver _GrFrameDriverNRAM32L = {
     bitbltovl,
     NULL,
     NULL,
-    getindexedscanline,
+    getscanline,
     putscanline
 };
 
@@ -78,6 +78,6 @@ GrFrameDriver _GrFrameDriverNLFB32L = {
     bitbltovl,
     bitbltnoo,
     bitbltnoo,
-    getindexedscanline,
+    getscanline,
     putscanline
 };

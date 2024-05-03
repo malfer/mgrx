@@ -1,0 +1,78 @@
+#
+# MGRX test programs makefile for LINUX/WAYLAND. Uses GNU make.
+#
+.PHONY : clean
+
+GRXVWAYLAND=y
+
+include ../makedefs.grx
+
+INCDIR=  -I../include
+
+# Enable this two lines for static linked test progs (default)
+MGRXW = ../lib/$(GRX_LIB_SUBDIR)/libmgrxW.a
+DMGRXW = $(MGRXW)
+# or these if you've already installed the shared libs
+#MGRXW = -lmgrxW
+#DMGRXW =
+
+EXECBITS = 0755
+
+ADDON_LIBS = -lrt
+
+ifeq ($(HAVE_LIBJPEG),y)
+  ADDON_LIBS += -ljpeg
+endif
+
+ifeq ($(HAVE_LIBPNG),y)
+  ADDON_LIBS += -lpng
+endif
+
+ifeq ($(NEED_ZLIB),y)
+  ADDON_LIBS += -lz
+endif
+
+LIBS= $(MGRXW) $(ADDON_LIBS) $(WYLLIBS) -lm
+
+ifndef   DEBUG
+LDOPT += -s
+endif
+
+PROGS=  wgrgui01    \
+	wgrgui02    \
+	wgrgui03    \
+	wgrgui04    \
+	wgrgui05    \
+	wgrgui06    \
+	wgrgui07    \
+	wgrgui08    \
+	wgrgui09    \
+	wgrgui10    \
+	wgrgui11    \
+	wgrgui12    \
+	wshowfnt2   \
+	wdemmgrx2   \
+	wdemintl2
+
+all: $(PROGS)
+
+$(PROGS): w%: %.o $(DMGRXW)
+	$(CC) $(LDOPT) -o $@ $*.o $(LIBS)
+	chmod $(EXECBITS) $@
+
+$(PROGS:w%=%.o): %.o : %.c
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c -o $*.o
+
+.c.o:
+	$(CC) -c $(CCOPT) -D__WAYLAND__ $(INCDIR) $*.c
+
+.c.s:
+	$(CC) -S $(CCOPT) $(INCDIR) $*.c
+
+clean:
+	rm -f *.o $(PROGS)
+
+depend.new:
+	$(CC) -MM $(CCOPT) $(INCDIR) $(PROGS:x%=%.c) > depend.new
+
+include depend.gnu

@@ -35,6 +35,8 @@ pnmtest.o: pnmtest.c ../include/mgrx.h ../include/mgrxkeys.h
 pngtest.o: pngtest.c ../include/mgrx.h ../include/mgrxkeys.h
 polytest.o: polytest.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
  drawing.h rand.h
+polytedb.o: polytedb.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
+ drawing.h rand.h
 rgbtest.o: rgbtest.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
  drawing.h rand.h
 sbctest.o: sbctest.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
@@ -42,6 +44,7 @@ sbctest.o: sbctest.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
 scroltst.o: scroltst.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
  drawing.h rand.h
 speedtst.o: speedtst.c rand.h ../include/mgrx.h
+speedts2.o: speedts2.c rand.h ../include/mgrx.h
 textpatt.o: textpatt.c ../include/mgrx.h ../include/mgrxkeys.h
 winclip.o: winclip.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
  drawing.h rand.h
@@ -55,3 +58,6 @@ clrtable.o: clrtable.c ../include/mgrx.h ../include/mgrxkeys.h \
 i18ntest.o: i18ntest.c ../include/mgrx.h
 wrsztest.o: wrsztest.c ../include/mgrx.h ../include/mgrxkeys.h drawing.h \
  rand.h
+mpoltest.o: mpoltest.c ../include/mgrx.h ../include/mgrxkeys.h
+scltest.o: scltest.c test.h ../include/mgrx.h ../include/mgrxkeys.h \
+ drawing.h rand.h
