@@ -5,7 +5,7 @@
 
 # Specify version of MGRX
 # Currently only used to generate name of shared libraries for linux
-MGRX_VERSION=1.5.0
+MGRX_VERSION=1.5.1
 
 # Specify if you want to include GrGUI in the MGRX lib
 INCLUDE_GRGUI=y
@@ -92,7 +92,7 @@ GRX_LIB_SUBDIR=unix
 INSTALLDIR=/usr/local
 
 # Set the default GRX font path
-#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
 
 # Set to 'n'
 SET_SUIDROOT=n
@@ -125,7 +125,7 @@ GRX_LIB_SUBDIR=unix
 INSTALLDIR=/usr/local
 
 # Set the default GRX font path
-#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
 
 # Set X11 includes and libs
 X11INCS = $(shell $(PKG_CONFIG) x11 --cflags)
@@ -170,7 +170,7 @@ GRX_LIB_SUBDIR=unix
 INSTALLDIR=/usr/local
 
 # Set the default GRX font path
-#MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
+MGRX_DEFAULT_FONT_PATH=/usr/local/lib/fonts/grx
 
 # Set Wayland includes and libs
 WYLINCS = $(shell $(PKG_CONFIG) wayland-client --cflags)
@@ -182,6 +182,7 @@ WAYLAND_SCANNER = $(shell $(PKG_CONFIG) wayland-scanner --variable=wayland_scann
 
 WAYLAND_PROTOCOLS_DIR = $(shell $(PKG_CONFIG) wayland-protocols --variable=pkgdatadir)
 XDG_SHELL_PROTOCOL = $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml
+XDG_DECORATION_PROTOCOL = $(WAYLAND_PROTOCOLS_DIR)/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml
 
 endif
 

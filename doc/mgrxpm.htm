@@ -8,12 +8,12 @@
 
 <center>
 <h1><font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
-<small>1.5.0</small></h1>
+<small>1.5.1</small></h1>
 <h1>a C graphics library for DOS, Linux console, X11, Wayland and Win32</h1>
 <h2>Programmer's Manual</h2>
 <p>Based on the original GRX manual written by: Csaba Biegl on August 10, 1992
 <p>Adapted for MGRX by: Mariano Alvarez Fern&aacute;ndez on August 1, 2005
-<p>Last update: April 24, 2024
+<p>Last update: June 2, 2024
 </center>
 
 <!--- ===================================================================== --->
@@ -3101,9 +3101,9 @@ is not related with a window resize.
 <h2><a name="clipb">Clibpoard</a></h2>
 <p>&nbsp;&nbsp;Starting wiht the 1.3.6 version <b>MGRX</b> provides a clipboard
 to copy and paste text. The clipboard is internal to the program for the DOS and 
-linux console versions, but the X11 and Win32 drivers interact with the system clipboard.
-Because the X11 clipboard is asynchronous a special procedure is nedeed, but you
-can use it with any platform.
+linux console versions, but the X11, Wayland and Win32 drivers interact with the
+system clipboard. Because the X11 clipboard is asynchronous a special procedure is
+nedeed, but you can use it with any platform.
 
 <p>&nbsp;&nbsp;<b>MGRX</b> maintains a copy of the last copied text, by default
 with a maximum of 32000 characters, but you can change this with:
@@ -3130,10 +3130,11 @@ int GrIsClipBoardReadyToGet(void);
 </pre>
 
 <p>it returns 1 if the text is ready to get, 0 if the clipboard is empty or -1
-if a request to the system clipboard is issued. DOS, linux console and Win32
+if a request to the system clipboard is issued. DOS, linux console, Wayland and Win32
 platforms will never return -1. Anyway if -1 is returned you need to wait after
-a GREV_CBREPLY event with p1=1 is read. If 1 is returned or after the event is
-received you can call:
+a GREV_CBREPLY event is read and check the p1 event parameter, again if it is 1
+the text is ready to get, otherwise the clipboard is empty. So after confirmation
+that the text is ready you can call:
 
 <pre>
 int GrGetClipBoardLen(int *partloaded);
@@ -3157,8 +3158,8 @@ with:
 void GrClearClipBoard(void);
 </pre>
 
-<p>but note that in the X11 platform this prevent other clients to get the copied
-text from your program.
+<p>but note that in the Wayland and X11 platform this prevent other clients to get
+the copied text from your program.
 
 <!--- ===================================================================== --->
 <hr>

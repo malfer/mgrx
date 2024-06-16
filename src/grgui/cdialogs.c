@@ -1,7 +1,7 @@
 /**
  ** cdialogs.c ---- Mini GUI for MGRX, common dialogs
  **
- ** Copyright (C) 2019 Mariano Alvarez Fernandez
+ ** Copyright (C) 2019,2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer at telefonica dot net]
  **
  ** This file is part of the GRX graphics library.
@@ -29,8 +29,10 @@ int _dlgfontloaded = 0;
 
 GrColor _cdlgbtbgcolor;
 GrColor _cdlgbtfgcolor;
-
-static GrTextOption grtopt;
+GrColor _cdlgobjbgcolor;
+GrColor _cdlgobjfgcolor;
+GrColor _cdlgobjbggraycolor;
+GrColor _cdlglabelfgcolor;
 
 #define MINWIDTH 100
 #define BTWIDTH 80
@@ -58,16 +60,12 @@ void _GUICDialogInit(void)
     _cdlgfont = GrGetDefaultFont();
     _cdlgbtbgcolor = GrWhite();
     _cdlgbtfgcolor = GrBlack();
+    _cdlgobjbgcolor = GrWhite();
+    _cdlgobjfgcolor = GrBlack();
+    _cdlgobjbggraycolor = GrWhite();
+    _cdlglabelfgcolor = GrWhite();
 
     _cdlgchrtype = GrGetChrtypeForUserEncoding();
-    
-    grtopt.txo_font = _cdlgfont;
-    grtopt.txo_fgcolor = _dlgfgcolor;
-    grtopt.txo_bgcolor = GrNOCOLOR;
-    grtopt.txo_chrtype = _cdlgchrtype;
-    grtopt.txo_direct = GR_TEXT_RIGHT;
-    grtopt.txo_xalign = GR_ALIGN_CENTER;
-    grtopt.txo_yalign = GR_ALIGN_TOP;
 }
 
 void _GUICDialogEnd(void)
@@ -79,7 +77,6 @@ void _GUICDialogEnd(void)
 void GUICDialogsSetChrType(int chrtype)
 {
     _cdlgchrtype = chrtype;
-    grtopt.txo_chrtype = _cdlgchrtype;
 }
 
 void GUICDialogsSetFont(GrFont *fnt)
@@ -89,7 +86,6 @@ void GUICDialogsSetFont(GrFont *fnt)
         _dlgfontloaded = 0;
     }
     _cdlgfont = fnt;
-    grtopt.txo_font = _cdlgfont;
 }
 
 void GUICDialogsSetFontByName(char *fntname)
@@ -103,14 +99,20 @@ void GUICDialogsSetFontByName(char *fntname)
         _cdlgfont = &GrFont_PC8x16;
     else
         _dlgfontloaded = 1; 
-    grtopt.txo_font = _cdlgfont;
 }
 
 void GUICDialogsSetColors(GrColor btbg, GrColor btfg)
 {
     _cdlgbtbgcolor = btbg;
     _cdlgbtfgcolor = btfg;
-    grtopt.txo_fgcolor = _dlgfgcolor;
+}
+
+void GUICDialogsSetObjColors(GrColor objbg, GrColor objfg, GrColor objbggray, GrColor labelfg)
+{
+    _cdlgobjbgcolor = objbg;
+    _cdlgobjfgcolor = objfg;
+    _cdlgobjbggraycolor = objbggray;
+    _cdlglabelfgcolor = labelfg;
 }
 
 int GUICDialogInfo(void *title, void **text, int nlin, void *ok)

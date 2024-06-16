@@ -87,42 +87,6 @@ static KeyEntry _KTAlt[] = { // state == Alt
   { GrKey_Alt_PageUp           , KEY_PAGEUP },
   { GrKey_Alt_Right            , KEY_RIGHT },
   { GrKey_Alt_Up               , KEY_UP },
-/*
-  { GrKey_Alt_At               , XK_at },
-  { GrKey_Alt_Center           , XK_KP_Begin },
-  { GrKey_Alt_Delete           , XK_KP_Delete },
-  { GrKey_Alt_Home             , XK_KP_Home },
-  { GrKey_Alt_Insert           , XK_KP_Insert },
-  { GrKey_Alt_KPMinus          , XK_KP_Subtract },
-  { GrKey_Alt_KPPlus           , XK_KP_Add },
-  { GrKey_Alt_KPSlash          , XK_KP_Divide },
-  { GrKey_Alt_KPStar           , XK_KP_Multiply },
-  { GrKey_Alt_KPStar           , XK_multiply },
-  { GrKey_Alt_Left             , XK_KP_Left },
-  { GrKey_Alt_PageDown         , XK_KP_Next },
-  { GrKey_Alt_PageUp           , XK_KP_Prior },
-  { GrKey_Alt_Right            , XK_KP_Right },
-  { GrKey_Alt_Up               , XK_KP_Up },
-  { GrKey_Alt_Down             , XK_KP_Down },
-  { GrKey_Alt_End              , XK_KP_End },
-  { GrKey_Alt_Enter            , XK_KP_Enter },
-  { GrKey_Alt_Backquote        , XK_quoteright },
-  { GrKey_Alt_Backslash        , XK_backslash },
-  { GrKey_Alt_Comma            , XK_comma },
-  { GrKey_Alt_Dash             , XK_minus },
-  { GrKey_Alt_Equals           , XK_equal },
-  { GrKey_Alt_LAngle           , XK_less },
-  { GrKey_Alt_LBrace           , XK_braceleft },
-  { GrKey_Alt_LBracket         , XK_bracketleft },
-  { GrKey_Alt_Period           , XK_period },
-  { GrKey_Alt_Pipe             , XK_bar },
-  { GrKey_Alt_Quote            , XK_quoteleft },
-  { GrKey_Alt_RAngle           , XK_greater },
-  { GrKey_Alt_RBrace           , XK_braceright },
-  { GrKey_Alt_RBracket         , XK_bracketright },
-  { GrKey_Alt_Semicolon        , XK_semicolon },
-  { GrKey_Alt_Slash            , XK_slash },
-*/
 };
 
 
@@ -175,25 +139,6 @@ static KeyEntry _KTControl[] = { // state == Control
   { GrKey_Control_PageUp       , KEY_PAGEUP },
   { GrKey_Control_Right        , KEY_RIGHT },
   { GrKey_Control_Up           , KEY_UP },
-/*
-  { GrKey_Control_At           , XK_at },
-  { GrKey_Control_Center       , XK_5 },
-  { GrKey_Control_Center       , XK_KP_Begin },
-  { GrKey_Control_Delete       , XK_KP_Delete },
-  { GrKey_Control_Down         , XK_KP_Down },
-  { GrKey_Control_End          , XK_KP_End },
-  { GrKey_Control_Home         , XK_KP_Home },
-  { GrKey_Control_Insert       , XK_KP_Insert },
-  { GrKey_Control_KPDash       , XK_KP_Subtract },
-  { GrKey_Control_KPPlus       , XK_KP_Add },
-  { GrKey_Control_KPSlash      , XK_slash },
-  { GrKey_Control_KPStar       , XK_multiply },
-  { GrKey_Control_Left         , XK_KP_Left },
-  { GrKey_Control_PageDown     , XK_KP_Next },
-  { GrKey_Control_PageUp       , XK_KP_Prior },
-  { GrKey_Control_Right        , XK_KP_Right },
-  { GrKey_Control_Up           , XK_KP_Up },
-*/
 };
 
 static KeyEntry _KTVoid[] = { // state == None
@@ -219,23 +164,24 @@ static KeyEntry _KTVoid[] = { // state == None
   { GrKey_PageUp               , KEY_PAGEUP },
   { GrKey_Right                , KEY_RIGHT },
   { GrKey_Up                   , KEY_UP },
-/*
-  { GrKey_Center               , XK_5 },
-  { GrKey_Center               , XK_KP_Begin },
-  { GrKey_Dash                 , XK_KP_Subtract },
-  { GrKey_Delete               , XK_KP_Delete },
-  { GrKey_Down                 , XK_KP_Down },
-  { GrKey_End                  , XK_KP_End },
-  { GrKey_Home                 , XK_KP_Home },
-  { GrKey_Insert               , XK_KP_Insert },
-  { GrKey_Left                 , XK_KP_Left },
-  { GrKey_PageDown             , XK_KP_Next },
-  { GrKey_PageUp               , XK_KP_Prior },
-  { GrKey_Plus                 , XK_KP_Add },
-  { GrKey_Print                , XK_Print },
-  { GrKey_Right                , XK_KP_Right },
-  { GrKey_Up                   , XK_KP_Up },
-*/
+};
+
+typedef struct {
+  unsigned int oldk;
+  unsigned int newk;
+} RemapEntry;
+
+static RemapEntry _KPRemap[] = { // Remap keypad keys to normal
+  { KEY_KPDOT                  , KEY_DELETE },
+  { KEY_KP2                    , KEY_DOWN },
+  { KEY_KP1                    , KEY_END },
+  { KEY_KP7                    , KEY_HOME },
+  { KEY_KP0                    , KEY_INSERT },
+  { KEY_KP4                    , KEY_LEFT },
+  { KEY_KP3                    , KEY_PAGEDOWN },
+  { KEY_KP9                    , KEY_PAGEUP },
+  { KEY_KP6                    , KEY_RIGHT },
+  { KEY_KP8                    , KEY_UP },
 };
 
 #endif

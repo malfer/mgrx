@@ -1,7 +1,7 @@
 /**
  ** demintl2.c ---- MGRX Test intl support and GrGUI (full)
  **
- ** Copyright (C) 2019,2021,2022 Mariano Alvarez Fernandez
+ ** Copyright (C) 2019,2021-2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer@telefonica.net]
  **
  ** This is a test/demo file of the GRX graphics library.
@@ -68,15 +68,17 @@
 #define COMMAND_TP_COPY           236
 #define COMMAND_TP_PASTE          237
 #define COMMAND_TP_SELALL         238
+#define COMMAND_TP_CLRCB          239
 
 #define COMMAND_DLG_ABOUT         240
 #define COMMAND_DLG_YN            241
 #define COMMAND_DLG_YNC           242
-#define COMMAND_TEST_OBJ1         243
-#define COMMAND_TEST_OBJ2         244
-#define COMMAND_TEST_OBJ3         245
-#define COMMAND_USE_DB            246
-#define COMMAND_MANAGE_EXP        247
+#define COMMAND_DLG_FC            243
+#define COMMAND_TEST_OBJ1         244
+#define COMMAND_TEST_OBJ2         245
+#define COMMAND_TEST_OBJ3         246
+#define COMMAND_USE_DB            247
+#define COMMAND_MANAGE_EXP        248
 
 #define COMMAND_LOADFONT_FIRST    300
 #define COMMAND_LOADFONT_CP437    300
@@ -274,7 +276,7 @@ int main()
 
 static void setup(int restartonlygui)
 {
-    static char *wintitle = "MGRX+GrGUI 1.5.0, the graphics library";
+    static char *wintitle = "MGRX+GrGUI 1.5.1, the graphics library";
 
     if (!restartonlygui) {
         GrSetMode(GR_width_height_bpp_graphics, globalw, globalh, globalbpp);
@@ -379,7 +381,7 @@ static void setup_menus(void)
 
     static GUIMenu menu1 = {1, 13, 0, itemsm1};
 
-    static GUIMenuItem itemsm2[13] = {
+    static GUIMenuItem itemsm2[14] = {
         {GUI_MI_OPER, 1, "Cu&t", 'T', "Ctrl+X", GrKey_Control_X, COMMAND_TP_CUT, 0},
         {GUI_MI_OPER, 1, "&Copy", 'C', "Ctrl+C", GrKey_Control_C, COMMAND_TP_COPY, 0},
         {GUI_MI_OPER, 1, "&Paste", 'P', "Ctrl+V", GrKey_Control_V, COMMAND_TP_PASTE, 0},
@@ -392,9 +394,10 @@ static void setup_menus(void)
         {GUI_MI_OPER, 1, "C&lear...", 'L', "Alt+L", GrKey_Alt_L, COMMAND_TP_CLEAR, 0},
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
         {GUI_MI_OPER, 1, "&Save content to demintl2.out", 'S', NULL, 0, COMMAND_TP_SAVE, 0},
-        {GUI_MI_OPER, 1, "&No clipboard limit", 'N', NULL, 0, COMMAND_TP_NOLIMIT, 0}};
+        {GUI_MI_OPER, 1, "&No clipboard limit", 'N', NULL, 0, COMMAND_TP_NOLIMIT, 0},
+        {GUI_MI_OPER, 1, "Clea&r clipboard", 'R', NULL, 0, COMMAND_TP_CLRCB, 0}};
 
-    static GUIMenu menu2 = {2, 13, 0, itemsm2};
+    static GUIMenu menu2 = {2, 14, 0, itemsm2};
 
     static GUIMenuItem itemsm20[7] = {
         {GUI_MI_MENU, 1, "&1 Select CP437 font", '1', NULL, 0, 21, 0},
@@ -485,12 +488,13 @@ static void setup_menus(void)
 
     static GUIMenu menu27 = {27, 2, 0, itemsm27};
 
-    static GUIMenuItem itemsm3[11] = {
+    static GUIMenuItem itemsm3[12] = {
         {GUI_MI_OPER, 1, "&About", 'A', NULL, 0, COMMAND_DLG_ABOUT, 0},
         {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
         {GUI_MI_OPER, 1, "&Test Yes/No dialog...", 'T', NULL, 0, COMMAND_DLG_YN, 0},
         {GUI_MI_OPER, 1, "T&est Yes/No/Cancel dialog...", 'E', NULL, 0, COMMAND_DLG_YNC, 0},
-        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0}, 
+        {GUI_MI_OPER, 1, "Test &File Chooser dialog...", 'F', NULL, 0, COMMAND_DLG_FC, 0},
+        {GUI_MI_SEP, 1, "", 0, NULL, 0, 0, 0},
         {GUI_MI_OPER, 1, "Test &Objects 1...", 'O', NULL, 0, COMMAND_TEST_OBJ1, 0},
         {GUI_MI_OPER, 1, "Test O&bjects 2...", 'B', NULL, 0, COMMAND_TEST_OBJ2, 0},
         {GUI_MI_OPER, 1, "Test Ob&jects 3...", 'J', NULL, 0, COMMAND_TEST_OBJ3, 0},
@@ -498,7 +502,7 @@ static void setup_menus(void)
         {GUI_MI_OPER, 1, "&Use DoubleBuffer", 'U', NULL, 0, COMMAND_USE_DB, 0},
         {GUI_MI_OPER, 0, "&Manage Expose Events", 'M', NULL, 0, COMMAND_MANAGE_EXP, 0}};
 
-    static GUIMenu menu3 = {3, 11, 0, itemsm3};
+    static GUIMenu menu3 = {3, 12, 0, itemsm3};
 
     static GUIMenuBarItem mbitems[3] = {
         {"&Resolution", 1, GrKey_Alt_R, 1}, 
@@ -597,6 +601,7 @@ static void setup_tiles(void)
 
     GUIDialogsSetColors(EGAC_BLACK, EGAC_YELLOW, EGAC_BLUE, EGAC_WHITE);
     GUICDialogsSetColors(EGAC_GREEN, EGAC_WHITE);
+    GUICDialogsSetObjColors(EGAC_WHITE, EGAC_BLACK, EGAC_LIGHTGRAY, EGAC_WHITE);
     //GUIDialogsSetTitleFontByName("tmgrx18n.fnt");
     //GUICDialogsSetFontByName("tmgrx18n.fnt");
     GUIDialogsSetTitleFont(&GrFont_PX11x22);
@@ -699,7 +704,8 @@ static void set_desired_resolution(int dgw, int dgh, int dbpp)
 static int process_command(GrEvent *ev)
 {
     int result;
-    
+    char fcfname[FCDLG_MAXLEN_FNAME+1] = "test";
+
     if (process_loadfont(ev->p1)) return 0;
         
     switch (ev->p1) {
@@ -799,6 +805,9 @@ static int process_command(GrEvent *ev)
                 GUITilePaint(IDT_STATUS);
             }
             return 1;
+        case COMMAND_TP_CLRCB :
+            GrClearClipBoard();
+            return 1;
         case COMMAND_TP_FGCHARCOLOR :
             result = dlg_tpfg_color();
             if (result == 1) {
@@ -844,6 +853,16 @@ static int process_command(GrEvent *ev)
             result = GUICDialogYesNoCancel("Test Yes/No/Cancel", (void **)abouttext,
                                            3, "Yes", "No", "Cancel");
             print_dlg_result("Yes/No/Cancel", result);
+            GUITilePaint(IDT_STATUS);
+            return 1;
+        case COMMAND_DLG_FC :
+            result = GUICDialogFileChooser("Choose File", 480, 320, fcfname, 0);
+            print_dlg_result("File Chooser", result);
+            if (result == 1) {
+                GUITPPutString(textpanel1, "File: ", 0, GR_UTF8_TEXT);
+                GUITPPutString(textpanel1, fcfname, 0, GR_UTF8_TEXT);
+                GUITPNewLine(textpanel1);
+            }
             GUITilePaint(IDT_STATUS);
             return 1;
 

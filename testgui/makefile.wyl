@@ -50,6 +50,7 @@ PROGS=  wgrgui01    \
 	wgrgui10    \
 	wgrgui11    \
 	wgrgui12    \
+	wgrgui13    \
 	wshowfnt2   \
 	wdemmgrx2   \
 	wdemintl2
@@ -73,6 +74,6 @@ clean:
 	rm -f *.o $(PROGS)
 
 depend.new:
-	$(CC) -MM $(CCOPT) $(INCDIR) $(PROGS:x%=%.c) > depend.new
+	$(CC) -MM $(CCOPT) $(INCDIR) $(PROGS:w%=%.c) > depend.new
 
 include depend.gnu

@@ -1,7 +1,7 @@
 /**
  ** grgui.h ---- Mini GUI for MGRX, public header 
  **
- ** Copyright (C) 2002,2006,2019-2023 Mariano Alvarez Fernandez
+ ** Copyright (C) 2002,2006,2019-2024 Mariano Alvarez Fernandez
  ** [e-mail: malfer at telefonica dot net]
  **
  ** This file is part of the GRX graphics library.
@@ -263,7 +263,8 @@ typedef struct {
     int running;             // 0=no, 1=yes
     GUIPanel *p;             // Panel
     GrColor fg, bg;          // foreground & background colors
-    void *exdata;            // extended data (can be NULL)
+    void *exdata;            // extended data (can be NULL), commom and group
+                             // dialogs store here his GUIGroup pointer
     int result;              // result after running
 } GUIDialog;
 
@@ -285,11 +286,35 @@ void GUICDialogsSetChrType(int chrtype);
 void GUICDialogsSetFont(GrFont *fnt);
 void GUICDialogsSetFontByName(char *fntname);
 void GUICDialogsSetColors(GrColor btbg, GrColor btfg);
+void GUICDialogsSetObjColors(GrColor objbg, GrColor objfg, GrColor objbggray, GrColor labelfg);
 
 int GUICDialogInfo(void *title, void **text, int nlin, void *ok);
 int GUICDialogYesNo(void *title, void **text, int nlin, void *yes, void *no);
 int GUICDialogYesNoCancel(void *title, void **text, int nlin,
                           void *yes, void *no, void *cancel);
+
+/* File chooser dialog */
+
+typedef struct {
+    void *dirs;
+    void *files;
+    void *dirpath;
+    void *fname;
+    void *ok;
+    void *cancel;
+    void *overwrite;
+    void *yes;
+    void *no;
+} GUIFileChooserLabels;
+
+// if not called or setting fcl to NULL default English label will be used
+void GUIFileChooserSetLabels(GUIFileChooserLabels *fcl);
+
+#define FCDLG_MAXLEN_FNAME 240 // fname parameter must be char[FCDLG_MAXLEN_FNAME+1] at least
+
+#define FCDLGF_ASKOVERWRITE 1 // flags: ask user if overwrite a existing file
+
+int GUICDialogFileChooser(void *title, int width, int height, char *fname, int flags);
 
 /**
  ** OBJECTS
@@ -443,13 +468,15 @@ void GUITPNewLine(GUITextPanel *ta);
 void GUITPPutChar(GUITextPanel *ta, long ch, int chrtype);
 void GUITPPutString(GUITextPanel *ta, void *s, int len, int chrtype);
 void GUITPPutMultiString(GUITextPanel *ta, void *s, int len, int chrtype);
+void GUITPPutMultiStringNoDraw(GUITextPanel *ta, void *s, int len, int chrtype);
 void GUITPResetMA(GUITextPanel *ta);
 void GUITPSetMA(GUITextPanel *ta, int fl, int fc, int ll, int lc);
 int GUITPCopyMA(GUITextPanel *ta, int clear);
 void GUITPPasteMA(GUITextPanel *ta);
-
 void GUITPReDraw(GUITextPanel *ta);
 void GUITPGetStatus(GUITextPanel *ta, GUITEditStatus *tast);
+int GUITPGetChanged(GUITextPanel *ta);
+void GUITPResetChanged(GUITextPanel *ta);
 void *GUITPGetString(GUITextPanel *ta, int nline, int chrtype);
 void *GUITPGetMultiString(GUITextPanel *ta, int fline, int lline, int chrtype);
 int GUITPProcessEvent(GUITextPanel *ta, GrEvent *ev);

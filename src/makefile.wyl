@@ -57,22 +57,14 @@ else
   ADDON_O += $(NOPNG_1)
 endif
 
-#O=      $(STD_O)            \
-	$(ADDON_O)          \
-	fdrivers/fd_xwin.o  \
-	fonts/fdv_xwin.o    \
-	input/grev_x11.o    \
-	input/clb_x11.o     \
-	misc/x11misc.o      \
-	vdrivers/vd_xwin.o
-
-O=      $(STD_O)            \
-	$(ADDON_O)          \
-	input/grev_wyl.o    \
-	input/clb_gen.o     \
-	misc/wylmisc.o      \
-	vdrivers/vd_wylnd.o \
-	xdg-shell-protocol.o
+O=      $(STD_O)             \
+	$(ADDON_O)           \
+	input/grev_wyl.o     \
+	input/clb_wyl.o      \
+	misc/wylmisc.o       \
+	vdrivers/vd_wylnd.o  \
+	xdg-shell-protocol.o \
+	xdg-decoration-protocol.o
 
 ifeq ($(INCLUDE_GRGUI),y)
 O+=	$(GRGUI_1)
@@ -114,9 +106,9 @@ $(UTILPW): ../bin/w% : utilprog/%.o $(MGRXST)
 	$(STRIP) $@
 	chmod $(EXECBITS) $@
 
-$(O): $(LINUX_WAYLAND) xdg-shell-client-protocol.h
+$(O): $(LINUX_WAYLAND) xdg-shell-client-protocol.h xdg-decoration-client-protocol.h
 
-$(LO): $(LINUX_WAYLAND) xdg-shell-client-protocol.h
+$(LO): $(LINUX_WAYLAND) xdg-shell-client-protocol.h xdg-decoration-client-protocol.h
 
 $(LINUX_WAYLAND):
 	-if [ ! -r $(LINUX_WAYLAND) ]; then \
@@ -129,11 +121,19 @@ xdg-shell-client-protocol.h:
 xdg-shell-protocol.c:
 	$(WAYLAND_SCANNER) private-code $(XDG_SHELL_PROTOCOL) xdg-shell-protocol.c
 
+xdg-decoration-client-protocol.h:
+	$(WAYLAND_SCANNER) client-header $(XDG_DECORATION_PROTOCOL) xdg-decoration-client-protocol.h
+
+xdg-decoration-protocol.c:
+	$(WAYLAND_SCANNER) private-code $(XDG_DECORATION_PROTOCOL) xdg-decoration-protocol.c
+
 clean:
 	rm -f $(O) $(LO) $(LINUX_WAYLAND)
 	rm -f utilprog/*.o
 	rm -f xdg-shell-client-protocol.h
 	rm -f xdg-shell-protocol.c
+	rm -f xdg-decoration-client-protocol.h
+	rm -f xdg-decoration-protocol.c
 
 cleanall: clean
 #ifeq ($(INCLUDE_SHARED_SUPPORT),y)

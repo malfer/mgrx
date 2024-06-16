@@ -253,6 +253,8 @@ GRGUI_1 = $(OP)grgui/setup$(OX) \
 	$(OP)grgui/tiles$(OX) \
 	$(OP)grgui/dialogs$(OX) \
 	$(OP)grgui/cdialogs$(OX) \
+	$(OP)grgui/dircont$(OX) \
+	$(OP)grgui/fcdlg$(OX) \
 	$(OP)grgui/object$(OX) \
 	$(OP)grgui/obutton$(OX) \
 	$(OP)grgui/olabel$(OX) \

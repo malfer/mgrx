@@ -31,10 +31,10 @@ static int gwidth = 640;
 static int gheight = 480;
 static int gbpp = 16;
 
-char *mgrxversion = "MGRX 1.5.0";
-char *wintitle    = "MGRX 1.5.0, the graphics library";
+char *mgrxversion = "MGRX 1.5.1";
+char *wintitle    = "MGRX 1.5.1, the graphics library";
 char *animatedtext[2] = {
-    "MGRX 1.5.0, the graphics library for DJGPPv2, Linux, X11 and Win32",
+    "MGRX 1.5.1, the graphics library for DJGPPv2, Linux, X11, Wayland and Win32",
     "Hello world    Привет мир    Γειά σου Κόσμε    Hola mundo" };
 
 #if defined(__XWIN__) || defined(__WIN32__) || defined(__WAYLAND__)

@@ -60,6 +60,7 @@ PROGS=  grgui01    \
 	grgui10    \
 	grgui11    \
 	grgui12    \
+	grgui13    \
 	showfnt2   \
 	demmgrx2   \
 	demintl2

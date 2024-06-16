@@ -7,13 +7,13 @@
 <body text="#000000" bgcolor="#DDDDDD" link="#0000EE" vlink="#551A8B" alink="#FF0000">
 
 <center>
-<h1>GrGUI <small>1.5.0</small></h1>
+<h1>GrGUI <small>1.5.1</small></h1>
 <h1>a graphics gui on top of
 <font color="#555555">M</font><font color="#FF0000">G</font><font color="#00CC00">R</font><font color="#0000FF">X</font>
 </h1>
 <h2>Programmer's Guide by examples</h2>
 <p>Written by Mariano Alvarez Fern&aacute;ndez on October 1, 2019
-<p>Last update: February 21, 2022
+<p>Last update: Jume 9, 2024
 </center>
 
 <hr>
@@ -27,7 +27,7 @@ You don't need to use all the GUI functionality, you can (by example)
 use only the menues or the menu bar or some dialogs or some buttons or the GUI
 Contexts, it's up to you.
 <p>In this document, instead to present a detailed manual of each function, we
-will present twelve examples that covers the GrGUI basic concepts.
+will present thirteen examples that covers the GrGUI basic concepts.
 <p>Because all MGRX functions begin with "Gr" and all GrGUI functions begin
 with "GUI" yo can easily know what code is GrGUI related or standard MGRX code.
 <p>You can find all the examples in the MGRX distribution under the "testgui"
@@ -48,6 +48,7 @@ subdirectory.
 <li><a href="#Ex11">Example 11. Fonts, Colors and Double Buffer</a>
 <li><a href="#Ex12">Example 12. Window resize support</a>
 <li><a href="#Ex12b">Example 12b. Internationalization</a>
+<li><a href="#Ex13">Example 13. File chooser dialog</a>
 <li><a href="#End">More information</a>
 </dir>
 
@@ -1641,10 +1642,10 @@ buffer.
 
 <div>
 <img align="right" src="img/ex12.png">
-<p>Starting with the 1.3.5 MGRX version the X11 and Win32 drivers support window resize.
-This is achivied passing a parameter to the driver with "GrSetDriverExt(NULL, "rszwin")"
-before setting the graphics mode. After that GREV_WSZCHG events will be generate every
-time the user resize the window.
+<p>Starting with the 1.3.5 MGRX version the X11, Wayland and Win32 drivers support user
+window resize. This is achivied passing a parameter to the driver with
+"GrSetDriverExt(NULL, "rszwin")" before setting the graphics mode. After that GREV_WSZCHG
+events will be generate every time the user resize the window.
 <p>When we receive such an event we must uninit GrGUI, change the graphics mode and init
 GrGUI again. Also we must save the program status in some way to restore it later. In this
 small program the state are the language, the background image and the dialog showed, if any.
@@ -1837,6 +1838,385 @@ include file "gr12i18n.h" showed above.
 help from the library to set the correct strings at runtime.
 <p>That is what the <code>GUIMenusSetI18nFields</code> and
 <code>GUIMenuBarSetI18nFields</code> funtions do.
+<br clear="right">
+</div>
+
+<hr>
+<h2><a name="Ex13">Example 13. File chooser dialog</a></h2>
+<pre style='color:#1f1c1b;background-color:#ffffff;'>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&lt;stdlib.h&gt;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&lt;stdio.h&gt;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&lt;string.h&gt;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&lt;grgui.h&gt;</span>
+<span style='color:#006e28;'>#include </span><span style='color:#ff5500;'>&lt;mgrxcolr.h&gt;</span>
+
+<span style='color:#006e28;'>#define COMMAND_EXIT         </span><span style='color:#b08000;'>1</span>
+<span style='color:#006e28;'>#define COMMAND_LOAD         </span><span style='color:#b08000;'>2</span>
+<span style='color:#006e28;'>#define COMMAND_SAVE         </span><span style='color:#b08000;'>3</span>
+<span style='color:#006e28;'>#define COMMAND_SAVEAS       </span><span style='color:#b08000;'>4</span>
+<span style='color:#006e28;'>#define COMMAND_ABOUT        </span><span style='color:#b08000;'>5</span>
+<span style='color:#006e28;'>#define COMMAND_TP_CUT       </span><span style='color:#b08000;'>6</span>
+<span style='color:#006e28;'>#define COMMAND_TP_COPY      </span><span style='color:#b08000;'>7</span>
+<span style='color:#006e28;'>#define COMMAND_TP_PASTE     </span><span style='color:#b08000;'>8</span>
+<span style='color:#006e28;'>#define COMMAND_TP_SELALL    </span><span style='color:#b08000;'>9</span>
+
+<span style='color:#006e28;'>#define IDT_EDIT   </span><span style='color:#b08000;'>1</span>
+<span style='color:#006e28;'>#define IDT_FNAME  </span><span style='color:#b08000;'>2</span>
+<span style='color:#006e28;'>#define IDT_STATUS </span><span style='color:#b08000;'>3</span>
+
+GUITile <span style='color:#ca60ca;'>*</span>gtedit<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>*</span>gtfname<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>*</span>gtstatus<span style='color:#ca60ca;'>;</span>
+GUITextPanel <span style='color:#ca60ca;'>*</span>gtp <span style='color:#ca60ca;'>=</span> NULL<span style='color:#ca60ca;'>;</span>
+<span style='color:#898887;'>//we need a real buffer at least FCDLG_MAXLEN_FNAME+1 bytes to use in file chooser dialog</span>
+<span style='color:#0057ae;'>char</span> editedfname<span style='color:#ca60ca;'>[</span>FCDLG_MAXLEN_FNAME<span style='color:#ca60ca;'>+</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#bf0303;'>&quot;new_file&quot;</span><span style='color:#ca60ca;'>;</span>
+GrTextOption grt_infol<span style='color:#ca60ca;'>,</span> grt_infor<span style='color:#ca60ca;'>;</span>
+<span style='color:#0057ae;'>int</span> new_file <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span> <span style='color:#898887;'>//to detect if no file loaded so save=save_as</span>
+
+<span style='color:#0057ae;'>void</span> setup_menus<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span><span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>static</span> GUIMenuItem itemsm1<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>5</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&amp;Load file...&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'L'</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> COMMAND_LOAD<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&amp;Save file&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'S'</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> COMMAND_SAVE<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Save &amp;As...&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'A'</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> COMMAND_SAVEAS<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_SEP<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;E&amp;xit&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'X'</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Alt+X&quot;</span><span style='color:#ca60ca;'>,</span> GrKey_Alt_X<span style='color:#ca60ca;'>,</span> COMMAND_EXIT<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>}};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenu menu1 <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>5</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> itemsm1<span style='color:#ca60ca;'>};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenuItem itemsm2<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>4</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Cu&amp;t&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'T'</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Ctrl+X&quot;</span><span style='color:#ca60ca;'>,</span> GrKey_Control_X<span style='color:#ca60ca;'>,</span> COMMAND_TP_CUT<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&amp;Copy&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'C'</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Ctrl+C&quot;</span><span style='color:#ca60ca;'>,</span> GrKey_Control_C<span style='color:#ca60ca;'>,</span> COMMAND_TP_COPY<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&amp;Paste&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'P'</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Ctrl+V&quot;</span><span style='color:#ca60ca;'>,</span> GrKey_Control_V<span style='color:#ca60ca;'>,</span> COMMAND_TP_PASTE<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Select &amp;All&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'A'</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Ctrl+A&quot;</span><span style='color:#ca60ca;'>,</span> GrKey_Control_A<span style='color:#ca60ca;'>,</span> COMMAND_TP_SELALL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>}};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenu menu2 <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span><span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>4</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> itemsm2<span style='color:#ca60ca;'>};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenuItem itemsm3<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span>
+        <span style='color:#ca60ca;'>{</span>GUI_MI_OPER<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;&amp;About&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#924c9d;'>'A'</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> COMMAND_ABOUT<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>}};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenu menu3 <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span><span style='color:#b08000;'>3</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> itemsm3<span style='color:#ca60ca;'>};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenuBarItem mbitems<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>3</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span>
+        <span style='color:#ca60ca;'>{</span><span style='color:#bf0303;'>&quot;&amp;File&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> GrKey_Alt_F<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span><span style='color:#bf0303;'>&quot;&amp;Edit&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> GrKey_Alt_E<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>},</span>
+        <span style='color:#ca60ca;'>{</span><span style='color:#bf0303;'>&quot;&amp;Help&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> GrKey_Alt_H<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>3</span><span style='color:#ca60ca;'>}};</span>
+
+    <span style='color:#0057ae;'>static</span> GUIMenuBar menubar <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span><span style='color:#b08000;'>3</span> <span style='color:#ca60ca;'>,</span><span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> mbitems<span style='color:#ca60ca;'>};</span>
+
+    GUIMenusSetChrType<span style='color:#ca60ca;'>(</span>GR_UTF8_TEXT<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//this source is UTF8 coded</span>
+    GUIMenusSetFont<span style='color:#ca60ca;'>(&amp;</span>GrFont_PX11x22<span style='color:#ca60ca;'>);</span>
+    GUIMenusSetColors<span style='color:#ca60ca;'>(</span>EGAC_WHITE<span style='color:#ca60ca;'>,</span> EGAC_RED<span style='color:#ca60ca;'>,</span> EGAC_BLACK<span style='color:#ca60ca;'>,</span>
+                      EGAC_YELLOW<span style='color:#ca60ca;'>,</span> EGAC_LIGHTGRAY<span style='color:#ca60ca;'>,</span> EGAC_DARKGRAY<span style='color:#ca60ca;'>);</span>
+
+    GUIMenuRegister<span style='color:#ca60ca;'>(&amp;</span>menu1<span style='color:#ca60ca;'>);</span>
+    GUIMenuRegister<span style='color:#ca60ca;'>(&amp;</span>menu2<span style='color:#ca60ca;'>);</span>
+    GUIMenuRegister<span style='color:#ca60ca;'>(&amp;</span>menu3<span style='color:#ca60ca;'>);</span>
+    GUIMenuBarSet<span style='color:#ca60ca;'>(&amp;</span>menubar<span style='color:#ca60ca;'>);</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>void</span> setup_objects<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span><span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>int</span> mbheight<span style='color:#ca60ca;'>,</span> stheight<span style='color:#ca60ca;'>;</span>
+
+    GUIObjectsSetColors<span style='color:#ca60ca;'>(</span>EGAC_BLACK<span style='color:#ca60ca;'>,</span> EGAC_LIGHTGRAY<span style='color:#ca60ca;'>,</span> EGAC_DARKGRAY<span style='color:#ca60ca;'>);</span>
+    GUIObjectsSetFont<span style='color:#ca60ca;'>(&amp;</span>GrFont_PX8x18<span style='color:#ca60ca;'>);</span>
+    GUIScrollbarsSetColors<span style='color:#ca60ca;'>(</span>EGAC_LIGHTGRAY<span style='color:#ca60ca;'>,</span> EGAC_DARKGRAY<span style='color:#ca60ca;'>);</span>
+    GUIDialogsSetColors<span style='color:#ca60ca;'>(</span>EGAC_BLACK<span style='color:#ca60ca;'>,</span> EGAC_CYAN<span style='color:#ca60ca;'>,</span> EGAC_DARKGRAY<span style='color:#ca60ca;'>,</span> EGAC_WHITE<span style='color:#ca60ca;'>);</span>
+    GUIDialogsSetTitleFont<span style='color:#ca60ca;'>(&amp;</span>GrFont_PX11x22<span style='color:#ca60ca;'>);</span>
+    GUICDialogsSetColors<span style='color:#ca60ca;'>(</span>EGAC_CYAN<span style='color:#ca60ca;'>,</span> EGAC_WHITE<span style='color:#ca60ca;'>);</span>
+    GUICDialogsSetObjColors<span style='color:#ca60ca;'>(</span>EGAC_WHITE<span style='color:#ca60ca;'>,</span> EGAC_BLACK<span style='color:#ca60ca;'>,</span> EGAC_LIGHTGRAY<span style='color:#ca60ca;'>,</span> EGAC_WHITE<span style='color:#ca60ca;'>);</span>
+    GUICDialogsSetFont<span style='color:#ca60ca;'>(&amp;</span>GrFont_PX8x18<span style='color:#ca60ca;'>);</span>
+
+    mbheight <span style='color:#ca60ca;'>=</span> GUIMenuBarGetHeight<span style='color:#ca60ca;'>();</span>
+    stheight <span style='color:#ca60ca;'>=</span> GrFont_PX8x18<span style='color:#ca60ca;'>.</span>h<span style='color:#ca60ca;'>.</span>height <span style='color:#ca60ca;'>+</span> <span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>;</span>
+    gtedit <span style='color:#ca60ca;'>=</span> GUITileCreate<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>,</span> GUI_TT_ACTIVEBWSCB<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> mbheight<span style='color:#ca60ca;'>,</span>
+                           GrSizeX<span style='color:#ca60ca;'>(),</span> GrSizeY<span style='color:#ca60ca;'>()-</span>mbheight<span style='color:#ca60ca;'>-</span>stheight<span style='color:#ca60ca;'>);</span>
+    gtfname <span style='color:#ca60ca;'>=</span> GUITileCreate<span style='color:#ca60ca;'>(</span>IDT_FNAME<span style='color:#ca60ca;'>,</span> GUI_TT_BORDERLESS<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> GrSizeY<span style='color:#ca60ca;'>()-</span>stheight<span style='color:#ca60ca;'>,</span>
+                            GrSizeX<span style='color:#ca60ca;'>()/</span><span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span> stheight<span style='color:#ca60ca;'>);</span>
+    gtstatus <span style='color:#ca60ca;'>=</span> GUITileCreate<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>,</span> GUI_TT_BORDERLESS<span style='color:#ca60ca;'>,</span> GrSizeX<span style='color:#ca60ca;'>()/</span><span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span>
+                             GrSizeY<span style='color:#ca60ca;'>()-</span>stheight<span style='color:#ca60ca;'>,</span> GrSizeX<span style='color:#ca60ca;'>()/</span><span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span> stheight<span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>gtedit <span style='color:#ca60ca;'>==</span> NULL <span style='color:#ca60ca;'>||</span> gtfname <span style='color:#ca60ca;'>==</span> NULL <span style='color:#ca60ca;'>||</span> gtstatus <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> exit<span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>);</span>
+    GUITileRegister<span style='color:#ca60ca;'>(</span>gtedit<span style='color:#ca60ca;'>);</span>
+    GUITileRegister<span style='color:#ca60ca;'>(</span>gtfname<span style='color:#ca60ca;'>);</span>
+    GUITileRegister<span style='color:#ca60ca;'>(</span>gtstatus<span style='color:#ca60ca;'>);</span>
+    GUITilesSetColors<span style='color:#ca60ca;'>(</span>EGAC_BLACK<span style='color:#ca60ca;'>,</span> EGAC_LIGHTGRAY<span style='color:#ca60ca;'>,</span> EGAC_WHITE<span style='color:#ca60ca;'>);</span>
+
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_font <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>&amp;</span>GrFont_PX8x18<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_fgcolor <span style='color:#ca60ca;'>=</span> EGAC_BLACK<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_bgcolor <span style='color:#ca60ca;'>=</span> GrNOCOLOR<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_direct <span style='color:#ca60ca;'>=</span> GR_TEXT_RIGHT<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_xalign <span style='color:#ca60ca;'>=</span> GR_ALIGN_RIGHT<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_yalign <span style='color:#ca60ca;'>=</span> GR_ALIGN_TOP<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_chrtype <span style='color:#ca60ca;'>=</span> GR_UTF8_TEXT<span style='color:#ca60ca;'>;</span>
+    grt_infor <span style='color:#ca60ca;'>=</span> grt_infol<span style='color:#ca60ca;'>;</span>
+    grt_infol<span style='color:#ca60ca;'>.</span>txo_xalign <span style='color:#ca60ca;'>=</span> GR_ALIGN_LEFT<span style='color:#ca60ca;'>;</span>
+
+    <b>if</b> <span style='color:#ca60ca;'>(</span>gtp <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span> <span style='color:#898887;'>//it is not NULL if we are resizing window</span>
+        gtp <span style='color:#ca60ca;'>=</span> GUITPCreate<span style='color:#ca60ca;'>(</span>gtedit<span style='color:#ca60ca;'>-&gt;</span>p<span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>);</span>
+        <b>if</b> <span style='color:#ca60ca;'>(</span>gtp <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> exit<span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>);</span>
+        GUITPClear<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+    <span style='color:#ca60ca;'>}</span> <b>else</b> <span style='color:#ca60ca;'>{</span>
+        GUITPSetPanel<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> gtedit<span style='color:#ca60ca;'>-&gt;</span>p<span style='color:#ca60ca;'>);</span>
+    <span style='color:#ca60ca;'>}</span>
+    GUITPSetSimpleColors<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> EGAC_WHITE<span style='color:#ca60ca;'>,</span> EGAC_BLACK<span style='color:#ca60ca;'>,</span> EGAC_RED<span style='color:#ca60ca;'>);</span>
+    GUITPSetFont<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>GrFont_PX8x18<span style='color:#ca60ca;'>);</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>void</span> paint_gtedit<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span> <span style='color:#ca60ca;'>*</span>data<span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    GUITPReDraw<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> process_gtedit_event<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span> <span style='color:#ca60ca;'>*</span>data<span style='color:#ca60ca;'>,</span> GrEvent <span style='color:#ca60ca;'>*</span>ev<span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>int</span> ret<span style='color:#ca60ca;'>;</span>
+
+    ret <span style='color:#ca60ca;'>=</span> GUITPProcessEvent<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> ev<span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>ret<span style='color:#ca60ca;'>)</span> GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+    <b>return</b> ret<span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>void</span> paint_gtfname<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span> <span style='color:#ca60ca;'>*</span>data<span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    GrClearContext<span style='color:#ca60ca;'>(</span>EGAC_LIGHTGRAY<span style='color:#ca60ca;'>);</span>
+    GrDrawString<span style='color:#ca60ca;'>(</span>editedfname<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>8</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>grt_infol<span style='color:#ca60ca;'>);</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>void</span> paint_gtstatus<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span> <span style='color:#ca60ca;'>*</span>data<span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>char</span> s<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>81</span><span style='color:#ca60ca;'>];</span>
+    GUITEditStatus tast<span style='color:#ca60ca;'>;</span>
+
+    GUITPGetStatus<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>tast<span style='color:#ca60ca;'>);</span>
+    snprintf<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>80</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;line </span><span style='color:#3daee9;'>%d</span><span style='color:#bf0303;'> of </span><span style='color:#3daee9;'>%d</span><span style='color:#bf0303;'>, col </span><span style='color:#3daee9;'>%d</span><span style='color:#bf0303;'>&quot;</span><span style='color:#ca60ca;'>,</span>
+             tast<span style='color:#ca60ca;'>.</span>tclpos<span style='color:#ca60ca;'>+</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> tast<span style='color:#ca60ca;'>.</span>nlines<span style='color:#ca60ca;'>,</span> tast<span style='color:#ca60ca;'>.</span>tccpos<span style='color:#ca60ca;'>+</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>);</span>
+    GrClearContext<span style='color:#ca60ca;'>(</span>EGAC_LIGHTGRAY<span style='color:#ca60ca;'>);</span>
+    GrDrawString<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> GrMaxX<span style='color:#ca60ca;'>()-</span><span style='color:#b08000;'>8</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>grt_infor<span style='color:#ca60ca;'>);</span>
+
+    s<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#924c9d;'>'</span><span style='color:#3daee9;'>\0</span><span style='color:#924c9d;'>'</span><span style='color:#ca60ca;'>;</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>GUITPGetChanged<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>))</span> strcat<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span><span style='color:#bf0303;'>&quot;(M) &quot;</span><span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>tast<span style='color:#ca60ca;'>.</span>full<span style='color:#ca60ca;'>)</span> strcat<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;FULL &quot;</span><span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>tast<span style='color:#ca60ca;'>.</span>partloaded<span style='color:#ca60ca;'>)</span> strcpy<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;CBPL &quot;</span><span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>])</span> GrDrawString<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>grt_infol<span style='color:#ca60ca;'>);</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> load_editedfile<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span><span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>FILE</span> <span style='color:#ca60ca;'>*</span>fin<span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>char</span> aux<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>251</span><span style='color:#ca60ca;'>];</span>
+
+    fin <span style='color:#ca60ca;'>=</span> fopen<span style='color:#ca60ca;'>(</span>editedfname<span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;r&quot;</span><span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>fin <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> <b>return</b> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span> <span style='color:#898887;'>//</span><b><span style='color:#ca9219;background:#451e1a;'>TODO</span></b><span style='color:#898887;'> show error</span>
+    GUITPHideTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+    <b>while</b> <span style='color:#ca60ca;'>(</span>fgets<span style='color:#ca60ca;'>(</span>aux<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>250</span><span style='color:#ca60ca;'>,</span> fin<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>!=</span> NULL<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+        GUITPPutMultiStringNoDraw<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> aux<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> GR_UTF8_TEXT<span style='color:#ca60ca;'>);</span>
+    <span style='color:#ca60ca;'>}</span>
+    GUITPMoveTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> GUI_RESETMARQUEDAREA<span style='color:#ca60ca;'>);</span>
+    GUITPShowTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+    fclose<span style='color:#ca60ca;'>(</span>fin<span style='color:#ca60ca;'>);</span>
+    <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> save_editedfile<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span><span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>FILE</span> <span style='color:#ca60ca;'>*</span>fout<span style='color:#ca60ca;'>;</span>
+    GUITEditStatus tast<span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>char</span> <span style='color:#ca60ca;'>*</span>s<span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>int</span> i<span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>int</span> first <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+
+    fout <span style='color:#ca60ca;'>=</span> fopen<span style='color:#ca60ca;'>(</span>editedfname<span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;w&quot;</span><span style='color:#ca60ca;'>);</span>
+    <b>if</b> <span style='color:#ca60ca;'>(</span>fout <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> <b>return</b> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span> <span style='color:#898887;'>//</span><b><span style='color:#ca9219;background:#451e1a;'>TODO</span></b><span style='color:#898887;'> show error</span>
+    GUITPGetStatus<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>&amp;</span>tast<span style='color:#ca60ca;'>);</span>
+    <b>for</b> <span style='color:#ca60ca;'>(</span>i<span style='color:#ca60ca;'>=</span><span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span> i<span style='color:#ca60ca;'>&lt;</span>tast<span style='color:#ca60ca;'>.</span>nlines<span style='color:#ca60ca;'>;</span> i<span style='color:#ca60ca;'>++)</span> <span style='color:#ca60ca;'>{</span>
+        s <span style='color:#ca60ca;'>=</span> GUITPGetString<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> i<span style='color:#ca60ca;'>,</span> GR_UTF8_TEXT<span style='color:#ca60ca;'>);</span>
+        <b>if</b> <span style='color:#ca60ca;'>(</span>s <span style='color:#ca60ca;'>==</span> NULL<span style='color:#ca60ca;'>)</span> <b>break</b><span style='color:#ca60ca;'>;</span> <span style='color:#898887;'>//</span><b><span style='color:#ca9219;background:#451e1a;'>TODO</span></b><span style='color:#898887;'> show error</span>
+        <b>if</b> <span style='color:#ca60ca;'>(!</span>first<span style='color:#ca60ca;'>)</span> putc<span style='color:#ca60ca;'>(</span> <span style='color:#924c9d;'>'</span><span style='color:#3daee9;'>\n</span><span style='color:#924c9d;'>'</span><span style='color:#ca60ca;'>,</span> fout<span style='color:#ca60ca;'>);</span>
+        fputs<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>,</span> fout<span style='color:#ca60ca;'>);</span>
+        first <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+        free<span style='color:#ca60ca;'>(</span>s<span style='color:#ca60ca;'>);</span>
+    <span style='color:#ca60ca;'>}</span>
+    fclose<span style='color:#ca60ca;'>(</span>fout<span style='color:#ca60ca;'>);</span>
+    <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> test_not_saved<span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span><span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>int</span> result <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+
+    <b>if</b> <span style='color:#ca60ca;'>(</span>GUITPGetChanged<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>))</span> <span style='color:#ca60ca;'>{</span> <span style='color:#898887;'>//if the edited file has been modified</span>
+        result <span style='color:#ca60ca;'>=</span> GUICDialogYesNoCancel<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;Modified file, save it?&quot;</span><span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>,</span>
+                                       <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Yes&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;No&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Cancel&quot;</span><span style='color:#ca60ca;'>);</span>
+        <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>==</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+            <b>if</b> <span style='color:#ca60ca;'>(</span>new_file<span style='color:#ca60ca;'>)</span>
+                result <span style='color:#ca60ca;'>=</span> GUICDialogFileChooser<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;Save File As&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>480</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>320</span><span style='color:#ca60ca;'>,</span>
+                                               editedfname<span style='color:#ca60ca;'>,</span> FCDLGF_ASKOVERWRITE<span style='color:#ca60ca;'>);</span>
+            <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>==</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span>
+                <b>if</b> <span style='color:#ca60ca;'>(!</span>save_editedfile<span style='color:#ca60ca;'>())</span> result <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>-</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+        <span style='color:#ca60ca;'>}</span>
+    <span style='color:#ca60ca;'>}</span>
+    <b>return</b> result<span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> process_command<span style='color:#ca60ca;'>(</span>GrEvent <span style='color:#ca60ca;'>*</span>ev<span style='color:#ca60ca;'>)</span>
+<span style='color:#ca60ca;'>{</span>
+    <span style='color:#0057ae;'>int</span> result<span style='color:#ca60ca;'>;</span>
+
+    <b>if</b> <span style='color:#ca60ca;'>(</span>ev<span style='color:#ca60ca;'>-&gt;</span>type <span style='color:#ca60ca;'>==</span> GREV_COMMAND<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+        <b>switch</b> <span style='color:#ca60ca;'>(</span>ev<span style='color:#ca60ca;'>-&gt;</span>p1<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+            <b>case</b> COMMAND_TP_CUT <span style='color:#ca60ca;'>:</span>
+                result <span style='color:#ca60ca;'>=</span> GUITPCopyMA<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+            <b>case</b> COMMAND_TP_COPY <span style='color:#ca60ca;'>:</span>
+                result <span style='color:#ca60ca;'>=</span> GUITPCopyMA<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+            <b>case</b> COMMAND_TP_PASTE <span style='color:#ca60ca;'>:</span>
+                GUITPPasteMA<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+            <b>case</b> COMMAND_TP_SELALL <span style='color:#ca60ca;'>:</span>
+                GUITPSetMA<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>-</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+
+            <b>case</b> COMMAND_LOAD <span style='color:#ca60ca;'>:</span>
+                result <span style='color:#ca60ca;'>=</span> test_not_saved<span style='color:#ca60ca;'>();</span>
+                <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>==</span> <span style='color:#ca60ca;'>-</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+                result <span style='color:#ca60ca;'>=</span> GUICDialogFileChooser<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;Load File&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>480</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>320</span><span style='color:#ca60ca;'>,</span> editedfname<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>);</span>
+                <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>==</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+                    GUITPClear<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                    load_editedfile<span style='color:#ca60ca;'>();</span>
+                    GUITPResetChanged<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                    GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>);</span>
+                    GUITPShowTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                    GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_FNAME<span style='color:#ca60ca;'>);</span>
+                    GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                    new_file <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+                <span style='color:#ca60ca;'>}</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+            <b>case</b> COMMAND_SAVE <span style='color:#ca60ca;'>:</span>
+                <b>if</b> <span style='color:#ca60ca;'>(</span>new_file<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+                    result <span style='color:#ca60ca;'>=</span> GUICDialogFileChooser<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;Save File As&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>480</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>320</span><span style='color:#ca60ca;'>,</span>
+                                                   editedfname<span style='color:#ca60ca;'>,</span> FCDLGF_ASKOVERWRITE<span style='color:#ca60ca;'>);</span>
+                    <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>!=</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+                <span style='color:#ca60ca;'>}</span>
+                save_editedfile<span style='color:#ca60ca;'>();</span>
+                GUITPResetChanged<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_FNAME<span style='color:#ca60ca;'>);</span>
+                GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                new_file <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+            <b>case</b> COMMAND_SAVEAS <span style='color:#ca60ca;'>:</span>
+                result <span style='color:#ca60ca;'>=</span> GUICDialogFileChooser<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;Save File As&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>480</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>320</span><span style='color:#ca60ca;'>,</span>
+                                               editedfname<span style='color:#ca60ca;'>,</span> FCDLGF_ASKOVERWRITE<span style='color:#ca60ca;'>);</span>
+                <b>if</b> <span style='color:#ca60ca;'>(</span>result <span style='color:#ca60ca;'>==</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+                    save_editedfile<span style='color:#ca60ca;'>();</span>
+                    GUITPResetChanged<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+                    GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_FNAME<span style='color:#ca60ca;'>);</span>
+                    GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+                    new_file <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+                <span style='color:#ca60ca;'>}</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+
+            <b>case</b> COMMAND_ABOUT <span style='color:#ca60ca;'>:</span>
+                <span style='color:#ca60ca;'>{</span>
+                    <span style='color:#0057ae;'>char</span> <span style='color:#ca60ca;'>*</span>abouttext<span style='color:#ca60ca;'>[</span><span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>]</span> <span style='color:#ca60ca;'>=</span> <span style='color:#ca60ca;'>{</span>
+                        <span style='color:#bf0303;'>&quot;GrGUI+MGRX example program number 13&quot;</span><span style='color:#ca60ca;'>,</span>
+                        <span style='color:#bf0303;'>&quot;a small text editor&quot;</span><span style='color:#ca60ca;'>};</span>
+                    GUICDialogInfo<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;About&quot;</span><span style='color:#ca60ca;'>,</span> <span style='color:#ca60ca;'>(</span><span style='color:#0057ae;'>void</span> <span style='color:#ca60ca;'>**)</span>abouttext<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>2</span><span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;Ok&quot;</span><span style='color:#ca60ca;'>);</span>
+                <span style='color:#ca60ca;'>}</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+
+            <b>case</b> COMMAND_EXIT <span style='color:#ca60ca;'>:</span>
+                GrEventParEnqueue<span style='color:#ca60ca;'>(</span>GREV_END<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>);</span>
+                <b>return</b> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+       <span style='color:#ca60ca;'>}</span>
+    <span style='color:#ca60ca;'>}</span>
+    <b>return</b> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+
+<span style='color:#0057ae;'>int</span> main<span style='color:#ca60ca;'>()</span>
+<span style='color:#ca60ca;'>{</span>
+    GrEvent ev<span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>int</span> windoww <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>800</span><span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>int</span> windowh <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>600</span><span style='color:#ca60ca;'>;</span>
+    <span style='color:#0057ae;'>int</span> terminate <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+
+    GrSetDriverExt<span style='color:#ca60ca;'>(</span>NULL<span style='color:#ca60ca;'>,</span> <span style='color:#bf0303;'>&quot;rszwin&quot;</span><span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//let window resizes in windowed plattforms</span>
+    GrSetMinWindowDims<span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>640</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>480</span><span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//set minimal window dimensions</span>
+    GrSetWindowTitle<span style='color:#ca60ca;'>(</span><span style='color:#bf0303;'>&quot;GrGUI example 13&quot;</span><span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//in windowed plattforms set the win title</span>
+
+    <b>while</b><span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+        GrSetMode<span style='color:#ca60ca;'>(</span>GR_width_height_bpp_graphics<span style='color:#ca60ca;'>,</span> windoww<span style='color:#ca60ca;'>,</span> windowh<span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>8</span><span style='color:#ca60ca;'>);</span>
+        GUIInit<span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>,</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//init input and use double buffer</span>
+        GrSetDefaultFont<span style='color:#ca60ca;'>(&amp;</span>GrFont_PX8x18<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//this is an intermal font</span>
+        GrEventGenWMEnd<span style='color:#ca60ca;'>(</span>GR_GEN_WMEND_YES<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//in windowed plattforms gen WMEND event</span>
+        GrGenEgaColorTable<span style='color:#ca60ca;'>();</span>
+        GrSetComposeKey<span style='color:#ca60ca;'>(</span>GrKey_Alt_U<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//to compose chars using ALT_U + hex digits</span>
+        GrSetClipBoardMaxChars<span style='color:#ca60ca;'>(</span>GR_CB_NOLIMIT<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//we don't want clipboard limit</span>
+
+        setup_menus<span style='color:#ca60ca;'>();</span>
+        setup_objects<span style='color:#ca60ca;'>();</span>
+        GUIPanelSetClCallBacks<span style='color:#ca60ca;'>(</span>gtedit<span style='color:#ca60ca;'>-&gt;</span>p<span style='color:#ca60ca;'>,</span> paint_gtedit<span style='color:#ca60ca;'>,</span> process_gtedit_event<span style='color:#ca60ca;'>);</span>
+        GUIPanelSetClCallBacks<span style='color:#ca60ca;'>(</span>gtfname<span style='color:#ca60ca;'>-&gt;</span>p<span style='color:#ca60ca;'>,</span> paint_gtfname<span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>);</span>
+        GUIPanelSetClCallBacks<span style='color:#ca60ca;'>(</span>gtstatus<span style='color:#ca60ca;'>-&gt;</span>p<span style='color:#ca60ca;'>,</span> paint_gtstatus<span style='color:#ca60ca;'>,</span> NULL<span style='color:#ca60ca;'>);</span>
+
+        GUIMenuBarShow<span style='color:#ca60ca;'>();</span>
+        GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_EDIT<span style='color:#ca60ca;'>);</span>
+        GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_FNAME<span style='color:#ca60ca;'>);</span>
+        GUITilePaint<span style='color:#ca60ca;'>(</span>IDT_STATUS<span style='color:#ca60ca;'>);</span>
+        GUITPShowTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//show text cursor</span>
+
+        <b>while</b><span style='color:#ca60ca;'>(</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span>
+            GrEventRead<span style='color:#ca60ca;'>(&amp;</span>ev<span style='color:#ca60ca;'>);</span>
+            <b>if</b> <span style='color:#ca60ca;'>(</span>ev<span style='color:#ca60ca;'>.</span>type <span style='color:#ca60ca;'>==</span> GREV_END <span style='color:#ca60ca;'>||</span> <span style='color:#ca60ca;'>(</span>ev<span style='color:#ca60ca;'>.</span>type <span style='color:#ca60ca;'>==</span> GREV_WMEND<span style='color:#ca60ca;'>))</span> <span style='color:#ca60ca;'>{</span>
+                <b>if</b> <span style='color:#ca60ca;'>(</span>test_not_saved<span style='color:#ca60ca;'>()</span> <span style='color:#ca60ca;'>==</span> <span style='color:#ca60ca;'>-</span><span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>)</span> <b>continue</b><span style='color:#ca60ca;'>;</span>
+                terminate <span style='color:#ca60ca;'>=</span> <span style='color:#b08000;'>1</span><span style='color:#ca60ca;'>;</span>
+                <b>break</b><span style='color:#ca60ca;'>;</span>
+            <span style='color:#ca60ca;'>}</span>
+            <b>if</b> <span style='color:#ca60ca;'>(</span>ev<span style='color:#ca60ca;'>.</span>type <span style='color:#ca60ca;'>==</span> GREV_WSZCHG<span style='color:#ca60ca;'>)</span> <span style='color:#ca60ca;'>{</span> <span style='color:#898887;'>//window resize</span>
+                windoww <span style='color:#ca60ca;'>=</span> ev<span style='color:#ca60ca;'>.</span>p3<span style='color:#ca60ca;'>;</span>
+                windowh <span style='color:#ca60ca;'>=</span> ev<span style='color:#ca60ca;'>.</span>p4<span style='color:#ca60ca;'>;</span>
+                <b>break</b><span style='color:#ca60ca;'>;</span>
+            <span style='color:#ca60ca;'>}</span>
+            <b>if</b> <span style='color:#ca60ca;'>(</span>process_command<span style='color:#ca60ca;'>(&amp;</span>ev<span style='color:#ca60ca;'>))</span> <b>continue</b><span style='color:#ca60ca;'>;</span>
+            GUITilesProcessEvent<span style='color:#ca60ca;'>(&amp;</span>ev<span style='color:#ca60ca;'>);</span>
+        <span style='color:#ca60ca;'>}</span>
+
+        GUITPHideTCursor<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span> <span style='color:#898887;'>//hide text cursor</span>
+        GUITilesDestroyAll<span style='color:#ca60ca;'>();</span>
+        GUIEnd<span style='color:#ca60ca;'>();</span>
+        <b>if</b> <span style='color:#ca60ca;'>(</span>terminate<span style='color:#ca60ca;'>)</span> <b>break</b><span style='color:#ca60ca;'>;</span>
+    <span style='color:#ca60ca;'>}</span>
+
+    GUITPDestroy<span style='color:#ca60ca;'>(</span>gtp<span style='color:#ca60ca;'>);</span>
+    GrSetMode<span style='color:#ca60ca;'>(</span>GR_default_text<span style='color:#ca60ca;'>);</span>
+
+    <b>return</b> <span style='color:#b08000;'>0</span><span style='color:#ca60ca;'>;</span>
+<span style='color:#ca60ca;'>}</span>
+</pre>
+
+<div>
+<img align="right" src="img/ex13.png">
+<p>In this example we expand the idea from the example number nine to make a small
+text editor around the TextPanel object, we add a menu bar and use the File Chooser
+dialog to ask for a file to load or save as. Note the use of the flag
+FCDLGF_ASKOVERWRITE when we want to "save as" because we want to alert the user
+about a undesired overwrite.
+<p>It is important to use a real buffer with at least FCDLG_MAXLEN_FNAME+1 bytes for
+the fname parameter of the GUICDialogFileChooser function.
+<p>In the menu bar we add options to cut, copy and paste.
+<p>The window is divided in three tiles, the big one is for the Textpanel object, another
+one to show the name of the file being edited and the other one to show information
+about line and colum numbers where the text cursor is positioned, and a indication if
+the file has been edited.
+<p>Also, in this example we manage user window resizes for the plattforms that suport it,
+Linux X11, Linux Wayland and Win32. Obviusly it works for MSDOS and Linux console too,
+but without resizings.
 <br clear="right">
 </div>
 

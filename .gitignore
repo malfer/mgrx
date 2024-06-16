@@ -15,6 +15,8 @@ src/systag.*
 # Ignore Wayland autofiles
 src/xdg-shell-client-protocol.h
 src/xdg-shell-protocol.c
+src/xdg-decoration-client-protocol.h
+src/xdg-decoration-protocol.c
 # Ignore test programs
 test/arctest
 test/bb1test
@@ -155,6 +157,7 @@ testgui/grgui09
 testgui/grgui10
 testgui/grgui11
 testgui/grgui12
+testgui/grgui13
 testgui/showfnt2
 testgui/demmgrx2
 testgui/demintl2
@@ -171,6 +174,7 @@ testgui/xgrgui09
 testgui/xgrgui10
 testgui/xgrgui11
 testgui/xgrgui12
+testgui/xgrgui13
 testgui/xshowfnt2
 testgui/xdemmgrx2
 testgui/xdemintl2
@@ -187,6 +191,7 @@ testgui/wgrgui09
 testgui/wgrgui10
 testgui/wgrgui11
 testgui/wgrgui12
+testgui/wgrgui13
 testgui/wshowfnt2
 testgui/wdemmgrx2
 testgui/wdemintl2

@@ -21,7 +21,9 @@
 
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbcommon-compose.h>
 #include "xdg-shell-client-protocol.h"
+#include "xdg-decoration-client-protocol.h"
 
 enum pointer_event_mask {
     POINTER_EVENT_ENTER = 1 << 0,
@@ -60,18 +62,24 @@ struct wgr_client_state {
     struct wl_seat *wl_seat;
     int num_outputs;
     struct wl_output *wl_output[MGRX_MAX_OUTPUTS];
+    struct zxdg_decoration_manager_v1 *zxdg_decoration_manager_v1;
+    struct wl_data_device_manager *wl_data_device_manager;
    /* Objects */
     struct wl_surface *wl_surface;
     struct xdg_surface *xdg_surface;
     struct xdg_toplevel *xdg_toplevel;
     struct wl_keyboard *wl_keyboard;
     struct wl_pointer *wl_pointer;
+    struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1;
+    struct wl_data_device *wl_data_device;
     /* State */
     uint32_t last_frame;
     struct pointer_event pointer_event;
     struct xkb_context *xkb_context;
     struct xkb_keymap *xkb_keymap;
     struct xkb_state *xkb_state;
+    struct xkb_compose_table *xkb_compose_table;
+    struct xkb_compose_state *xkb_compose_state;
 };
 
 extern struct wgr_client_state _WGrState;
@@ -91,8 +99,11 @@ extern int _WGrGenWMEndEvents;
 extern int _WGrGenFrameEvents;
 extern int _WGrGenWSzChgEvents;
 extern int _WGrUserHadSetWName;
+extern int _WGrLastKbEnterSerial;
 
 extern const struct wl_pointer_listener _Gr_wyl_pointer_listener;
 extern const struct wl_keyboard_listener _Gr_wyl_keyboard_listener;
+
+void _WGrIniClipBoard(void);
 
 #endif

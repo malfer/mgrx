@@ -62,6 +62,7 @@ PROGS=  xgrgui01    \
 	xgrgui10    \
 	xgrgui11    \
 	xgrgui12    \
+	xgrgui13    \
 	xshowfnt2   \
 	xdemmgrx2   \
 	xdemintl2

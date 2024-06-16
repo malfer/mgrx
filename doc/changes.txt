@@ -1,3 +1,32 @@
+2024-06-09 New GrGUI example program grgui13.c, a small text editor.
+2024-06-08 Added three new funtion to GrGUI:
+             void GUITPPutMultiStringNoDraw(GUITextPanel *ta, void *s, int len, int chrtype);
+           is like GUITPPutMultiString but without drawing, so a file can be
+           loaded in the textPanel without showing it.
+             int GUITPGetChanged(GUITextPanel *ta);
+             void GUITPResetChanged(GUITextPanel *ta);
+           the first ask if the textPanel have been changed, the second reset the
+           status to not changed.
+2024-06-05 Added file chooser common dialog to GrGUI, functions:
+             void GUIFileChooserSetLabels(GUIFileChooserLabels *fcl);
+           To set the dialog labels if the defaults don't fit.
+             int GUICDialogFileChooser(void *title, int width, int height, char *fname);
+           Important to note that fname parameter must be char[FCDLG_MAXLEN_FNAME+1]
+           at least. It returns 1 on succes and fill fname with the selected file name,
+           other returns values as the other common dialogs.
+             void GUICDialogsSetObjColors(GrColor objbg, GrColor objfg, GrColor objbggray, GrColor labelfg);
+           To set aditional colors for the dialog.
+           Modified testgui/demmgrx2.c to test the new dialog.
+2024-05-31 Now in the Wayland driver the clipboard interact with the Wayland
+           clipboard.
+2024-05-24 Handled compose keys in the Wayland input driver.
+2024-05-22 Added autorepeat keys to the Wayland input driver.
+           In the Waylan driver if not asked fot user window resize set max
+           and min xdg_toplevel sizes so the compositor doesn't try to resize.
+2024-05-18 Added keypad keys to the Wayland input driver.
+           Using the xdg-decoration-protocol to request server side window
+           decoraion in the Wayland videodriver, it works okey in KDE.
+           Modified testgui/demmgrx2.c to support user window resize.
 2024-05-03 ----------- MGRX 1.5.0 released
 2024-04-27 Added new members to the _GR_videoDriver:
              int inputdriver;        /* not used by now */
@@ -19,12 +48,12 @@
            generate the events.
            Deprecated defines GR_GEN_EXPOSE_NO, GR_GEN_EXPOSE_YES,
            GR_GEN_WMEND_NO and GR_GEN_WMEND_YES. Use GR_GEN_NO and GR_GEN_YES for
-           the all the GrEventGen... functions.
+           all the GrEventGen... functions.
            New GREV_CLOCK event, generates only when requested.
            New function:
              int GrEventGenClock(int gen, int msec);
            to request generation of GREV_CLOCK events every "msec" miliseconds,
-           mot implemented yet.
+           not implemented yet.
 2024-04-24 Ready to release the new Wayland videodriver, it must be considered
            in alpha stage. Only the x86_64 platform is tested.
            It runs nicely most of the time, but have some caveats to be fixed in

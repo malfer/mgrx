@@ -1,4 +1,4 @@
-Welcome to MGRX 1.5.0!
+Welcome to MGRX 1.5.1!
 
 MGRX is a 2D graphics C library derived from the GRX library. GRX was
 originaly written by Csaba Biegl for DJ Delorie's DOS port of the GCC
@@ -28,8 +28,9 @@ Supported platforms
   Note that with the memory driver a graphics card is not required, so it
   can be used for generation of graphics files.
 
-  The Wayland videodriver is new in version 1.5.0, it must be considered in
-  alpha stage, only the x86_64 architecture is tested at the moment.
+  The Wayland videodriver was new in version 1.5.0, it must be considered in
+  beta stage, only the i386 and x86_64 architectures have been tested at the
+  moment.
 
 Why MGRX
 ========
@@ -53,7 +54,7 @@ MGRX installation instructions
 Requirements:
 -------------
 
-  The source files and fonts:  mgrx150.tar.gz or mgrx150s.zip
+  The source files and fonts:  mgrx151.tar.gz or mgrx151s.zip
   This document:               readme
   
 Dependencies:
@@ -94,12 +95,12 @@ Dependencies:
 
   3) Unpack the MGRX archive:
 
-         tar xzvf mgrx150.tar.gz   (1)
+         tar xzvf mgrx151.tar.gz   (1)
      or
-         unzip mgrx150s.zip        (2)
+         unzip mgrx151s.zip        (2)
 
-     (1) This will create the subdirectory 'mgrx150'.
-     (2) This will create the subdirectory 'contrib/mgrx150'.
+     (1) This will create the subdirectory 'mgrx151'.
+     (2) This will create the subdirectory 'contrib/mgrx151'.
 
 B. Edit "makedefs.grx"
 ----------------------
@@ -321,18 +322,22 @@ Using the KMS/DRM videodriver
 Using the Wayland videodriver
 =============================
 
-  The Wayland videodriver is new in MGRX version 1.5.0 and must be considered
-  in alpha stage. Only the x86_64 platform is tested.
+  The Wayland videodriver was new in MGRX version 1.5.0 and must be considered
+  in beta stage. Only the i38 and x86_64 platforms have been tested.
 
-  It runs nicely most of the time, but have some caveats to be fixed in
-  future releases:
+  It runs nicely all the example programs, In these release we have fixed most
+  of the caveats we have in the previous version:
 
-  - There are no window decoration, Wayland expect the client to do it, so if
-    you want to move, resize or close the window you have to use the menu in
-    the task bar (at least in KDE).
-  - There are no autorepeat keys, again Wayland expect the client to do it.
-  - The compose keys don't work.
-  - No interaction with the Wayland clipboard.
+  - We use window server decoration if the Wayland compositor support it (like
+    the KDE one).
+  - We generate now autorepeat keys, because Wayland expect the client to do it.
+  - The compose keys work.
+  - The clipboard interact with the Wayland clipboard.
+
+  But:
+
+  - We don't have window decoration if the Wayland compositor doesn't support
+    window server decoration (like the Gnome one).
   - Because, by now, graphic commits only happen when reading events, non
     interactive programs don't work as expected.
 

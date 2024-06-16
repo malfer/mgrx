@@ -423,7 +423,6 @@ void GUIRTEClear(GUIRawTEdit *ta)
     ta->numchars = 0;
     ta->full = 0;
     reset_marqued_area(ta, 0);
-    
 }
 
 /**************************************************************************/

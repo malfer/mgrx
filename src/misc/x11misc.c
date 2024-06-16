@@ -1,4 +1,4 @@
- /**
+/**
  ** x11misc.c - miscellaneous functions for X11
  **
  ** Copyright (C) 2001 Mariano Alvarez Fernandez
@@ -26,6 +26,8 @@
 
 void GrSetWindowTitle(char *title)
 {
+  if (_XGrDisplay == NULL || _XGrWindow == None) return;
+
   XStoreName(_XGrDisplay, _XGrWindow, title);
   XSetIconName(_XGrDisplay, _XGrWindow, title);
   _XGrUserHadSetWName = 1;

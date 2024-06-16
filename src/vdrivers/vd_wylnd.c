@@ -247,6 +247,12 @@ static int setmode(GrVideoMode * mp, int noclear)
         xdg_toplevel_set_title(_WGrState.xdg_toplevel, name);
     }
 
+    if (!_WGrGenWSzChgEvents) {
+        // Inform to the compositor not to resize
+        xdg_toplevel_set_max_size(_WGrState.xdg_toplevel, mp->width, mp->height);
+        xdg_toplevel_set_min_size(_WGrState.xdg_toplevel, mp->width, mp->height);
+    }
+
     _WGrFrame = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, _WGrFd, 0);
     if (_WGrFrame == MAP_FAILED) {
         close(_WGrFd);
@@ -494,6 +500,12 @@ static void registry_global(void *data, struct wl_registry *wl_registry,
                     &wl_output_listener, state);
             state->num_outputs++;
         }
+    } else if (strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0) {
+        state->zxdg_decoration_manager_v1 = wl_registry_bind(
+            wl_registry, name, &zxdg_decoration_manager_v1_interface, 1);
+    } else if (strcmp(interface, wl_data_device_manager_interface.name) == 0) {
+        state->wl_data_device_manager = wl_registry_bind(
+            wl_registry, name, &wl_data_device_manager_interface, 3);
     }
 }
 
@@ -507,10 +519,23 @@ static const struct wl_registry_listener wl_registry_listener = {
     .global_remove = registry_global_remove,
 };
 
+static void toplevel_decoration_v1_configure(void *data,
+            struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1,
+            uint32_t mode)
+{
+    //fprintf(stderr, "zxdg_decoration_manager_v1 mode %d\n", mode);
+}
+
+static const struct zxdg_toplevel_decoration_v1_listener
+    zxdg_toplevel_decoration_v1_listener = {
+    .configure = toplevel_decoration_v1_configure,
+};
+
 static int init(char *options)
 {
     int res = FALSE;
     GrVideoMode *mp;
+    const char *locale;
 
     GRX_ENTER();
     _WGrState.wl_display = wl_display_connect(NULL);
@@ -533,13 +558,25 @@ static int init(char *options)
         _GrVideoDriverWAYLAND.drvflags &= ~GR_DRIVERF_WINDOW_RESIZE;
     }
 
-    _WGrState.wl_registry = wl_display_get_registry(_WGrState.wl_display);
     _WGrState.xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    locale = getenv("LANG");
+    if (!locale || !*locale) locale = "C";
+    _WGrState.xkb_compose_table = xkb_compose_table_new_from_locale(
+            _WGrState.xkb_context, locale, XKB_COMPOSE_COMPILE_NO_FLAGS);
+    if (_WGrState.xkb_compose_table) {
+        _WGrState.xkb_compose_state = xkb_compose_state_new(
+            _WGrState.xkb_compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
+    }
+
+    _WGrState.wl_registry = wl_display_get_registry(_WGrState.wl_display);
+
     wl_registry_add_listener(_WGrState.wl_registry, &wl_registry_listener, &_WGrState);
     /* The first roundtrip gets the list of advertised globals */
     wl_display_roundtrip(_WGrState.wl_display);
-    /* In the second roundtrip we get the wl_seat::capabilities */
+    /* In the second roundtrip we get the wl_seat::capabilities & wl_outputs */
     wl_display_roundtrip(_WGrState.wl_display);
+
+    _WGrIniClipBoard();
 
     _WGrState.wl_surface = wl_compositor_create_surface(_WGrState.wl_compositor);
     _WGrState.xdg_surface = xdg_wm_base_get_xdg_surface(_WGrState.xdg_wm_base,
@@ -547,10 +584,19 @@ static int init(char *options)
     xdg_surface_add_listener(_WGrState.xdg_surface, &xdg_surface_listener, &_WGrState);
     _WGrState.xdg_toplevel = xdg_surface_get_toplevel(_WGrState.xdg_surface);
     xdg_toplevel_add_listener(_WGrState.xdg_toplevel, &xdg_toplevel_listener, &_WGrState);
+
+    /* if the compositor support it (like the KDE one) ask for server side decoration */
+    if (_WGrState.zxdg_decoration_manager_v1) {
+        _WGrState.zxdg_toplevel_decoration_v1 =
+            zxdg_decoration_manager_v1_get_toplevel_decoration(
+                _WGrState.zxdg_decoration_manager_v1, _WGrState.xdg_toplevel);
+        zxdg_toplevel_decoration_v1_add_listener(_WGrState.zxdg_toplevel_decoration_v1,
+            &zxdg_toplevel_decoration_v1_listener, &_WGrState);
+    }
+
     wl_surface_commit(_WGrState.wl_surface);
-    /* In the third roundtrip we get the xdg surface configure */
+    /* In the third roundtrip we get the keyboard kyempap and the xdg surface configure */
     wl_display_roundtrip(_WGrState.wl_display);
-    //fprintf(stderr, "Init wyl\n");
 
     /* 32 bpp fixed size modes */
     for (mp = &modes[1]; mp < &modes[itemsof(modes)-1]; mp++) {
@@ -576,6 +622,8 @@ static void reset(void)
     if (_WGrState.wl_display) {
         wl_display_disconnect(_WGrState.wl_display);
         xkb_keymap_unref(_WGrState.xkb_keymap);
+        xkb_compose_state_unref(_WGrState.xkb_compose_state);
+        xkb_compose_table_unref(_WGrState.xkb_compose_table);
         xkb_state_unref(_WGrState.xkb_state);
         xkb_context_unref(_WGrState.xkb_context);
         _WGrState.wl_display = NULL;

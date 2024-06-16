@@ -1,4 +1,4 @@
- /**
+/**
  ** wylmisc.c - miscellaneous functions for Wayland
  **
  ** Copyright (C) 2024 Mariano Alvarez Fernandez

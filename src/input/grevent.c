@@ -354,6 +354,8 @@ int GrEventDeleteHook(int (*fn) (GrEvent *))
 
 int GrEventGenExpose(int gen)
 {
+    if (!DRVINFO->vdriver) return GR_GEN_NO;
+
     if(DRVINFO->vdriver->genexpose) {
         genexposeevents = (*DRVINFO->vdriver->genexpose)(gen);
     } else {
@@ -373,6 +375,8 @@ int GrEventGenExpose(int gen)
 
 int GrEventGenWMEnd(int gen)
 {
+    if (!DRVINFO->vdriver) return GR_GEN_NO;
+
     if(DRVINFO->vdriver->genwmend) {
         genwmendevents = (*DRVINFO->vdriver->genwmend)(gen);
     } else {
@@ -392,6 +396,8 @@ int GrEventGenWMEnd(int gen)
 
 int GrEventGenFrame(int gen)
 {
+    if (!DRVINFO->vdriver) return GR_GEN_NO;
+
     if(DRVINFO->vdriver->genframe) {
         genframeevents = (*DRVINFO->vdriver->genframe)(gen);
     } else {

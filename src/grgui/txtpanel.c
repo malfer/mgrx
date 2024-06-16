@@ -255,6 +255,15 @@ void GUITPPutMultiString(GUITextPanel *ta, void *s, int len, int chrtype)
 
 /**************************************************************************/
 
+void GUITPPutMultiStringNoDraw(GUITextPanel *ta, void *s, int len, int chrtype)
+{
+    if (ta == NULL) return;
+
+    GUIRTEPutMultiString(ta->tedit, s, len, chrtype, 0);
+}
+
+/**************************************************************************/
+
 void GUITPResetMA(GUITextPanel *ta)
 {
     GrContext ctxsave;
@@ -332,6 +341,24 @@ void GUITPGetStatus(GUITextPanel *ta, GUITEditStatus *tast)
     if (ta == NULL) return;
 
     GUIRTEGetStatus(ta->tedit, tast);
+}
+
+/**************************************************************************/
+
+int GUITPGetChanged(GUITextPanel *ta)
+{
+    if (ta == NULL) return 0;
+
+    return GUIRTEGetChanged(ta->tedit);
+}
+
+/**************************************************************************/
+
+void GUITPResetChanged(GUITextPanel *ta)
+{
+    if (ta == NULL) return;
+
+    GUIRTEResetChanged(ta->tedit);
 }
 
 /**************************************************************************/

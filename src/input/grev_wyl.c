@@ -29,6 +29,7 @@
 #include "wylkeys.h"
 
 int _WGrEventInited = 0;
+int _WGrLastKbEnterSerial = 0;
 
 static int kbsysencoding = -1;
 static int numgrxeventread = 0;
@@ -36,6 +37,14 @@ static int kbd_lastmod = 0;
 
 static void _WGrEnqueuKeyEvent(uint32_t key, char *buf);
 static int _WGrKeyCode(unsigned int keywyl, unsigned int state, long *p1, long *p2);
+static void _WGrCheckAutoRepeatKey(void);
+
+static struct {
+    int rate;
+    int delay;
+    int status; // 0 canceled, 1 waiting delay, 2 waiting rate
+    GrEvent ev; // last key event to be repeated
+} repeat_status = {40, 660, 0};
 
 /**
  ** _GrEventInit - Initializes inputs
@@ -94,9 +103,10 @@ int _GrReadInputs(void)
     wl_display_roundtrip(_WGrState.wl_display);
     //wl_display_dispatch(_WGrState.wl_display);
 
+    if (numgrxeventread == 0) _WGrCheckAutoRepeatKey();
+
     nevents = numgrxeventread;
-//    if (nevents == 0) usleep(1000L);   // wait 1 ms to not eat 100% cpu
-//    else fprintf(stderr, "En readinputs %d\n", nevents);
+    if (nevents == 0) usleep(1000L);   // wait 1 ms to not eat 100% cpu
     numgrxeventread = 0;
     return nevents;
 }
@@ -287,9 +297,11 @@ wl_pointer_frame(void *data, struct wl_pointer *wl_pointer)
             evaux.p2 = MOUINFO->xpos;
             evaux.p3 = MOUINFO->ypos;
             evaux.p4 = 0;
-            GrEventEnqueue(&evaux);
-            MOUINFO->moved = FALSE;
-            numgrxeventread++;
+            int err = GrEventEnqueue(&evaux);
+            if (!err) {
+                MOUINFO->moved = FALSE;
+                numgrxeventread++;
+            }
         }
     }
 
@@ -351,9 +363,11 @@ wl_pointer_frame(void *data, struct wl_pointer *wl_pointer)
 
         }
         if (sendgrevent) {
-            GrEventEnqueue(&evaux);
-            MOUINFO->moved = FALSE;
-            numgrxeventread++;
+            int err = GrEventEnqueue(&evaux);
+            if (!err) {
+                MOUINFO->moved = FALSE;
+                numgrxeventread++;
+            }
         }
     }
 
@@ -386,16 +400,20 @@ wl_pointer_frame(void *data, struct wl_pointer *wl_pointer)
             case 6 :evaux.p1 = GRMOUSE_B6_PRESSED; break;
             case 7 :evaux.p1 = GRMOUSE_B7_PRESSED; break;
         }
-        GrEventEnqueue(&evaux);
-        switch (whellbutton) {
-            case 4 :evaux.p1 = GRMOUSE_B4_RELEASED; break;
-            case 5 :evaux.p1 = GRMOUSE_B5_RELEASED; break;
-            case 6 :evaux.p1 = GRMOUSE_B6_RELEASED; break;
-            case 7 :evaux.p1 = GRMOUSE_B7_RELEASED; break;
+        int err = GrEventEnqueue(&evaux);
+        if (!err) {
+            switch (whellbutton) {
+                case 4 :evaux.p1 = GRMOUSE_B4_RELEASED; break;
+                case 5 :evaux.p1 = GRMOUSE_B5_RELEASED; break;
+                case 6 :evaux.p1 = GRMOUSE_B6_RELEASED; break;
+                case 7 :evaux.p1 = GRMOUSE_B7_RELEASED; break;
+            }
+            err = GrEventEnqueue(&evaux);
+            if (!err) {
+                MOUINFO->moved = FALSE;
+                numgrxeventread += 2;
+            }
         }
-        GrEventEnqueue(&evaux);
-        MOUINFO->moved = FALSE;
-        numgrxeventread += 2;
     }
 
    memset(event, 0, sizeof(*event));
@@ -450,6 +468,7 @@ wl_keyboard_enter(void *data, struct wl_keyboard *wl_keyboard,
             uint32_t serial, struct wl_surface *surface,
             struct wl_array *keys)
 {
+    _WGrLastKbEnterSerial = serial; // to use it in clipboard offers
     //fprintf(stderr, "keyboard enter\n");
 }
 
@@ -460,18 +479,38 @@ wl_keyboard_key(void *data, struct wl_keyboard *wl_keyboard,
     struct wgr_client_state *client_state = data;
     char buf[128];
     uint32_t keycode = key + 8;
+    enum xkb_compose_status status;
 
-    //xkb_keysym_t sym = xkb_state_key_get_one_sym(
-    //                client_state->xkb_state, keycode);
+    repeat_status.status = 0;
 
-    //xkb_keysym_get_name(sym, buf, sizeof(buf));
-    //char *action = state == WL_KEYBOARD_KEY_STATE_PRESSED ? "press" : "release";
-    //fprintf(stderr, "key(%d) %s: sym: %-12s (%d), \n", keycode, action, buf, sym);
-    xkb_state_key_get_utf8(client_state->xkb_state, keycode, buf, sizeof(buf));
-    //fprintf(stderr, "utf8(%d): '%s'\n", (int)strlen(buf), buf);
+    status = XKB_COMPOSE_NOTHING;
+
+    if (client_state->xkb_compose_state && state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+        xkb_keysym_t keysym = xkb_state_key_get_one_sym(client_state->xkb_state, keycode);
+        xkb_compose_state_feed(client_state->xkb_compose_state, keysym);
+
+        status = xkb_compose_state_get_status(client_state->xkb_compose_state);
+        /*fprintf(stderr, "Compose status %d ", status);
+        if (status == XKB_COMPOSE_NOTHING) fprintf(stderr, "nothing\n");
+        else if (status == XKB_COMPOSE_COMPOSING) fprintf(stderr, "composing\n");
+        else if (status == XKB_COMPOSE_COMPOSED) fprintf(stderr, "composed\n");
+        else if (status == XKB_COMPOSE_CANCELLED) fprintf(stderr, "cancelled\n");
+        else fprintf(stderr, "unknown\n");*/
+
+        if (status == XKB_COMPOSE_COMPOSED) {
+            xkb_compose_state_get_utf8(client_state->xkb_compose_state, buf, sizeof(buf));
+        }
+        if (status == XKB_COMPOSE_CANCELLED || status == XKB_COMPOSE_COMPOSED)
+            xkb_compose_state_reset(client_state->xkb_compose_state);
+        if (status == XKB_COMPOSE_CANCELLED || status == XKB_COMPOSE_COMPOSING)
+            return;
+    }
+
+    if (status == XKB_COMPOSE_NOTHING) {
+        xkb_state_key_get_utf8(client_state->xkb_state, keycode, buf, sizeof(buf));
+    }
 
     if (state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-        //fprintf(stderr, "key %d\n", key);
         _WGrEnqueuKeyEvent(key, buf);
     }
 }
@@ -492,22 +531,21 @@ wl_keyboard_modifiers(void *data, struct wl_keyboard *wl_keyboard,
     struct wgr_client_state *client_state = data;
     xkb_state_update_mask(client_state->xkb_state,
             mods_depressed, mods_latched, mods_locked, 0, 0, group);
-    //fprintf(stderr, "keyboard modifiers %8x %8x %8x\n",
-    //        mods_depressed, mods_latched, mods_locked);
 
     kbd_lastmod = 0;
     if (mods_depressed & 1) kbd_lastmod |= GRKBS_LEFTSHIFT;
     if (mods_depressed & 4) kbd_lastmod |= GRKBS_CTRL;
     if (mods_depressed & 8) kbd_lastmod |= GRKBS_ALT;
     if (mods_locked & 2) kbd_lastmod |= GRKBS_CAPSLOCK;
-    //fprintf(stderr, "mgrx modifiers %8x\n", kbd_lastmod);
+    if (mods_locked & 0x10) kbd_lastmod |= GRKBS_NUMLOCK;
 }
 
 static void
 wl_keyboard_repeat_info(void *data, struct wl_keyboard *wl_keyboard,
             int32_t rate, int32_t delay)
 {
-    //fprintf(stderr, "keyboard repeat_info\n");
+    repeat_status.rate = rate;
+    repeat_status.delay = delay;
 }
 
 const struct wl_keyboard_listener _Gr_wyl_keyboard_listener = {
@@ -524,7 +562,7 @@ static void _WGrEnqueuKeyEvent(uint32_t key, char *buf)
     GrEvent evaux;
     int have_event = 0;
     int count;
-   char *cp1;
+    char *cp1;
 
     evaux.type = GREV_PREKEY;
     evaux.kbstat = kbd_lastmod;
@@ -546,15 +584,28 @@ static void _WGrEnqueuKeyEvent(uint32_t key, char *buf)
     }
 
     if (have_event) {
-        GrEventEnqueue(&evaux);
-        MOUINFO->moved = FALSE;
-        numgrxeventread++;
+        int err = GrEventEnqueue(&evaux);
+        if (!err) {
+            repeat_status.status = 1;
+            repeat_status.ev = evaux;
+            MOUINFO->moved = FALSE;
+            numgrxeventread++;
+        }
     }
 }
 
 static int _WGrKeyCode(unsigned int keywyl, unsigned int state, long *p1, long *p2)
 {
     KeyEntry *k, *kp, *lastkp;
+
+    if (!(state & GRKBS_NUMLOCK)) {
+        for (int i=0; i<sizeof(_KPRemap)/sizeof(_KPRemap[0]); i++) {
+            if (keywyl == _KPRemap[i].oldk) {
+                keywyl = _KPRemap[i].newk;
+                break;
+            }
+        }
+    }
 
     if (state & GRKBS_ALT) {
         lastkp = &_KTAlt[sizeof(_KTAlt)/sizeof(_KTAlt[0])];
@@ -579,4 +630,26 @@ static int _WGrKeyCode(unsigned int keywyl, unsigned int state, long *p1, long *
     }
 
     return 0;
+}
+
+void _WGrCheckAutoRepeatKey(void)
+{
+    if (repeat_status.status == 0) return;
+    long time = GrMsecTime() - repeat_status.ev.time;
+    if (repeat_status.status == 1) {
+        if (time > repeat_status.delay) {
+            int err = GrEventEnqueue(&(repeat_status.ev));
+            if (!err) {
+                repeat_status.status = 2;
+                numgrxeventread++;
+            }
+        }
+    } else if (repeat_status.status == 2) {
+        if (time > repeat_status.rate) {
+            int err = GrEventEnqueue(&(repeat_status.ev));
+            if (!err) {
+                numgrxeventread++;
+            }
+        }
+    }
 }

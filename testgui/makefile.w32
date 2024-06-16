@@ -37,6 +37,7 @@ PROGS=  grgui01.exe    \
 	grgui10.exe    \
 	grgui11.exe    \
 	grgui12.exe    \
+	grgui13.exe    \
 	showfnt2.exe   \
 	demmgrx2.exe   \
 	demintl2.exe

@@ -130,6 +130,10 @@ extern GrFont *_cdlgfont;
 extern int _dlgfontloaded;
 extern GrColor _cdlgbtbgcolor;
 extern GrColor _cdlgbtfgcolor;
+extern GrColor _cdlgobjbgcolor;
+extern GrColor _cdlgobjfgcolor;
+extern GrColor _cdlgobjbggraycolor;
+extern GrColor _cdlglabelfgcolor;
 
 void _GUICDialogInit(void);
 void _GUICDialogEnd(void);
